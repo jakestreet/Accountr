@@ -74,7 +74,8 @@ export default function LoginForm() {
 
       const ResetForm = async (e)=>{
         try {
-          await sendPasswordResetEmail(auth, localUser.email);
+          await sendPasswordResetEmail(auth, emailInputRef.current.value);
+          setLoginStatus("A password reset email has been sent.")
           } catch (error) {
             setLoginStatus(error.message);
           }
