@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import '../App.css'
 import { app, auth } from '../components/utils/firebase'
-import { doc, setDoc, getDoc} from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import bcrypt from 'bcryptjs'
@@ -52,7 +52,6 @@ export default function LoginPage() {
             if (!docSnap.exists()) {
               const hashedPass = await bcrypt.hash(password, 10);
               setDoc(docRef, {
-                uid: auth.currentUser.uid,
                 email: email,
                 password: hashedPass,
                 firstname: firstName,
@@ -65,9 +64,7 @@ export default function LoginPage() {
               setLoginStatus("Registration Successful!")
               await createUserWithEmailAndPassword(auth, email, password)
               .then((userCredential) => {
-                // Signed in 
                 auth.signOut();
-                // Signed Out
               })
             }
             else {
