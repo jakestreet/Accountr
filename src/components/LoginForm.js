@@ -4,7 +4,7 @@ import { auth, app } from './utils/firebase'
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { createUserWithEmailAndPassword, onAuthStateChanged, signOut, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
-
+import bcrypt from 'bcryptjs'
 
 export default function LoginForm() {
     const emailInputRef = useRef();
@@ -19,6 +19,8 @@ export default function LoginForm() {
     onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     })
+
+    bcrypt.hash(passwdInputRef.current.value, 10);
 
     const db = getFirestore(app);
 
