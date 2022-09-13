@@ -52,6 +52,7 @@ export default function LoginPage() {
             if (!docSnap.exists()) {
               const hashedPass = await bcrypt.hash(password, 10);
               setDoc(docRef, {
+                uid: auth.currentUser.uid,
                 email: email,
                 password: hashedPass,
                 firstname: firstName,
@@ -59,7 +60,7 @@ export default function LoginPage() {
                 address: address,
                 dob: dob,
                 role: role,
-                status: "request"
+                status: "Requested"
               });
               setLoginStatus("Registration Successful!")
               await createUserWithEmailAndPassword(auth, email, password)
@@ -102,7 +103,7 @@ export default function LoginPage() {
                 await signInWithEmailAndPassword(auth, email, password)
                 navigate("/home");
               }
-              else if(docSnap.data().status === "request") {
+              else if(docSnap.data().status === "Requested") {
                 setLoginStatus("Your registration request is awaiting approval.");
               }
               else {

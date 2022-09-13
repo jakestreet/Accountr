@@ -19,7 +19,7 @@ export default function HomePage() {
     const Requests = async (e)=>{
         const docRef = doc(db, "users", auth.currentUser.email);
         const docSnap = await getDoc(docRef);
-        if(docSnap.data().role === "manager") {
+        if(docSnap.data().role === "Manager") {
             navigate("/requests");
         }
         else {

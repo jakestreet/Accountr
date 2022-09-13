@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { app } from '../components/utils/firebase'
-import { collection, query, where, getDocs, getFirestore } from "firebase/firestore";
+import { collection, query, where, getDocs, getFirestore, doc, deleteDoc } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import { MDBBtn, MDBTable, MDBTableHead } from 'mdb-react-ui-kit';
 import Requests from '../components/Requests';
@@ -24,45 +24,65 @@ export default function RequestsPage() {
 
     async function GetRequests() {
         try {
-          const usersRef = collection(db, "users");
+            const usersRef = collection(db, "users");
 
-          const q = query(usersRef, where("status", "!=", "none"));
+            const q = query(usersRef, where("status", "!=", "none"));
           
-          const querySnapshot = await getDocs(q);
-          const fNameArray = [];
-          const lNameArray = [];
-          const emailArray = [];
-          const roleArray = [];
-          const statusPillArray = [];
-          const statusTextArray = [];
+            var indexToDelete = 0;
+            var counter = 0;
+            const querySnapshot = await getDocs(q);
+            const fNameArray = [];
+            const lNameArray = [];
+            const emailArray = [];
+            const roleArray = [];
+            const statusPillArray = [];
+            const statusTextArray = [];
 
-          querySnapshot.forEach((doc) => {
-            fNameArray.push(doc.data().firstname);
-            lNameArray.push(doc.data().lastname);
-            emailArray.push(doc.data().email);
-            roleArray.push(doc.data().role);
-            if(doc.data().status === "Request") {
-                statusPillArray.push("warning");
-                statusTextArray.push("Requested");
+            querySnapshot.forEach(async (doc) => {
+                fNameArray.push(doc.data().firstname);
+                lNameArray.push(doc.data().lastname);
+                emailArray.push(doc.data().email);
+                roleArray.push(doc.data().role);
+                if(doc.data().status === "Requested") {
+                    statusPillArray.push("info");
+                    statusTextArray.push("Requested");
+                }
+                else if(doc.data().status === "Approved") {
+                    statusPillArray.push("success");
+                    statusTextArray.push("Approved");
+                }
+                else if(doc.data().status === "Rejected") {
+                    statusPillArray.push("danger");
+                    statusTextArray.push("Rejected");
+                }
+                else if(doc.data().status === "Disabled") {
+                    statusPillArray.push("warning");
+                    statusTextArray.push("Disabled");
+                }
+                else if(doc.data().status === "Suspended") {
+                    statusPillArray.push("secondary");
+                    statusTextArray.push("Suspended");
+                }
+                else if(doc.data().status === "Deleted") {
+                    indexToDelete = counter;
+                }
+                counter++;
+            });
+            setFirstNameArray(fNameArray);
+            setLastNameArray(lNameArray);
+            setEmailArray(emailArray);
+            setRoleArray(roleArray);
+            setStatusPillArray(statusPillArray);
+            setStatusTextArray(statusTextArray);
+
+            if(indexToDelete > 0)
+            {
+                await deleteDoc(doc(db, "users", emailArray[indexToDelete]))
             }
-            else if(doc.data().status === "Approved") {
-                statusPillArray.push("success");
-                statusTextArray.push("Approved");
+            
+            
+            } catch (error) {
             }
-            else if(doc.data().status === "Rejected") {
-                statusPillArray.push("danger");
-                statusTextArray.push("Rejected");
-            }
-          });
-          setFirstNameArray(fNameArray);
-          setLastNameArray(lNameArray);
-          setEmailArray(emailArray);
-          setRoleArray(roleArray);
-          setStatusPillArray(statusPillArray);
-          setStatusTextArray(statusTextArray);
-          
-          } catch (error) {
-          }
     }
 
     useEffect(() => {
