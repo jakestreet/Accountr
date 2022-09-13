@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 function App() {
   return (
     <div>
+      <h1>SWE Application Domain Project</h1>
       <BrowserRouter>
         <Routes>
             <Route index element={<LoginPage />} />

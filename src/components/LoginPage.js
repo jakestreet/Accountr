@@ -15,8 +15,7 @@ import {
   MDBTabsContent,
   MDBTabsPane,
   MDBBtn,
-  MDBInput,
-  MDBCheckbox
+  MDBInput
 }
 from 'mdb-react-ui-kit';
 
@@ -125,6 +124,10 @@ export default function LoginPage() {
         
     }
     */
+    const ResetNav = (e)=>{
+      e.preventDefault();
+      navigate("/reset");
+  }
 
     const [justifyActive, setJustifyActive] = useState('tab1');;
 
@@ -156,27 +159,25 @@ export default function LoginPage() {
       
               <MDBTabsPane show={justifyActive === 'tab1'}>
       
-                <MDBInput wrapperClass='mb-4' label='Email address' id='form1' type='email' inputRef={loginEmailInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Password' id='form2' type='password' inputRef={loginPasswdInputRef}/>
-      
-                <div className="d-flex justify-content-between mx-4 mb-4">
-                  <MDBCheckbox name='flexCheck' value='' id='flexCheckDefault' label='Remember me' />
-                  <a href="/reset">Forgot password?</a>
-                </div>
+                <MDBInput wrapperClass='mb-4' label='Email address' id='loginEmail' type='email' inputRef={loginEmailInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Password' id='loginPassword' type='password' inputRef={loginPasswdInputRef}/>
+                <a onClick={ResetNav} href="!#" >Forgot password?</a>
+                <div className="d-flex justify-content-between mx-4 mb-4"></div>
       
                 <MDBBtn onClick={LoginForm} className="mb-4 w-100">Sign in</MDBBtn>
                 <p className="text-center">Message: {loginStatus}</p>
+                
       
               </MDBTabsPane>
       
               <MDBTabsPane show={justifyActive === 'tab2'}>
       
-                <MDBInput wrapperClass='mb-4' label='Email' id='form1' type='email' inputRef={emailInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Password' id='form1' type='password' inputRef={passwdInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='First Name' id='form1' type='text' inputRef={fNameInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Last Name' id='form1' type='text' inputRef={lNameInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Address' id='form1' type='text' inputRef={addressInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Date of Birth' id='form1' type='date' inputRef={dobInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Email' id='regEmail' type='email' inputRef={emailInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Password' id='regPassword' type='password' inputRef={passwdInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='First Name' id='regFirst' type='text' inputRef={fNameInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Date of Birth' id='regDoB' type='date' inputRef={dobInputRef}/>
       
                 <MDBBtn onClick={SignUpForm} className="mb-4 w-100">Sign up</MDBBtn>
 
