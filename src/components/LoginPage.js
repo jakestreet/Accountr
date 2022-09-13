@@ -24,7 +24,9 @@ export default function LoginPage() {
     const loginEmailInputRef = useRef();
     const loginPasswdInputRef = useRef();
     const emailInputRef = useRef();
+    const roleInputRef = useRef()
     const passwdInputRef = useRef();
+    const conPasswdInputRef = useRef();
     const fNameInputRef = useRef();
     const lNameInputRef = useRef();
     const addressInputRef = useRef();
@@ -36,37 +38,46 @@ export default function LoginPage() {
         e.preventDefault();
         const email = emailInputRef.current.value;
         const password = passwdInputRef.current.value;
+        const conPassword = conPasswdInputRef.current.value;
         const firstName = fNameInputRef.current.value;
         const lastName = lNameInputRef.current.value;
         const address = addressInputRef.current.value;
         const dob = dobInputRef.current.value;
+        const role = roleInputRef.current.value;
 
         try {
           const docRef = doc(db, "users", email);
           const docSnap = await getDoc(docRef);
 
-          if (!docSnap.exists()) {
-            const hashedPass = await bcrypt.hash(password, 10);
-            setDoc(docRef, {
-              email: email,
-              password: hashedPass,
-              firstname: firstName,
-              lastname: lastName,
-              address: address,
-              dob: dob,
-              role: "request"
-            });
-            setLoginStatus("Registration Successful!")
-            await createUserWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-              // Signed in 
-              auth.signOut();
-              // Signed Out
-            })
+          if(password === conPassword) {
+            if (!docSnap.exists()) {
+              const hashedPass = await bcrypt.hash(password, 10);
+              setDoc(docRef, {
+                email: email,
+                password: hashedPass,
+                firstname: firstName,
+                lastname: lastName,
+                address: address,
+                dob: dob,
+                role: role,
+                status: "request"
+              });
+              setLoginStatus("Registration Successful!")
+              await createUserWithEmailAndPassword(auth, email, password)
+              .then((userCredential) => {
+                // Signed in 
+                auth.signOut();
+                // Signed Out
+              })
+            }
+            else {
+              setLoginStatus("Username already in use!")
+            }
           }
           else {
-            setLoginStatus("Username already in use!")
+            setLoginStatus("Passwords do not match!")
           }
+       
         } 
         catch (error) {
           setLoginStatus(error.message);
@@ -87,9 +98,18 @@ export default function LoginPage() {
 
           if(docSnap.data() !== undefined) {
             if(await bcrypt.compare(password, docSnap.data().password)) {
-              setLoginStatus("Successfully Logged In!");
-              await signInWithEmailAndPassword(auth, email, password)
-              navigate("/home");
+              if(docSnap.data().status === "approved") {
+                setLoginStatus("Successfully Logged In!");
+                await signInWithEmailAndPassword(auth, email, password)
+                navigate("/home");
+              }
+              else if(docSnap.data().status === "request") {
+                setLoginStatus("Your registration request is awaiting approval.");
+              }
+              else {
+                setLoginStatus("Your request for registration has been rejected.")
+              }
+              
             } else {
               setLoginStatus("Incorrect Password!")
             }
@@ -173,7 +193,9 @@ export default function LoginPage() {
               <MDBTabsPane show={justifyActive === 'tab2'}>
       
                 <MDBInput wrapperClass='mb-4' label='Email' id='regEmail' type='email' inputRef={emailInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Role (User, Manager, Admin)' id='regFirst' type='text' inputRef={roleInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Password' id='regPassword' type='password' inputRef={passwdInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Confirm Password' id='regPassword' type='password' inputRef={conPasswdInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='First Name' id='regFirst' type='text' inputRef={fNameInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
