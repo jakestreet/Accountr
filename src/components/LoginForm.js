@@ -1,9 +1,8 @@
 import { useRef, useState } from 'react'
 import '../App.css'
-import { auth, app } from './utils/firebase'
+import { app } from './utils/firebase'
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
-import { createUserWithEmailAndPassword, onAuthStateChanged, signOut, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
 import bcrypt from 'bcryptjs'
 
 export default function LoginForm() {
@@ -12,15 +11,9 @@ export default function LoginForm() {
     const fNameInputRef = useRef();
     const lNameInputRef = useRef();
     
-    const [localUser, setUser] = useState({});
+    const [currentUser, setUser] = useState("");
 
     const [loginStatus, setLoginStatus] = useState("");
-
-    onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    })
-
-    bcrypt.hash(passwdInputRef.current.value, 10);
 
     const db = getFirestore(app);
 
@@ -32,20 +25,21 @@ export default function LoginForm() {
         const lastName = lNameInputRef.current.value;
 
         try {
-        const user = await createUserWithEmailAndPassword(auth, email, password);
-        console.log(user);
-        await sendEmailVerification(user.user);
-        const docRef = doc(db, "users", user.user.uid);
+        const docRef = doc(db, "users", email);
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
-          setDoc(doc(db, "users", user.user.uid), {
+          const hashedPass = await bcrypt.hash(password, 10);
+          console.log(hashedPass);
+          setDoc(docRef, {
             email: email,
+            password: hashedPass,
             firstname: firstName,
             lastname: lastName,
-            role: "user"
+            role: "request"
           });
           setLoginStatus("Registration Successful!")
+          setUser(email);
         }
         else {
           setLoginStatus("Username already in use!")
@@ -63,20 +57,30 @@ export default function LoginForm() {
         const password = passwdInputRef.current.value;
         
         try {
-          await signInWithEmailAndPassword(auth, email, password)
-          setLoginStatus("Successfully Logged In!")
+          const docRef = doc(db, "users", email);
+          const docSnap = await getDoc(docRef);
+
+          if(docSnap.exists) {
+            if(await bcrypt.compare(password, docSnap.data().password)) {
+              setLoginStatus("Successfully Logged In!");
+              setUser(email);
+            } else {
+              setLoginStatus("Incorrect Password!");
+            }
+          } else {
+              setLoginStatus("The username does not exist!");
+          }       
         } catch (error) {
           setLoginStatus(error.message);
         }
     }
 
     const LogoutForm = async (e)=>{
-      await signOut(auth);
+      
   }
 
       const ResetForm = async (e)=>{
         try {
-          await sendPasswordResetEmail(auth, emailInputRef.current.value);
           setLoginStatus("A password reset email has been sent.")
           } catch (error) {
             setLoginStatus(error.message);
@@ -101,7 +105,7 @@ export default function LoginForm() {
                 <button type="button" onClick={ResetForm}>Reset Password</button>
             </form>
             <h1>Response: {loginStatus}</h1>
-            <h1>Current User: {localUser?.email}</h1>
+            <h1>Current User: {currentUser}</h1>
         </div>
     )
 }
