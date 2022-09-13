@@ -1,7 +1,7 @@
-import LoginPage from "./components/LoginPage"
-import HomePage from "./components/HomePage"
-import ResetPass from "./components/ResetPass";
-import RequestsPage from "./components/RequestsPage"
+import LoginPage from "./pages/LoginPage"
+import HomePage from "./pages/HomePage"
+import ResetPage from "./pages/ResetPage";
+import RequestsPage from "./pages/RequestsPage"
 
 import './App.css';
 import 'mdb-react-ui-kit/dist/css/mdb.min.css';
@@ -15,7 +15,7 @@ function App() {
         <Routes>
             <Route index element={<LoginPage />} />
             <Route path="home" element={<HomePage />} />
-            <Route path="reset" element={<ResetPass />} />
+            <Route path="reset" element={<ResetPage />} />
             <Route path="requests" element={<RequestsPage />} />
         </Routes>     
       </BrowserRouter>

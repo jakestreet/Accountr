@@ -1,11 +1,10 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import '../App.css'
-import { app, auth } from './utils/firebase'
+import { app, auth } from '../components/utils/firebase'
 import { doc, setDoc, getDoc} from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-//import { collection, query, where, getDocs  } from "firebase/firestore";
 import bcrypt from 'bcryptjs'
 import {
   MDBContainer,
@@ -98,7 +97,7 @@ export default function LoginPage() {
 
           if(docSnap.data() !== undefined) {
             if(await bcrypt.compare(password, docSnap.data().password)) {
-              if(docSnap.data().status === "approved") {
+              if(docSnap.data().status === "Approved") {
                 setLoginStatus("Successfully Logged In!");
                 await signInWithEmailAndPassword(auth, email, password)
                 navigate("/home");
@@ -124,26 +123,6 @@ export default function LoginPage() {
         
     }
 
-
-          /*
-      const GetRequests = async (e)=>{
-        try {
-          const usersRef = collection(db, "users");
-
-          const q = query(usersRef, where("role", "==", "request"));
-          
-          const querySnapshot = await getDocs(q);
-          querySnapshot.forEach((doc) => {
-            // doc.data() is never undefined for query doc snapshots
-            console.log(doc.id, " => ", doc.data());
-          });
-
-          } catch (error) {
-            setLoginStatus(error.message);
-          }
-        
-    }
-    */
     const ResetNav = (e)=>{
       e.preventDefault();
       navigate("/reset");

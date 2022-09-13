@@ -6,7 +6,7 @@ import {
   }
   from 'mdb-react-ui-kit';
 
-export default function ResetPass() {
+export default function ResetPage() {
     const emailInputRef = useRef();
     const [message, setMessage] = useState("");
     

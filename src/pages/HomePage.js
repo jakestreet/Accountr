@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { app, auth } from './utils/firebase';
+import { app, auth } from '../components/utils/firebase';
 import { doc, getDoc, getFirestore} from "firebase/firestore";
 
 export default function HomePage() {
