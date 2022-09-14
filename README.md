@@ -1,5 +1,9 @@
 # Getting Started with Create React App
 
+This repository is being auto published to Netlify.
+
+Live Site: [https://accountr.netlify.app/](https://accountr.netlify.app/)
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
