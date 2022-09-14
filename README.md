@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# Accountr - Web Based Accounting App
 
 This repository is being auto published to Netlify.
 
