@@ -1,7 +1,7 @@
 import LoginPage from "./pages/LoginPage"
 import HomePage from "./pages/HomePage"
 import ResetPage from "./pages/ResetPage";
-import RequestsPage from "./pages/RequestsPage"
+import UsersPage from "./pages/UsersPage"
 
 import './App.css';
 import 'mdb-react-ui-kit/dist/css/mdb.min.css';
@@ -17,7 +17,7 @@ function App() {
             <Route index element={<LoginPage />} />
             <Route path="home" element={<HomePage />} />
             <Route path="reset" element={<ResetPage />} />
-            <Route path="users" element={<RequestsPage />} />
+            <Route path="users" element={<UsersPage />} />
         </Routes>     
       </BrowserRouter>
     </div>

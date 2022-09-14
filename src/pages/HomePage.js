@@ -1,10 +1,7 @@
 export default function HomePage() {
-
     return (
-        <div> 
+        <div>
             <h1 className="text-center mt-3">Home Page Placeholder</h1>
-        </div>
-        
-    )
-    
+        </div> 
+    )   
 }

@@ -6,9 +6,8 @@ import { useState, useEffect } from 'react'
 import { Alert } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
-import CloseIcon from '@mui/icons-material/Close'
-
-export default function NavBar(props) {
+import CloseIcon from '@mui/icons-material/Close';
+export default function NavBar() {
 
     const db = getFirestore(app);
     const navigate = useNavigate();
@@ -112,9 +111,11 @@ export default function NavBar(props) {
                     <div className="collapse navbar-collapse" id="navbarText">
                     <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                         <li className="nav-item">
+                        {/* eslint-disable-next-line*/}
                         <a className={homeNav} onClick={HomeNavigate} href="" aria-current="page">Home</a>
                         </li>
                         <li className="nav-item">
+                        {/* eslint-disable-next-line*/}
                         <a className={usersNav} onClick={UsersNavigate} href="">Users</a>
                         </li>
                     </ul>
@@ -122,7 +123,7 @@ export default function NavBar(props) {
                         <span className="navbar-text">
                             {auth.currentUser.email}
                         </span>
-                        <MDBBtn onClick={LogOut} className="mb-0 w-5 btn-sm">Log Out</MDBBtn>
+                        <MDBBtn onClick={LogOut} className="mb-0 w-5 btn-rounded">Log Out</MDBBtn>
                     </div>
                     </div>
                 </div>
@@ -134,11 +135,18 @@ export default function NavBar(props) {
         <div>
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
                 <div className="container-fluid">
-                    <a className="navbar-brand">Accountr</a>
+                    {/* eslint-disable-next-line*/}
+                    <img
+                    src='/images/logo.png'
+                    className="rounded-pill"
+                    alt="Townhouses and Skyscrapers"
+                    width="175"
+                    />
                     {RenderNav()}
                 </div>  
             </nav> 
             {SendAlert()}
+            
         </div>       
         
     )
