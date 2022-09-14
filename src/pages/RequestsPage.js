@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react'
 import { app } from '../components/utils/firebase'
 import { collection, query, where, getDocs, getFirestore, doc, deleteDoc } from "firebase/firestore";
-import { useNavigate } from 'react-router-dom';
 import { MDBBtn, MDBTable, MDBTableHead } from 'mdb-react-ui-kit';
 import Requests from '../components/Requests';
 
 export default function RequestsPage() {
-    const navigate = useNavigate();
-
+    
     const [firstNameArray, setFirstNameArray] = useState([]);
     const [lastNameArray, setLastNameArray] = useState([]);
     const [emailArray, setEmailArray] = useState([]);
@@ -16,11 +14,6 @@ export default function RequestsPage() {
     const [statusTextArray, setStatusTextArray] = useState([]);
 
     const db = getFirestore(app);
-
-    const ReturnHome = (e)=>{
-        e.preventDefault();
-        navigate("/home");
-    }
 
     async function GetRequests() {
         try {
@@ -114,8 +107,9 @@ export default function RequestsPage() {
 
    return (
     <div>
-            <MDBBtn className="mb-4" onClick={ReturnHome}>Return to Home Page</MDBBtn>
-            <MDBBtn className="mb-4" onClick={GetRequests}>Refresh Requests</MDBBtn>
+            <div className="container-fluid">
+                <MDBBtn className="gap-2 d-flex mb-1 mt-3" onClick={GetRequests}>Refresh Requests</MDBBtn>
+            </div>
             <MDBTable align='middle'>
                 <MDBTableHead>
                 <tr>

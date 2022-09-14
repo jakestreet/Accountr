@@ -6,17 +6,18 @@ import RequestsPage from "./pages/RequestsPage"
 import './App.css';
 import 'mdb-react-ui-kit/dist/css/mdb.min.css';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import NavBar from "./components/NavBar";
 
 function App() {
   return (
     <div>
-      <h1>SWE Application Domain Project</h1>
       <BrowserRouter>
+        <NavBar />
         <Routes>
             <Route index element={<LoginPage />} />
             <Route path="home" element={<HomePage />} />
             <Route path="reset" element={<ResetPage />} />
-            <Route path="requests" element={<RequestsPage />} />
+            <Route path="users" element={<RequestsPage />} />
         </Routes>     
       </BrowserRouter>
     </div>
