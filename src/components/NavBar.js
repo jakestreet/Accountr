@@ -95,7 +95,7 @@ export default function NavBar(props) {
             setUsersNav("nav-link active");
         }
         
-        if(location.pathname !== "/") {
+        if(location.pathname !== "/" && location.pathname !== "/reset") {
             return(
                 <div className="container-fluid">
                     <button
