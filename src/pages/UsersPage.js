@@ -200,10 +200,10 @@ export default function RequestsPage() {
               renderCell: (cellValues) => {
                 return (
                     <div>
-                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.email, UpdateStatusApprove(cellValues.row.statusText)) }} className="d-md-flex gap-2" rounded color="link">
+                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.email, UpdateStatusApprove(cellValues.row.statusText)) }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         {UpdateButtonApprove(cellValues.row.statusText)}
                         </MDBBtn>
-                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.email, UpdateStatusReject(cellValues.row.statusText)) }} className="d-md-flex gap-2" rounded color='link'>
+                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.email, UpdateStatusReject(cellValues.row.statusText)) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         {UpdateButtonReject(cellValues.row.statusText)}
                         </MDBBtn>
                     </div>
@@ -213,7 +213,7 @@ export default function RequestsPage() {
           ];
 
    return (
-        <div style={{ height: 960, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
+        <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
         <DataGrid
             sx={{ "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "rgba(41,121,255,1)",

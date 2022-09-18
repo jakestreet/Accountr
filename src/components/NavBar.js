@@ -88,14 +88,13 @@ export default function NavBar() {
                         {/* eslint-disable-next-line*/}
                         <a className={homeNav} onClick={HomeNavigate} href="" aria-current="page">Home</a>
                         </li>
-                        {/*RenderUsersTab()*/}
                         {RenderUsersTab()}
                     </ul>
                     <div className="gap-2 d-flex">
                         <span className="navbar-text">
                         {currentUser && currentUser.email}
                         </span>
-                        <MDBBtn onClick={LogOut} className="mb-0 w-5 btn-rounded">Log Out</MDBBtn>
+                        <MDBBtn onClick={LogOut} className="mb-0 w-5 btn-rounded" style={{background: 'rgba(41,121,255,1)'}} >Log Out</MDBBtn>
                     </div>
                     </div>
                 </div>
