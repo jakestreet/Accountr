@@ -3,10 +3,7 @@ import { auth, app } from '../components/utils/firebase';
 import { doc, getDoc, getFirestore} from "firebase/firestore";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react'
-import { Alert } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
-import Collapse from '@mui/material/Collapse';
-import CloseIcon from '@mui/icons-material/Close';
+import { useAuth } from '../contexts/AuthContext';
 export default function NavBar() {
 
     const db = getFirestore(app);
@@ -14,59 +11,35 @@ export default function NavBar() {
     const location = useLocation();
     const [homeNav, setHomeNav] = useState("");
     const [usersNav, setUsersNav] = useState("");
-    const [alertStatus, setAlertStatus] = useState("");
-    const [open, setOpen] = useState(true);
+    const { currentUser, logout, currentRole, setCurrentRole } = useAuth();
 
     const HomeNavigate = async (e)=>{
         e.preventDefault();
         navigate("/home");
     }
 
-    const UsersNavigate = async (e)=>{
-        e.preventDefault();
-        const docRef = doc(db, "users", auth.currentUser.email);
-        const docSnap = await getDoc(docRef);
-        if(docSnap.data().role === "Manager") {
-            navigate("/users");
+    const GetRole = async (e)=>{
+        if(auth.currentUser) {
+            const docRef = doc(db, "users", auth.currentUser.email);
+            const docSnap = await getDoc(docRef);
+            setCurrentRole(docSnap.data().role);
         }
-        else {
-            setAlertStatus("Only managers and administrators can access users.");
-            setOpen(true);
-        }  
+       
+
     }
 
-    const SendAlert = (e)=>{
-        if(alertStatus !== "") {
-          return (
-            <Collapse in={open}>
-              <Alert severity="warning"
-                action={
-                  <IconButton
-                    aria-label="close"
-                    color="inherit"
-                    size="small"
-                    onClick={() => {
-                      setOpen(false);
-                    }}
-                  >
-                    <CloseIcon fontSize="inherit" />
-                  </IconButton>
-                }
-                sx={{ mb: 2 }}
-              >
-                {alertStatus}
-              </Alert>
-            </Collapse>
-          )
-        } 
+    const UsersNavigate = async (e)=>{
+        e.preventDefault();
+        if(currentRole === "Manager") {
+            navigate("/users");
+        }
     }
 
     const LogOut = async (e)=>{
-        auth.signOut();
+        logout()
         console.log("logged out");
         navigate("/");
     }
-
 
     useEffect(() => {
         let ignore = false;
@@ -95,6 +68,7 @@ export default function NavBar() {
         }
         
         if(location.pathname !== "/" && location.pathname !== "/reset") {
+            GetRole();
             return(
                 <div className="container-fluid">
                     <button
@@ -114,14 +88,12 @@ export default function NavBar() {
                         {/* eslint-disable-next-line*/}
                         <a className={homeNav} onClick={HomeNavigate} href="" aria-current="page">Home</a>
                         </li>
-                        <li className="nav-item">
-                        {/* eslint-disable-next-line*/}
-                        <a className={usersNav} onClick={UsersNavigate} href="">Users</a>
-                        </li>
+                        {/*RenderUsersTab()*/}
+                        {RenderUsersTab()}
                     </ul>
                     <div className="gap-2 d-flex">
                         <span className="navbar-text">
-                            {auth.currentUser.email}
+                        {currentUser && currentUser.email}
                         </span>
                         <MDBBtn onClick={LogOut} className="mb-0 w-5 btn-rounded">Log Out</MDBBtn>
                     </div>
@@ -129,6 +101,19 @@ export default function NavBar() {
                 </div>
             )
         }
+    }
+
+    function RenderUsersTab() {
+        if(currentUser) {
+            if(currentRole === "Manager") {
+                return (
+                    <li className="nav-item">
+                    {/* eslint-disable-next-line*/}
+                    <a className={usersNav} onClick={UsersNavigate} href="">Users</a>
+                    </li>
+                )
+            }
+        } 
     }
 
     return (
@@ -145,8 +130,6 @@ export default function NavBar() {
                     {RenderNav()}
                 </div>  
             </nav> 
-            {SendAlert()}
-            
         </div>       
         
     )

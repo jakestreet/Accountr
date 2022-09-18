@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import '../App.css'
-import { app, auth } from '../components/utils/firebase'
+import { app } from '../components/utils/firebase'
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import bcrypt from 'bcryptjs'
+import { useAuth } from '../contexts/AuthContext';
 import {
   MDBContainer,
   MDBTabs,
@@ -38,6 +38,16 @@ export default function LoginPage() {
     const [justifyActive, setJustifyActive] = useState('tab1');
     const [open, setOpen] = useState(true);
     const db = getFirestore(app);
+    const { signup, login, logout, currentUser } = useAuth();
+
+    
+    useEffect(() => {
+      if(currentUser !== null)
+      {
+        navigate("/home");
+      }
+    })
+    
 
     const SignUpForm = async (e)=>{
         e.preventDefault();
@@ -68,9 +78,9 @@ export default function LoginPage() {
                 status: "Requested"
               });
               setLoginStatus("Registration Successful!")
-              await createUserWithEmailAndPassword(auth, email, password)
+              await signup(email, password)
               .then((userCredential) => {
-                auth.signOut();
+                logout();
               })
             }
             else {
@@ -104,7 +114,7 @@ export default function LoginPage() {
           if(docSnap.data() !== undefined) {
             if(await bcrypt.compare(password, docSnap.data().password)) {
               if(docSnap.data().status === "Approved") {
-                await signInWithEmailAndPassword(auth, email, password)
+                await login(email, password)
                 navigate("/home");
               }
               else if(docSnap.data().status === "Requested") {

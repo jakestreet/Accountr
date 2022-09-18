@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { app } from '../components/utils/firebase'
 import { collection, query, where, getDocs, getFirestore, doc, updateDoc } from "firebase/firestore";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { MDBBadge, MDBBtn } from 'mdb-react-ui-kit';
 import {
     DataGrid,
@@ -14,6 +16,8 @@ import Pagination from '@mui/material/Pagination';
 export default function RequestsPage() {
 
     const db = getFirestore(app);
+    const navigate = useNavigate();
+    const { currentRole } = useAuth();
 
     const [rows, setRows] = useState([]);
 
@@ -150,6 +154,14 @@ export default function RequestsPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
         },[]);
 
+    //disable access for users
+    useEffect(() => {
+        if(currentRole === "User")
+        {
+            navigate("/home");
+        }
+        })
+
         const columns = [
             {
                 field: "firstName",
@@ -201,7 +213,7 @@ export default function RequestsPage() {
           ];
 
    return (
-        <div style={{ height: 660, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
+        <div style={{ height: 960, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
         <DataGrid
             sx={{ "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "rgba(41,121,255,1)",
@@ -214,7 +226,7 @@ export default function RequestsPage() {
           rowHeight={100}
           rows={rows}
           columns={columns}
-          pageSize={5}
+          pageSize={10}
           components={{ 
             Pagination: CustomPagination
             }}
