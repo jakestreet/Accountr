@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { auth } from '../components/utils/firebase'
+import { auth, authAdmin } from '../components/utils/firebase'
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 const AuthContext = React.createContext();
@@ -17,12 +17,22 @@ export function AuthProvider({children}) {
         return createUserWithEmailAndPassword(auth, email, password)
     }
 
+    function signupAdmin(email, password) {
+        return createUserWithEmailAndPassword(authAdmin, email, password)
+    }
+
     function login(email, password) {
         return signInWithEmailAndPassword(auth, email, password)
     }
 
     function logout() {
         return auth.signOut();
+    }
+
+    function logoutAdmin() {
+        console.log(currentUser);
+        console.log("admin logout");
+        return authAdmin.signOut();
     }
 
     useEffect(() => {
@@ -39,8 +49,10 @@ export function AuthProvider({children}) {
         currentRole,
         setCurrentRole,
         signup,
+        signupAdmin,
         login,
         logout,
+        logoutAdmin,
     }
 
   return (

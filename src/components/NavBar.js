@@ -30,7 +30,7 @@ export default function NavBar() {
 
     const UsersNavigate = async (e)=>{
         e.preventDefault();
-        if(currentRole === "Manager") {
+        if(currentRole === "Admin") {
             navigate("/users");
         }
     }
@@ -104,7 +104,7 @@ export default function NavBar() {
 
     function RenderUsersTab() {
         if(currentUser) {
-            if(currentRole === "Manager") {
+            if(currentRole === "Admin") {
                 return (
                     <li className="nav-item">
                     {/* eslint-disable-next-line*/}
