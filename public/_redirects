@@ -1,2 +1,2 @@
 # Redirects from what the browser requests to what we serve
-/reset-password              /reset-password
+/*    /index.html   200
