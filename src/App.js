@@ -1,5 +1,7 @@
 import LoginPage from "./pages/LoginPage"
 import HomePage from "./pages/HomePage"
+import EditProfilePage from "./pages/EditProfilePage"
+import ProfilePage from "./pages/ProfilePage"
 import ResetPage from "./pages/ResetPage"
 import ForgotPage from "./pages/ForgotPage"
 import UsersPage from "./pages/UsersPage"
@@ -22,6 +24,8 @@ function App() {
             <Route path="reset-password" element={<ResetPage />} />
             <Route element={<PrivateRoutes/>}>
               <Route path="home" element={<HomePage />} />
+              <Route path="edit-profile" element={<EditProfilePage />} />
+              <Route path="profile" element={<ProfilePage />} />
               <Route path="users" element={<UsersPage />} />
             </Route>   
         </Routes>     

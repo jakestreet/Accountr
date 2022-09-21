@@ -21,6 +21,7 @@ import { Alert } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
 import CloseIcon from '@mui/icons-material/Close'
+import PasswordChecklist from "react-password-checklist"
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -39,7 +40,10 @@ export default function LoginPage() {
     const [open, setOpen] = useState(true);
     const db = getFirestore(app);
     const { signup, login, logout, currentUser } = useAuth();
-
+    const [password, setPassword] = useState("")
+    const [passwordAgain, setPasswordAgain] = useState("")
+    const [validPass, setValidPass] = useState("invalid")
+    
     
     useEffect(() => {
       if(currentUser !== null)
@@ -48,12 +52,10 @@ export default function LoginPage() {
       }
     })
     
-
     const SignUpForm = async (e)=>{
         e.preventDefault();
         const email = emailInputRef.current.value;
         const password = passwdInputRef.current.value;
-        const conPassword = conPasswdInputRef.current.value;
         const firstName = fNameInputRef.current.value;
         const lastName = lNameInputRef.current.value;
         const address = addressInputRef.current.value;
@@ -64,7 +66,7 @@ export default function LoginPage() {
           const docRef = doc(db, "users", email);
           const docSnap = await getDoc(docRef);
 
-          if(password === conPassword) {
+          if(validPass === "valid") {
             if (!docSnap.exists()) {
               const hashedPass = await bcrypt.hash(password, 10);
               setDoc(docRef, {
@@ -90,15 +92,13 @@ export default function LoginPage() {
           }
           else {
             setOpen(true);
-            setLoginStatus("Passwords do not match!")
+            setLoginStatus("Check Password Requirements!")
           }
        
         } 
         catch (error) {
           setLoginStatus(error.message);
         }
-
-
     }
 
     const LoginForm = async (e)=>{
@@ -188,6 +188,9 @@ export default function LoginPage() {
       setJustifyActive(value);
     };
   
+
+
+
     return (
           <div>
             {SendAlert()}
@@ -221,11 +224,21 @@ export default function LoginPage() {
                 </MDBTabsPane>
         
                 <MDBTabsPane show={justifyActive === 'tab2'}>
-        
                   <MDBInput wrapperClass='mb-4' label='Email' id='regEmail' type='email' inputRef={emailInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Role (User, Manager, Admin)' id='regFirst' type='text' inputRef={roleInputRef}/>
-                  <MDBInput wrapperClass='mb-4' label='Password' id='regPassword' type='password' inputRef={passwdInputRef}/>
-                  <MDBInput wrapperClass='mb-4' label='Confirm Password' id='regPassword' type='password' inputRef={conPasswdInputRef}/>
+                  <MDBInput wrapperClass='mb-4' label='Password' id='regPassword' type='password' onChange={e => setPassword(e.target.value)} inputRef={passwdInputRef}/>
+                  <MDBInput wrapperClass='mb-2' label='Confirm Password' id='regPassword' type='password' onChange={e => setPasswordAgain(e.target.value)} inputRef={conPasswdInputRef}/>
+                  <PasswordChecklist className='mb-3'
+                  rules={["minLength","specialChar","number","letter","match"]}
+                  minLength={8}
+                  value={password}
+                  valueAgain={passwordAgain}
+                  messages={{
+                    minLength: "Password has at least 8 characters.",
+                    specialChar: "Password has a special character.",
+                  }}
+                  onChange={(isValid) => {setValidPass(isValid)}}
+                />
                   <MDBInput wrapperClass='mb-4' label='First Name' id='regFirst' type='text' inputRef={fNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>

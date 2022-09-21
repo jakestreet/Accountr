@@ -20,6 +20,7 @@ import Pagination from '@mui/material/Pagination';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { MDBInput } from 'mdb-react-ui-kit';
+import PasswordChecklist from "react-password-checklist"
 
 export default function RequestsPage() {
 
@@ -43,6 +44,9 @@ export default function RequestsPage() {
     const addressInputRef = useRef();
     const dobInputRef = useRef();
     const [loginStatus, setLoginStatus] = useState("");
+    const [password, setPassword] = useState("")
+    const [passwordAgain, setPasswordAgain] = useState("")
+    const [validPass, setValidPass] = useState("invalid")
 
     const style = {
         position: 'absolute',
@@ -61,7 +65,6 @@ export default function RequestsPage() {
         e.preventDefault();
         const email = emailInputRef.current.value;
         const password = passwdInputRef.current.value;
-        const conPassword = conPasswdInputRef.current.value;
         const firstName = fNameInputRef.current.value;
         const lastName = lNameInputRef.current.value;
         const address = addressInputRef.current.value;
@@ -72,7 +75,7 @@ export default function RequestsPage() {
           const docRef = doc(db, "users", email);
           const docSnap = await getDoc(docRef);
 
-          if(password === conPassword) {
+          if(validPass === "valid") {
             if (!docSnap.exists()) {
               const hashedPass = await bcrypt.hash(password, 10);
               setDoc(docRef, {
@@ -98,7 +101,7 @@ export default function RequestsPage() {
             }
           }
           else {
-            setLoginStatus("Passwords do not match!")
+            setLoginStatus("Check Password Requirements!")
             setOpenAlert(true);
           }
        
@@ -351,8 +354,18 @@ export default function RequestsPage() {
                 {SendAlert()}
                 <MDBInput wrapperClass='mb-4' label='Email' id='regEmail' type='email' inputRef={emailInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Role (User, Manager, Admin)' id='regFirst' type='text' inputRef={roleInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Password' id='regPassword' type='password' inputRef={passwdInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Confirm Password' id='regPassword' type='password' inputRef={conPasswdInputRef}/>
+                <MDBInput wrapperClass='mb-4' label='Password' id='regPassword' type='password' onChange={e => setPassword(e.target.value)} inputRef={passwdInputRef}/>
+                  <MDBInput wrapperClass='mb-2' label='Confirm Password' id='regPassword' type='password' onChange={e => setPasswordAgain(e.target.value)} inputRef={conPasswdInputRef}/>
+                  <PasswordChecklist className='mb-3'
+                  rules={["minLength","specialChar","number","letter","match"]}
+                  minLength={8}
+                  value={password}
+                  valueAgain={passwordAgain}
+                  messages={{
+                    minLength: "Password has at least 8 characters.",
+                  }}
+                  onChange={(isValid) => {setValidPass(isValid)}}
+                />
                 <MDBInput wrapperClass='mb-4' label='First Name' id='regFirst' type='text' inputRef={fNameInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
