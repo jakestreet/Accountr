@@ -5,13 +5,18 @@ import {
     MDBBtn,
   }
   from 'mdb-react-ui-kit';
+  import { useAuth } from '../contexts/AuthContext';
 
 export default function ForgotPage() {
     const emailInputRef = useRef();
     const [message, setMessage] = useState("");
+    const { forgotPassword } = useAuth();
     
     const SendResetEmail = async (e)=>{
-        setMessage("Reset email sent")
+        await forgotPassword(emailInputRef.current.value)
+        .then(response => {
+          console.log(response)
+        }).catch(e => console.log(e.message))
     }
 
     return (

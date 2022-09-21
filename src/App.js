@@ -7,14 +7,14 @@ import PrivateRoutes from "./components/PrivateRoutes"
 
 import './App.css';
 import 'mdb-react-ui-kit/dist/css/mdb.min.css';
-import { Routes, Route, HashRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
   return (
     <AuthProvider>
-      <HashRouter>
+      <BrowserRouter>
         <NavBar />
         <Routes>
             <Route index element={<LoginPage />} />
@@ -25,7 +25,7 @@ function App() {
               <Route path="users" element={<UsersPage />} />
             </Route>   
         </Routes>     
-      </HashRouter>
+      </BrowserRouter>
     </AuthProvider>
 
   )
