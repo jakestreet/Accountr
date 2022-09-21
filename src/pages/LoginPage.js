@@ -144,7 +144,7 @@ export default function LoginPage() {
 
     const ResetNav = (e)=>{
       e.preventDefault();
-      navigate("/reset");
+      navigate("/forgot-password");
   }
 
   const SendAlert = (e)=>{

@@ -67,7 +67,7 @@ export default function NavBar() {
             setUsersNav("nav-link active");
         }
         
-        if(location.pathname !== "/" && location.pathname !== "/reset") {
+        if(location.pathname !== "/" && location.pathname !== "/forgot-password") {
             GetRole();
             return(
                 <div className="container-fluid">

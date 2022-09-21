@@ -30,8 +30,6 @@ export function AuthProvider({children}) {
     }
 
     function logoutAdmin() {
-        console.log(currentUser);
-        console.log("admin logout");
         return authAdmin.signOut();
     }
 
