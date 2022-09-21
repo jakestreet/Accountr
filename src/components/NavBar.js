@@ -2,7 +2,7 @@ import { MDBBtn } from 'mdb-react-ui-kit';
 import { auth, app } from '../components/utils/firebase';
 import { doc, getDoc, getFirestore} from "firebase/firestore";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext';
 export default function NavBar() {
 
@@ -56,7 +56,7 @@ export default function NavBar() {
             setUsersNav("nav-link active");
         }
         
-        if(location.pathname !== "/" && location.pathname !== "/forgot-password") {
+        if(location.pathname !== "/" && location.pathname !== "/forgot-password" && location.pathname !== "/reset-password") {
             GetRole();
             return(
                 <div className="container-fluid">
