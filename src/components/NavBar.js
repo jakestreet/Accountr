@@ -41,17 +41,6 @@ export default function NavBar() {
         navigate("/");
     }
 
-    useEffect(() => {
-        let ignore = false;
-        
-        if (!ignore)  if(auth.currentUser === null)
-        {
-            navigate("/");
-        }
-        return () => { ignore = true; }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        },[]);
-
 
     function RenderNav() {
         
