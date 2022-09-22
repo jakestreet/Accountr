@@ -72,13 +72,20 @@ export default function RequestsPage() {
         const role = roleInputRef.current.value;
 
         try {
-          const docRef = doc(db, "users", email);
+          const MyDate = new Date();
+          const currentYear = String(MyDate.getFullYear());
+          const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+          const username = firstName.toLowerCase().substring(0,1) + lastName.toLowerCase() + currentMonth + currentYear.slice(-2)
+          
+          const docRef = doc(db, "users", username);
           const docSnap = await getDoc(docRef);
+          console.log(validPass)
 
-          if(validPass === "valid") {
+          if(validPass === true) {
             if (!docSnap.exists()) {
               const hashedPass = await bcrypt.hash(password, 10);
               setDoc(docRef, {
+                username: username,
                 email: email,
                 password: hashedPass,
                 firstname: firstName,
@@ -86,7 +93,8 @@ export default function RequestsPage() {
                 address: address,
                 dob: dob,
                 role: role,
-                status: "Requested"
+                status: "Requested",
+                passwordAttempts: 1
               });
               setLoginStatus("Registration Successful!")
               setOpenAlert(true);
@@ -148,9 +156,9 @@ export default function RequestsPage() {
         }
     }
 
-    async function UpdateStatus(email, status) {
+    async function UpdateStatus(username, status) {
         try{
-            const userRef = doc(db, "users", email)
+            const userRef = doc(db, "users", username)
 
             await updateDoc(userRef, {
                 status: status
@@ -258,6 +266,7 @@ export default function RequestsPage() {
             querySnapshot.forEach(async (doc) => {
                 rowsArray.push({
                     id: doc.data().email,
+                    username: doc.data().username,
                     firstName: doc.data().firstname,
                     lastName: doc.data().lastname,
                     email: doc.data().email,
@@ -266,6 +275,8 @@ export default function RequestsPage() {
                     statusPill: UpdateStatusPill(doc.data().status)
                 })
             });
+
+            
 
             setRows(rowsArray);
             } catch (error) {
@@ -289,6 +300,11 @@ export default function RequestsPage() {
         })
 
         const columns = [
+            {
+                field: "username",
+                headerName: "Username",
+                flex: 1
+            },
             {
                 field: "firstName",
                 headerName: "First Name",
@@ -326,10 +342,10 @@ export default function RequestsPage() {
               renderCell: (cellValues) => {
                 return (
                     <div>
-                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.email, UpdateStatusApprove(cellValues.row.statusText)) }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.username, UpdateStatusApprove(cellValues.row.statusText)) }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         {UpdateButtonApprove(cellValues.row.statusText)}
                         </MDBBtn>
-                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.email, UpdateStatusReject(cellValues.row.statusText)) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.username, UpdateStatusReject(cellValues.row.statusText)) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         {UpdateButtonReject(cellValues.row.statusText)}
                         </MDBBtn>
                     </div>

@@ -1,4 +1,3 @@
-import { MDBBtn } from 'mdb-react-ui-kit';
 import { auth, app } from '../components/utils/firebase';
 import { doc, getDoc, getFirestore} from "firebase/firestore";
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -33,7 +32,7 @@ export default function NavBar() {
 
     const GetRole = async (e)=>{
         if(auth.currentUser) {
-            const docRef = doc(db, "users", auth.currentUser.email);
+            const docRef = doc(db, "users", auth.currentUser.displayName);
             const docSnap = await getDoc(docRef);
             setCurrentRole(docSnap.data().role);
         }
@@ -127,7 +126,7 @@ export default function NavBar() {
                     <div className="gap-2 d-flex">
                         {RenderProfilePicture()}
                         <span className="navbar-text">
-                        {currentUser && currentUser.email}
+                        {currentUser && currentUser.displayName}
                         </span>
                         <MDBDropdown>
                             <MDBDropdownToggle style={{background: 'rgba(41,121,255,1)'}}>Options</MDBDropdownToggle>

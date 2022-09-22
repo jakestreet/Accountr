@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { auth, authAdmin, storage } from '../components/utils/firebase'
 import { confirmPasswordReset, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 const AuthContext = React.createContext();
 
@@ -43,7 +43,7 @@ export function AuthProvider({children}) {
     }
 
     async function upload(file, currentUser, setLoading) {
-        const fileRef = ref(storage, currentUser.email +'/' + 'ProfilePicture.png');
+        const fileRef = ref(storage, currentUser.displayName +'/' + 'ProfilePicture.png');
       
         setLoading(true);
         

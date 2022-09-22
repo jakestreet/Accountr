@@ -10,29 +10,33 @@ import { useLocation } from 'react-router-dom';
 import { verifyPasswordResetCode } from 'firebase/auth' 
 import { auth } from '../components/utils/firebase'
 import { app } from '../components/utils/firebase'
-import { doc, updateDoc } from "firebase/firestore";
-import { getFirestore } from "firebase/firestore";
 import bcrypt from 'bcryptjs';
 import { Alert } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
 import CloseIcon from '@mui/icons-material/Close';
+import PasswordChecklist from "react-password-checklist"
+import { collection, query, where, getDocs, getFirestore, doc, updateDoc, getDoc} from "firebase/firestore";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
 export default function ResetPage() {
-    const passwordInputRef = useRef();
-    const confirmPasswordInputRef = useRef();
+    const passwdInputRef = useRef();
+    const conPasswdInputRef = useRef();
     const [message, setMessage] = useState("");
     const [alertSeverity, setAlertSeverity] = useState("success");
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("not loaded");
     const { resetPassword } = useAuth();
-    const query = useQuery();
+    const queryURL = useQuery();
     const db = getFirestore(app);
-    const oobCode = query.get('oobCode')
+    const oobCode = queryURL.get('oobCode')
+    const [password, setPassword] = useState("")
+    const [passwordAgain, setPasswordAgain] = useState("")
+    const [validPass, setValidPass] = useState("invalid")
 
     useEffect(() => {
       const verifyCode = async () => {
@@ -40,20 +44,40 @@ export default function ResetPage() {
           setEmail(email);
         })
       }
+      const getUsername = async () => {
+        if(username === "not loaded") {
+          const usersRef = collection(db, "users");
+
+          const q = query(usersRef, where("email", "==", email));
+        
+          const querySnapshot = await getDocs(q);
+          
+          querySnapshot.forEach(async (doc) => {
+            setUsername(doc.data().username)
+          });
+        }
+      }
       verifyCode();
+      getUsername();
     })
 
     const ResetPassword = async (e)=>{
-        const password = passwordInputRef.current.value;
-        const conPassword = confirmPasswordInputRef.current.value;
+        const password = passwdInputRef.current.value;
+        
+        const docRef = doc(db, "users", username);
+        const docSnap = await getDoc(docRef);
 
-        if(password !== "" && password === conPassword) {
+        if(validPass === true) {
           
           const hashedPass = await bcrypt.hash(password, 10);
 
-          console.log(hashedPass)
+          if(await bcrypt.compare(password, docSnap.data().password)) {
+            setAlertSeverity("warning")
+            setMessage("Your new password must be different than your previous password.")
+            return setOpen(true)
+          }
           try{
-            const userRef = doc(db, "users", email)
+            const userRef = doc(db, "users", username)
 
             await updateDoc(userRef, {
                 password: hashedPass
@@ -107,8 +131,19 @@ export default function ResetPage() {
         {SendAlert()}
         <MDBContainer className="p-3 my-5 d-flex flex-column w-50">
           <h1>Reset Password</h1>
-          <MDBInput wrapperClass='mb-4 w-50 m-auto mt-4' label='New Password' id='resetPassword' type='password' inputRef={passwordInputRef}/>
-          <MDBInput wrapperClass='mb-4 w-50 m-auto' label='Confirm New Password' id='resetConfirmPassword' type='password' inputRef={confirmPasswordInputRef}/>
+          <MDBInput wrapperClass='mb-4' label='Password' id='regPassword' type='password' onChange={e => setPassword(e.target.value)} inputRef={passwdInputRef}/>
+                  <MDBInput wrapperClass='mb-2' label='Confirm Password' id='regPassword' type='password' onChange={e => setPasswordAgain(e.target.value)} inputRef={conPasswdInputRef}/>
+          <PasswordChecklist className='mb-3'
+                  rules={["minLength","specialChar","number","letter","match"]}
+                  minLength={8}
+                  value={password}
+                  valueAgain={passwordAgain}
+                  messages={{
+                    minLength: "Password has at least 8 characters.",
+                    specialChar: "Password has a special character.",
+                  }}
+                  onChange={(isValid) => {setValidPass(isValid)}}
+                />
           <MDBBtn onClick={ResetPassword}className="mb-4 w-25 m-auto mt-2">Reset Password</MDBBtn>
           <MDBBtn className="mb-4 w-25 m-auto" href="/" color="link">Return to Log In</MDBBtn>
         </MDBContainer>

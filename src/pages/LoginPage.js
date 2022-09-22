@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import '../App.css'
-import { app } from '../components/utils/firebase'
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { app, auth } from '../components/utils/firebase'
+import { doc, setDoc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
+import { updateProfile } from 'firebase/auth';
 import bcrypt from 'bcryptjs'
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -25,7 +26,7 @@ import PasswordChecklist from "react-password-checklist"
 
 export default function LoginPage() {
     const navigate = useNavigate();
-    const loginEmailInputRef = useRef();
+    const usernameInputRef = useRef();
     const loginPasswdInputRef = useRef();
     const emailInputRef = useRef();
     const roleInputRef = useRef()
@@ -39,7 +40,7 @@ export default function LoginPage() {
     const [justifyActive, setJustifyActive] = useState('tab1');
     const [open, setOpen] = useState(true);
     const db = getFirestore(app);
-    const { signup, login, logout, currentUser } = useAuth();
+    const { signupAdmin, login, logoutAdmin, currentUser } = useAuth();
     const [password, setPassword] = useState("")
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
@@ -63,13 +64,20 @@ export default function LoginPage() {
         const role = roleInputRef.current.value;
 
         try {
-          const docRef = doc(db, "users", email);
+          const MyDate = new Date();
+          const currentYear = String(MyDate.getFullYear());
+          const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+          const username = firstName.toLowerCase().substring(0,1) + lastName.toLowerCase() + currentMonth + currentYear.slice(-2)
+          
+          const docRef = doc(db, "users", username);
           const docSnap = await getDoc(docRef);
+          console.log(validPass)
 
-          if(validPass === "valid") {
+          if(validPass === true) {
             if (!docSnap.exists()) {
               const hashedPass = await bcrypt.hash(password, 10);
               setDoc(docRef, {
+                username: username,
                 email: email,
                 password: hashedPass,
                 firstname: firstName,
@@ -77,12 +85,13 @@ export default function LoginPage() {
                 address: address,
                 dob: dob,
                 role: role,
-                status: "Requested"
+                status: "Requested",
+                passwordAttempts: 1
               });
               setLoginStatus("Registration Successful!")
-              await signup(email, password)
+              await signupAdmin(email, password, username)
               .then((userCredential) => {
-                logout();
+                logoutAdmin();
               })
             }
             else {
@@ -103,32 +112,68 @@ export default function LoginPage() {
 
     const LoginForm = async (e)=>{
         e.preventDefault();
-        const email = loginEmailInputRef.current.value;
+        const username = usernameInputRef.current.value;
         const password = loginPasswdInputRef.current.value;
         
         try {
                     
-          const docRef = doc(db, "users", email);
+          const docRef = doc(db, "users", username);
           const docSnap = await getDoc(docRef);
 
           if(docSnap.data() !== undefined) {
             if(await bcrypt.compare(password, docSnap.data().password)) {
               if(docSnap.data().status === "Approved") {
-                await login(email, password)
+                await login(docSnap.data().email, password)
+                await updateDoc(docRef, {
+                  passwordAttempts: 1
+                });
+                if(auth.currentUser.displayName === null) {
+                    await updateProfile(auth.currentUser, {
+                      displayName: username
+                  })
+                  console.log(auth.currentUser.displayName);
+                }
                 navigate("/home");
               }
               else if(docSnap.data().status === "Requested") {
                 setOpen(true);
                 setLoginStatus("Your registration request is awaiting approval.");
               }
-              else {
+              else if(docSnap.data().status === "Rejected") {
                 setOpen(true);
                 setLoginStatus("Your request for registration has been rejected.")
               }
+              else if(docSnap.data().status === "Disabled") {
+                setOpen(true);
+                setLoginStatus("Your account is currently disabled.")
+              }
+              else if(docSnap.data().status === "Suspended") {
+                setOpen(true);
+                setLoginStatus("Your account is currently suspended.")
+              }
               
             } else {
+                if(docSnap.data().status === "Suspended") {
+                  setOpen(true);
+                  return setLoginStatus("Your account is currently suspended.")
+                }
+                await updateDoc(docRef, {
+                  passwordAttempts: increment(1)
+                });
+                console.log(docSnap.data().passwordAttempts);
+                if(docSnap.data().passwordAttempts === 3) {
+                  await updateDoc(docRef, {
+                      status: "Suspended"
+                  });
+                  setLoginStatus("Your account has been suspended for too many incorrect attempts!")
+                  await updateDoc(docRef, {
+                    passwordAttempts: 1
+                  });
+                }
+              else {
+                setLoginStatus("Incorrect Password!")
+              }
               setOpen(true);
-              setLoginStatus("Incorrect Password!")
             }
           } else {
               setOpen(true);
@@ -213,7 +258,7 @@ export default function LoginPage() {
         
                 <MDBTabsPane show={justifyActive === 'tab1'}>
         
-                  <MDBInput wrapperClass='mb-4' label='Email address' id='loginEmail' type='email' inputRef={loginEmailInputRef}/>
+                  <MDBInput wrapperClass='mb-4' label='Username' id='username' type='text' inputRef={usernameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Password' id='loginPassword' type='password' inputRef={loginPasswdInputRef}/>
                   <a onClick={ResetNav} href="!#" >Forgot password?</a>
                   <div className="d-flex justify-content-between mx-4 mb-4"></div>

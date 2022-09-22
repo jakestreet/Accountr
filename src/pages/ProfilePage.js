@@ -1,7 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
-import { useRef, useState, useEffect } from 'react'
 import Avatar from '@mui/material/Avatar';
-import { MDBBtn, MDBCol, MDBInput, MDBRow, MDBCard, MDBCardBody, MDBCardImage, MDBCardText } from 'mdb-react-ui-kit';
+import { MDBCol, MDBRow, MDBCard, MDBCardBody, MDBCardText } from 'mdb-react-ui-kit';
 
 export default function ProfilePage() {
 
@@ -14,7 +13,7 @@ export default function ProfilePage() {
                 <MDBCard className="mb-4">
                   <MDBCardBody className="text-center">
                     <Avatar src={currentUser.photoURL} sx={{width: 250, height: 250, margin: "auto"}} />
-                    <p className="text-muted mb-1 mt-4">{currentUser.email}</p>
+                    <p className="text-muted mb-1 mt-4">{currentUser.displayName}</p>
                     <p className="text-muted mb-0">{currentRole}</p>
                   </MDBCardBody>
 
