@@ -1,11 +1,11 @@
 import { useAuth } from '../contexts/AuthContext';
 import Avatar from '@mui/material/Avatar';
-import { MDBCol, MDBRow, MDBCard, MDBCardBody, MDBCardText } from 'mdb-react-ui-kit';
+import { MDBCol, MDBRow, MDBCard, MDBCardBody, MDBCardText, MDBBtn } from 'mdb-react-ui-kit';
 
 export default function ProfilePage() {
 
-    const { currentUser, currentRole } = useAuth();
-  
+    const { currentUser, currentRole, sendEmail } = useAuth();
+
     return (
         <div>
             <MDBRow className='mt-5'>

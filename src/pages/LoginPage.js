@@ -40,7 +40,7 @@ export default function LoginPage() {
     const [justifyActive, setJustifyActive] = useState('tab1');
     const [open, setOpen] = useState(true);
     const db = getFirestore(app);
-    const { signupAdmin, login, logoutAdmin, currentUser } = useAuth();
+    const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, emailMessage } = useAuth();
     const [password, setPassword] = useState("")
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
@@ -89,6 +89,7 @@ export default function LoginPage() {
                 passwordAttempts: 1
               });
               setLoginStatus("Registration Successful!")
+              sendEmail("teamjest4713@gmail.com", "Accountr Registration Request", email + " has requested an account. Please login to approve or reject the request.")
               await signupAdmin(email, password, username)
               .then((userCredential) => {
                 logoutAdmin();

@@ -12,6 +12,7 @@ export function useAuth() {
 export function AuthProvider({children}) {
     const [currentUser, setCurrentUser] = useState();
     const [currentRole, setCurrentRole] = useState();
+    const [emailMessage, setEmailMessage] = useState();
     const [loading, setLoading] = useState(true);
 
     function signup(email, password) {
@@ -43,7 +44,7 @@ export function AuthProvider({children}) {
     }
 
     async function upload(file, currentUser, setLoading) {
-        const fileRef = ref(storage, currentUser.displayName +'/' + 'ProfilePicture.png');
+        const fileRef = ref(storage, currentUser.displayName + '/' + 'ProfilePicture.png');
       
         setLoading(true);
         
@@ -55,6 +56,22 @@ export function AuthProvider({children}) {
         setLoading(false);
         alert("Uploaded file!");
       }
+    
+    function sendEmail(emailTo, subject, body) { 
+        setEmailMessage("")
+        return window.Email.send({
+            SecureToken : "ce629ac7-e05d-45c6-b41e-943099ad36ef",
+            To : emailTo,
+            From : "teamjest4713@gmail.com",
+            Subject : subject,
+            Body : body
+        }).then(
+            message => {if(message === "OK") {
+                alert("Email Sent!")
+            }}
+        );
+      
+    }
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(user => {
@@ -68,6 +85,7 @@ export function AuthProvider({children}) {
     const value = {
         currentUser,
         currentRole,
+        emailMessage,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -77,6 +95,7 @@ export function AuthProvider({children}) {
         forgotPassword,
         resetPassword,
         upload,
+        sendEmail,
     }
 
   return (

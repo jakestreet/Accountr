@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, getFirestore, doc, updateDoc, getDoc
 import bcrypt from 'bcryptjs'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { MDBBadge, MDBBtn } from 'mdb-react-ui-kit';
+import { MDBBadge, MDBBtn, MDBTextArea } from 'mdb-react-ui-kit';
 import { Alert } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
@@ -26,13 +26,16 @@ export default function RequestsPage() {
 
     const db = getFirestore(app);
     const navigate = useNavigate();
-    const { currentRole, signupAdmin, logoutAdmin } = useAuth();
+    const { currentRole, signupAdmin, logoutAdmin, sendEmail, currentUser, emailMessage } = useAuth();
 
     const [rows, setRows] = useState([]);
 
-    const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
+    const [openNewUser, setOpenNewUser] = useState(false);
+    const handleOpenNewUser = () => setOpenNewUser(true);
+    const handleCloseNewUser = () => setOpenNewUser(false);
+    const [openSendEmail, setOpenSendEmail] = useState(false);
+    const handleOpenSendEmail = () => setOpenSendEmail(true);
+    const handleCloseSendEmail = () => setOpenSendEmail(false);
     const [openAlert, setOpenAlert] = useState(true);
 
     const emailInputRef = useRef();
@@ -43,7 +46,11 @@ export default function RequestsPage() {
     const lNameInputRef = useRef();
     const addressInputRef = useRef();
     const dobInputRef = useRef();
+    const subjectInputRef = useRef();
+    const bodyInputRef = useRef();
     const [loginStatus, setLoginStatus] = useState("");
+    const [emailTo, setEmailTo] = useState("");
+    const [approvalUsername, setApprovalUsername] = useState("");
     const [password, setPassword] = useState("")
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
@@ -93,7 +100,7 @@ export default function RequestsPage() {
                 address: address,
                 dob: dob,
                 role: role,
-                status: "Requested",
+                status: "Approved",
                 passwordAttempts: 1
               });
               setLoginStatus("Registration Successful!")
@@ -169,12 +176,18 @@ export default function RequestsPage() {
         }
     }
 
-    function UpdateStatusApprove(status) {
+    function UpdateStatusApprove(status, email, username) {
         if(status === "Approved") {
             return "Suspended"
         }
-        else if(status === "Requested"  || status === "Suspended") {
-            return "Approved"
+        else if(status === "Requested") {
+          setEmailTo(email);
+          setApprovalUsername(username);
+          SendApprovalEmail();  
+          return "Approved"
+        }
+        else if(status === "Suspended") {
+          return "Approved"
         }
         else if(status === "Rejected" || status === "Disabled") {
             return "Approved"
@@ -283,6 +296,23 @@ export default function RequestsPage() {
             }
     }
 
+    function EmailOnClick(email) {
+      setEmailTo(email);
+      handleOpenSendEmail();
+    }
+    
+    const SendEmailOnClick = (e)=>{
+        e.preventDefault();
+        const subject = subjectInputRef.current.value;
+        const body = bodyInputRef.current.value;
+        sendEmail(emailTo, currentUser.email, subject, body);
+        console.log(emailMessage)
+        handleCloseSendEmail();
+    }
+
+    const SendApprovalEmail = (e)=>{
+      sendEmail(emailTo, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + approvalUsername + " at https://accountr.netlify.app/");
+    }
     useEffect(() => {
         let ignore = false;
         
@@ -342,11 +372,14 @@ export default function RequestsPage() {
               renderCell: (cellValues) => {
                 return (
                     <div>
-                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.username, UpdateStatusApprove(cellValues.row.statusText)) }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.username, UpdateStatusApprove(cellValues.row.statusText, cellValues.row.email, cellValues.row.username)) }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         {UpdateButtonApprove(cellValues.row.statusText)}
                         </MDBBtn>
                         <MDBBtn onClick={() => { UpdateStatus(cellValues.row.username, UpdateStatusReject(cellValues.row.statusText)) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         {UpdateButtonReject(cellValues.row.statusText)}
+                        </MDBBtn>
+                        <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        Email
                         </MDBBtn>
                     </div>
                 )
@@ -358,11 +391,11 @@ export default function RequestsPage() {
         <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
         <div className="d-md-flex m-auto mb-3 gap-2">
             <MDBBtn onClick={GetRequests} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
-            <MDBBtn onClick={handleOpen} style={{background: 'rgba(41,121,255,1)'}}>Create New User</MDBBtn>
+            <MDBBtn onClick={handleOpenNewUser} style={{background: 'rgba(41,121,255,1)'}}>Create New User</MDBBtn>
         </div>
         <Modal
-            open={open}
-            onClose={handleClose}
+            open={openNewUser}
+            onClose={handleCloseNewUser}
             aria-labelledby="modal-modal-title"
             aria-describedby="modal-modal-description"
         >
@@ -387,9 +420,24 @@ export default function RequestsPage() {
                 <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Date of Birth' id='regDoB' type='date' inputRef={dobInputRef}/>
                 <MDBBtn onClick={SignUpForm} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create User</MDBBtn>
-                <MDBBtn onClick={handleClose} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                <MDBBtn onClick={handleCloseNewUser} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
-        </Modal>  
+        </Modal>
+        <Modal
+            open={openSendEmail}
+            onClose={handleCloseSendEmail}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+        >
+            <Box sx={style}>
+                <label>To: {emailTo}</label>
+                <label>From: {currentUser.email}</label>
+                <MDBInput wrapperClass='mb-4 mt-2' label='Subject' id='subject' type='text' inputRef={subjectInputRef}/>
+                <MDBTextArea label="Body" id="body" type="text" rows={10} inputRef={bodyInputRef}></MDBTextArea>
+                <MDBBtn onClick={SendEmailOnClick} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
+                <MDBBtn onClick={handleCloseSendEmail} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+            </Box>
+        </Modal>           
         <DataGrid
             sx={{ "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "rgba(41,121,255,1)",
@@ -399,7 +447,7 @@ export default function RequestsPage() {
               '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
                 outline: 'none', }
             }}
-          rowHeight={100}
+          rowHeight={120}
           rows={rows}
           columns={columns}
           pageSize={10}
