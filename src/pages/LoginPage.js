@@ -285,6 +285,7 @@ export default function LoginPage() {
                   }}
                   onChange={(isValid) => {setValidPass(isValid)}}
                 />
+                  <MDBInput wrapperClass='mb-4' label='Security Question 1' id='regFirst' type='text' inputRef={roleInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='First Name' id='regFirst' type='text' inputRef={fNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
