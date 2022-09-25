@@ -64,6 +64,12 @@ export default function ResetPage() {
     const ResetPassword = async (e)=>{
         const password = passwdInputRef.current.value;
         
+        const MyDate = new Date();
+        const expirationYear = String(MyDate.getFullYear() + 1);
+        const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+        const currentDay = ('0' + (MyDate.getDate())).slice(-2);
+        const passwordExpiration = expirationYear + "-" + currentMonth + "-" + currentDay;
+        
         const docRef = doc(db, "users", username);
         const docSnap = await getDoc(docRef);
 
@@ -80,7 +86,9 @@ export default function ResetPage() {
             const userRef = doc(db, "users", username)
 
             await updateDoc(userRef, {
-                password: hashedPass
+                password: hashedPass,
+                status: "Approved",
+                passwordExpiration: passwordExpiration
             });
 
             return resetPassword(oobCode, password).then(
