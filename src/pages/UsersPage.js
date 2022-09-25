@@ -34,9 +34,13 @@ export default function RequestsPage() {
     const handleOpenNewUser = () => setOpenNewUser(true);
     const handleCloseNewUser = () => setOpenNewUser(false);
     const [openSendEmail, setOpenSendEmail] = useState(false);
-    const handleOpenSendEmail = () => setOpenSendEmail(true);
-    const handleCloseSendEmail = () => setOpenSendEmail(false);
     const [openAlert, setOpenAlert] = useState(true);
+    const [openEmailAlert, setOpenEmailAlert] = useState(false);
+    const handleOpenSendEmail = () => setOpenSendEmail(true);
+    const handleCloseSendEmail = () => {
+      setOpenSendEmail(false)
+      setOpenEmailAlert(false)
+    }
 
     const emailInputRef = useRef();
     const roleInputRef = useRef()
@@ -50,7 +54,6 @@ export default function RequestsPage() {
     const bodyInputRef = useRef();
     const [loginStatus, setLoginStatus] = useState("");
     const [emailTo, setEmailTo] = useState("");
-    const [approvalUsername, setApprovalUsername] = useState("");
     const [password, setPassword] = useState("")
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
@@ -68,6 +71,27 @@ export default function RequestsPage() {
       };
 
 
+      async function getRegisteredEmail() {
+        try{
+          const usersRef = collection(db, "users");
+          
+          const q = query(usersRef, where("email", "==", emailInputRef.current.value));
+        
+          const querySnapshot = await getDocs(q);
+  
+          if(querySnapshot.docs[0]) {
+            return querySnapshot.docs[0].data().email;
+          }
+          else {
+            return "none"
+          }
+        }
+        catch (error) {
+          console.log(error)
+        }
+      }
+
+
       const SignUpForm = async (e)=>{
         e.preventDefault();
         const email = emailInputRef.current.value;
@@ -81,15 +105,18 @@ export default function RequestsPage() {
         try {
           const MyDate = new Date();
           const currentYear = String(MyDate.getFullYear());
+          const expirationYear = String(MyDate.getFullYear() + 1);
           const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+          const currentDay = ('0' + (MyDate.getDate())).slice(-2);
           const username = firstName.toLowerCase().substring(0,1) + lastName.toLowerCase() + currentMonth + currentYear.slice(-2)
-          
+          const passwordExpiration = expirationYear + "-" + currentMonth + "-" + currentDay;
+
           const docRef = doc(db, "users", username);
           const docSnap = await getDoc(docRef);
-          console.log(validPass)
+          const registeredEmail = await getRegisteredEmail();
 
           if(validPass === true) {
-            if (!docSnap.exists()) {
+            if (!docSnap.exists() && registeredEmail === "none") {
               const hashedPass = await bcrypt.hash(password, 10);
               setDoc(docRef, {
                 username: username,
@@ -101,10 +128,12 @@ export default function RequestsPage() {
                 dob: dob,
                 role: role,
                 status: "Approved",
+                passwordExpiration: passwordExpiration,
                 passwordAttempts: 1
               });
-              setLoginStatus("Registration Successful!")
+              setLoginStatus("Account succesfully created! An email with the username has been sent to the new account.")
               setOpenAlert(true);
+              sendEmail(email, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + username + " at https://accountr.netlify.app/");
               await signupAdmin(email, password)
               .then((userCredential) => {
                 logoutAdmin();
@@ -176,14 +205,26 @@ export default function RequestsPage() {
         }
     }
 
+    async function UpdateExpiration(username) {
+      try{
+          const userRef = doc(db, "users", username)
+
+          await updateDoc(userRef, {
+              passwordExpiration: "EXPIRED",
+              status: "Expired",
+          });
+          console.log("Updated Expiration")
+      }
+      catch (error) {
+      }
+  }
+
     function UpdateStatusApprove(status, email, username) {
         if(status === "Approved") {
             return "Suspended"
         }
         else if(status === "Requested") {
-          setEmailTo(email);
-          setApprovalUsername(username);
-          SendApprovalEmail();  
+          sendEmail(email, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + username + " at https://accountr.netlify.app/");
           return "Approved"
         }
         else if(status === "Suspended") {
@@ -238,7 +279,7 @@ export default function RequestsPage() {
           
           var alertSeverity = "warning";
           
-          if(loginStatus === "Registration Successful!"){
+          if(loginStatus === "Account succesfully created! An email with the username has been sent to the new account."){
             alertSeverity = "success";
           }
           
@@ -266,12 +307,55 @@ export default function RequestsPage() {
         } 
     }
 
+    const SendEmailAlert = (e)=>{
+        return (
+          <Collapse in={openEmailAlert}>
+            <Alert severity="success"
+              action={
+                <IconButton
+                  aria-label="close"
+                  color="inherit"
+                  size="small"
+                  onClick={() => {
+                    setOpenEmailAlert(false);
+                  }}
+                >
+                  <CloseIcon fontSize="inherit" />
+                </IconButton>
+              }
+              sx={{ mb: 2 }}
+            >
+              {emailMessage}
+            </Alert>
+          </Collapse>
+        )
+  }
+
     async function GetRequests() {
         try {
             const usersRef = collection(db, "users");
 
-            const q = query(usersRef, where("status", "!=", "none"));
+            const q = query(usersRef, where("role", "!=", "Admin"));
           
+            const querySnapshotExpiration = await getDocs(q);
+
+            
+            const MyDate = new Date();
+            const currentYear = String(MyDate.getFullYear());
+            const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+            const currentDay = ('0' + (MyDate.getDate())).slice(-2);
+            const currentDate = new Date(currentYear + "-" + currentMonth + "-" + currentDay);
+
+            querySnapshotExpiration.forEach(async (doc) => {
+              if(doc.data().passwordExpiration !== "EXPIRED") {
+                const passwordExpirationDate = new Date(doc.data().passwordExpiration);  
+                if(currentDate >= passwordExpirationDate) {
+                  await UpdateExpiration(doc.data().username)
+                  return GetRequests()
+                }
+              }
+            });
+
             const querySnapshot = await getDocs(q);
 
             const rowsArray = [];
@@ -285,7 +369,8 @@ export default function RequestsPage() {
                     email: doc.data().email,
                     role: doc.data().role,
                     statusText: doc.data().status,
-                    statusPill: UpdateStatusPill(doc.data().status)
+                    statusPill: UpdateStatusPill(doc.data().status),
+                    passwordExpiration: doc.data().passwordExpiration
                 })
             });
 
@@ -305,14 +390,27 @@ export default function RequestsPage() {
         e.preventDefault();
         const subject = subjectInputRef.current.value;
         const body = bodyInputRef.current.value;
-        sendEmail(emailTo, currentUser.email, subject, body);
-        console.log(emailMessage)
-        handleCloseSendEmail();
+        sendEmail(emailTo, subject, body);
+        //handleCloseSendEmail();
+        setOpenEmailAlert(true);
     }
 
-    const SendApprovalEmail = (e)=>{
-      sendEmail(emailTo, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + approvalUsername + " at https://accountr.netlify.app/");
+    function RenderActions(username, email, statusText) {
+      if(statusText !== "Expired")
+      {
+        return (
+          <div>
+            <MDBBtn onClick={() => { UpdateStatus(username, UpdateStatusApprove(statusText, email, username)) }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            {UpdateButtonApprove(statusText)}
+            </MDBBtn>
+            <MDBBtn onClick={() => { UpdateStatus(username, UpdateStatusReject(statusText)) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            {UpdateButtonReject(statusText)}
+            </MDBBtn>
+          </div>
+        )
+      }
     }
+
     useEffect(() => {
         let ignore = false;
         
@@ -366,18 +464,18 @@ export default function RequestsPage() {
                     </h6>
                   );
                 }
-              },
+            },
+            {
+              field: "passwordExpiration",
+              headerName: "Pass Expiration",
+              flex: 1
+            },
             {
               field: "Actions", flex: 1,
               renderCell: (cellValues) => {
                 return (
                     <div>
-                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.username, UpdateStatusApprove(cellValues.row.statusText, cellValues.row.email, cellValues.row.username)) }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                        {UpdateButtonApprove(cellValues.row.statusText)}
-                        </MDBBtn>
-                        <MDBBtn onClick={() => { UpdateStatus(cellValues.row.username, UpdateStatusReject(cellValues.row.statusText)) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                        {UpdateButtonReject(cellValues.row.statusText)}
-                        </MDBBtn>
+                        {RenderActions(cellValues.row.username, cellValues.row.email, cellValues.row.statusText)}
                         <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         Email
                         </MDBBtn>
@@ -430,6 +528,7 @@ export default function RequestsPage() {
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
+                {SendEmailAlert()}
                 <label>To: {emailTo}</label>
                 <label>From: {currentUser.email}</label>
                 <MDBInput wrapperClass='mb-4 mt-2' label='Subject' id='subject' type='text' inputRef={subjectInputRef}/>
