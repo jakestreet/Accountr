@@ -41,6 +41,10 @@ export default function RequestsPage() {
       setOpenSendEmail(false)
       setOpenEmailAlert(false)
     }
+    const [openSuspension, setOpenSuspension] = useState(false);
+    const handleOpenSuspension = () => setOpenSuspension(true);
+    const handleCloseSuspension = () => setOpenSuspension(false);
+    
 
     const emailInputRef = useRef();
     const roleInputRef = useRef()
@@ -52,11 +56,13 @@ export default function RequestsPage() {
     const dobInputRef = useRef();
     const subjectInputRef = useRef();
     const bodyInputRef = useRef();
+    const suspensionDateInputRef = useRef();
     const [loginStatus, setLoginStatus] = useState("");
     const [emailTo, setEmailTo] = useState("");
     const [password, setPassword] = useState("")
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
+    const [userToSuspend, setUserToSuspend] = useState("");
 
     const style = {
         position: 'absolute',
@@ -196,13 +202,45 @@ export default function RequestsPage() {
         try{
             const userRef = doc(db, "users", username)
 
-            await updateDoc(userRef, {
+            if(status === "Suspended") {
+              setUserToSuspend(username);
+              handleOpenSuspension();
+            }
+            else if(status === "Remove Suspension") {
+              await updateDoc(userRef, {
+                status: "Approved",
+                suspensionDate: "none"
+            });
+            await GetRequests();
+            }
+            else {
+              await updateDoc(userRef, {
                 status: status
             });
             await GetRequests();
+            }
+
         }
         catch (error) {
         }
+    }
+
+    async function SuspendUser(username) {
+      try{
+        const userRef = doc(db, "users", username)
+        const suspensionDate = suspensionDateInputRef.current.value;
+        console.log(suspensionDate)
+        console.log("suspend user")
+
+        await updateDoc(userRef, {
+            status: "Suspended",
+            suspensionDate: suspensionDate
+        });
+        handleCloseSuspension();
+        await GetRequests();
+      }
+      catch (error) {
+      }
     }
 
     async function UpdateExpiration(username) {
@@ -218,61 +256,6 @@ export default function RequestsPage() {
       catch (error) {
       }
   }
-
-    function UpdateStatusApprove(status, email, username) {
-        if(status === "Approved") {
-            return "Suspended"
-        }
-        else if(status === "Requested") {
-          sendEmail(email, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + username + " at https://accountr.netlify.app/");
-          return "Approved"
-        }
-        else if(status === "Suspended") {
-          return "Approved"
-        }
-        else if(status === "Rejected" || status === "Disabled") {
-            return "Approved"
-        }
-    }
-
-    function UpdateStatusReject(status) {
-        if(status === "Approved" || status === "Suspended") {
-            return "Disabled"
-        }
-        else if(status === "Requested") {
-            return "Rejected"
-        }
-        else if(status === "Rejected" || status === "Disabled") {
-            return "Deleted"
-        }
-    }
-
-    function UpdateButtonApprove(status) {
-        if(status === "Approved") {
-            return "Suspend"
-        }
-        else if(status === "Requested") {
-            return "Approve"
-        }
-        else if(status === "Suspended") {
-            return "Resume"
-        }
-        else if(status === "Rejected" || status === "Disabled") {
-            return "Approve"
-        }
-    }
-
-    function UpdateButtonReject(status) {
-        if(status === "Approved" || status === "Suspended") {
-            return "Disable"
-        }
-        else if(status === "Requested") {
-            return "Reject"
-        }
-        else if(status === "Rejected" || status === "Disabled") {
-            return "Delete"
-        }
-    }
 
     const SendAlert = (e)=>{
         if(loginStatus !== "") {
@@ -351,7 +334,13 @@ export default function RequestsPage() {
                 const passwordExpirationDate = new Date(doc.data().passwordExpiration);  
                 if(currentDate >= passwordExpirationDate) {
                   await UpdateExpiration(doc.data().username)
-                  return GetRequests()
+                  await GetRequests()
+                }
+              }
+              if(doc.data().suspensionDate !== "none") {
+                const suspensionDate = new Date(doc.data().suspensionDate)
+                if(currentDate >= suspensionDate) {
+                  await UpdateStatus(doc.data().username, "Remove Suspension")
                 }
               }
             });
@@ -377,6 +366,7 @@ export default function RequestsPage() {
             
 
             setRows(rowsArray);
+            console.log("set rows")
             } catch (error) {
             }
     }
@@ -395,16 +385,48 @@ export default function RequestsPage() {
         setOpenEmailAlert(true);
     }
 
-    function RenderActions(username, email, statusText) {
-      if(statusText !== "Expired")
-      {
+    function RenderActions(username, statusText) {
+      if(statusText === "Requested") {
         return (
           <div>
-            <MDBBtn onClick={() => { UpdateStatus(username, UpdateStatusApprove(statusText, email, username)) }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            {UpdateButtonApprove(statusText)}
+            <MDBBtn onClick={() => { UpdateStatus(username, "Approved") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            Approve
             </MDBBtn>
-            <MDBBtn onClick={() => { UpdateStatus(username, UpdateStatusReject(statusText)) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            {UpdateButtonReject(statusText)}
+            <MDBBtn onClick={() => { UpdateStatus(username, "Rejected") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            Reject
+            </MDBBtn>
+          </div>
+        )
+      }
+      else if(statusText === "Approved") {
+        return (
+          <div>
+            <MDBBtn onClick={() => { UpdateStatus(username, "Suspended") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            Suspend
+            </MDBBtn>
+            <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            Disable
+            </MDBBtn>
+          </div>
+        )
+      }
+      else if(statusText === "Suspended") {
+        return (
+          <div>
+            <MDBBtn onClick={() => { UpdateStatus(username, "Approved") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            Resume
+            </MDBBtn>
+            <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            Disable
+            </MDBBtn>
+          </div>
+        )
+      }
+      else if(statusText === "Disabled" || statusText === "Rejected") {
+        return (
+          <div>
+            <MDBBtn onClick={() => { UpdateStatus(username, "Approved") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            Resume
             </MDBBtn>
           </div>
         )
@@ -475,7 +497,7 @@ export default function RequestsPage() {
               renderCell: (cellValues) => {
                 return (
                     <div>
-                        {RenderActions(cellValues.row.username, cellValues.row.email, cellValues.row.statusText)}
+                        {RenderActions(cellValues.row.username, cellValues.row.statusText)}
                         <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         Email
                         </MDBBtn>
@@ -488,8 +510,8 @@ export default function RequestsPage() {
    return (
         <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
         <div className="d-md-flex m-auto mb-3 gap-2">
-            <MDBBtn onClick={GetRequests} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
-            <MDBBtn onClick={handleOpenNewUser} style={{background: 'rgba(41,121,255,1)'}}>Create New User</MDBBtn>
+            <MDBBtn onClick={() => {GetRequests()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
+            <MDBBtn onClick={() => {handleOpenNewUser()}} style={{background: 'rgba(41,121,255,1)'}}>Create New User</MDBBtn>
         </div>
         <Modal
             open={openNewUser}
@@ -517,8 +539,8 @@ export default function RequestsPage() {
                 <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Date of Birth' id='regDoB' type='date' inputRef={dobInputRef}/>
-                <MDBBtn onClick={SignUpForm} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create User</MDBBtn>
-                <MDBBtn onClick={handleCloseNewUser} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                <MDBBtn onClick={() => {SignUpForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create User</MDBBtn>
+                <MDBBtn onClick={() => {handleCloseNewUser()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>
         <Modal
@@ -533,8 +555,21 @@ export default function RequestsPage() {
                 <label>From: {currentUser.email}</label>
                 <MDBInput wrapperClass='mb-4 mt-2' label='Subject' id='subject' type='text' inputRef={subjectInputRef}/>
                 <MDBTextArea label="Body" id="body" type="text" rows={10} inputRef={bodyInputRef}></MDBTextArea>
-                <MDBBtn onClick={SendEmailOnClick} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
-                <MDBBtn onClick={handleCloseSendEmail} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                <MDBBtn onClick={() => {SendEmailOnClick()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
+                <MDBBtn onClick={() => {handleCloseSendEmail()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+            </Box>
+        </Modal>
+        <Modal
+            open={openSuspension}
+            onClose={handleCloseSuspension}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+        >
+            <Box sx={style}>
+                <label>User: {userToSuspend}</label>
+                <MDBInput wrapperClass='mb-4 mt-4' label='Date for Suspension' id='regDoB' type='date' inputRef={suspensionDateInputRef}/>
+                <MDBBtn onClick={() => {SuspendUser(userToSuspend)}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Suspend</MDBBtn>
+                <MDBBtn onClick={() => {handleCloseSuspension()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>           
         <DataGrid

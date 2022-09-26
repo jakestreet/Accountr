@@ -13,7 +13,8 @@ export default function NavBar() {
     const [homeNav, setHomeNav] = useState("");
     const [usersNav, setUsersNav] = useState("");
     const [profileNav, setProfileNav] = useState("");
-    const { currentUser, logout, currentRole, setCurrentRole } = useAuth();
+    const [haveInfo, setHaveInfo] = useState(false);
+    const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays } = useAuth();
 
     const HomeNavigate = async (e)=>{
         e.preventDefault();
@@ -31,14 +32,36 @@ export default function NavBar() {
     }
 
     const GetRole = async (e)=>{
-        if(auth.currentUser) {
+        if(auth.currentUser && haveInfo === false) {
             const docRef = doc(db, "users", auth.currentUser.displayName);
             const docSnap = await getDoc(docRef);
+            const userInfo = {
+                firstName: docSnap.data().firstname,
+                lastName: docSnap.data().lastname,
+                address: docSnap.data().address,
+                dob: docSnap.data().dob
+            }
+            const days = await GetPasswordExpiration(docSnap.data().passwordExpiration);
+            setPassExpirationDays(days);
+            setCurrentUserInfo(userInfo)
             setCurrentRole(docSnap.data().role);
-        }
-       
-
+            setHaveInfo(true)
+        }   
     }
+    
+    function GetPasswordExpiration(passwordExpiration) {
+        const MyDate = new Date();
+        const currentYear = String(MyDate.getFullYear());
+        const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+        const currentDay = ('0' + (MyDate.getDate())).slice(-2);
+        const currentDate = new Date(currentYear + "-" + currentMonth + "-" + currentDay);
+        const passwordExpirationDate = new Date(passwordExpiration);
+                
+        const oneDay = 1000 * 60 * 60 * 24;
+        const diffInTime = passwordExpirationDate.getTime() - currentDate.getTime();
+        
+        return Math.round(diffInTime / oneDay);
+      }
 
     const RenderProfilePicture = (e)=>{
         if(auth.currentUser) {
