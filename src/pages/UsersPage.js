@@ -30,14 +30,19 @@ export default function RequestsPage() {
 
     const [rows, setRows] = useState([]);
 
+    const [selectedUser, setSelectedUser] = useState({});
+
     const [openNewUser, setOpenNewUser] = useState(false);
     const handleOpenNewUser = () => setOpenNewUser(true);
     const handleCloseNewUser = () => setOpenNewUser(false);
     const [openSendEmail, setOpenSendEmail] = useState(false);
     const handleOpenSendEmail = () => setOpenSendEmail(true);
     const handleCloseSendEmail = () => setOpenSendEmail(false);
+    const [openEditInfo, setEditInfo] = useState(false);
+    const handleOpenEditInfo = () => setEditInfo(true);
+    const handleCloseEditInfo = () => setEditInfo(false);
     const [openAlert, setOpenAlert] = useState(true);
-
+    const [openEditAlert, setOpenEditAlert] = useState(true);
     const emailInputRef = useRef();
     const roleInputRef = useRef()
     const passwdInputRef = useRef();
@@ -48,7 +53,12 @@ export default function RequestsPage() {
     const dobInputRef = useRef();
     const subjectInputRef = useRef();
     const bodyInputRef = useRef();
+    const editFirstNInputRef = useRef();
+    const editLastNInputRef = useRef();
+    const editAddressInputRef = useRef();
+    const editDOBInputRef =useRef();
     const [loginStatus, setLoginStatus] = useState("");
+    const [editStatus, setEditStatus] = useState("");
     const [emailTo, setEmailTo] = useState("");
     const [approvalUsername, setApprovalUsername] = useState("");
     const [password, setPassword] = useState("")
@@ -266,6 +276,39 @@ export default function RequestsPage() {
         } 
     }
 
+    const SendAlertEdit = (e)=>{
+      if(editStatus !== "") {
+        
+        var alertSeverity = "warning";
+        
+        if(editStatus === "Edit Info Successful!"){
+          alertSeverity = "success";
+        }
+        
+        return (
+          <Collapse in={openEditAlert}>
+            <Alert severity={alertSeverity}
+              action={
+                <IconButton
+                  aria-label="close"
+                  color="inherit"
+                  size="small"
+                  onClick={() => {
+                    setOpenEditAlert(false);
+                  }}
+                >
+                  <CloseIcon fontSize="inherit" />
+                </IconButton>
+              }
+              sx={{ mb: 2 }}
+            >
+              {editStatus}
+            </Alert>
+          </Collapse>
+        )
+      } 
+  }
+
     async function GetRequests() {
         try {
             const usersRef = collection(db, "users");
@@ -284,6 +327,8 @@ export default function RequestsPage() {
                     lastName: doc.data().lastname,
                     email: doc.data().email,
                     role: doc.data().role,
+                    dob: doc.data().dob,
+                    address: doc.data().address,
                     statusText: doc.data().status,
                     statusPill: UpdateStatusPill(doc.data().status)
                 })
@@ -308,6 +353,58 @@ export default function RequestsPage() {
         sendEmail(emailTo, currentUser.email, subject, body);
         console.log(emailMessage)
         handleCloseSendEmail();
+    }
+
+    function editInfoOnClick(){
+      handleOpenEditInfo();
+    }
+
+    const getUserRow = () => {
+      return(
+        <div>
+          <MDBInput label={selectedUser.firstName} id='regFirst' type='text' inputRef={editFirstNInputRef}/>
+          <MDBInput label={selectedUser.lastName} id='regLast' type='text' inputRef={editLastNInputRef}/>
+          <MDBInput label={selectedUser.address} id='regRole' type='text' inputRef={editAddressInputRef}/>
+          <MDBInput label={selectedUser.dob} id='regRole' type='date' inputRef={editDOBInputRef}/>
+        </div>
+      );
+    }
+
+    // Janky solution (?)
+    useEffect(() => {
+      console.log(selectedUser);
+    }, [selectedUser]);
+
+    function currentlySelected(GridCellParams){
+      console.log(GridCellParams)
+      const currentUser = GridCellParams.row
+      setSelectedUser(currentUser)
+    }
+
+    const updateUser = async (e) =>{
+      e.preventDefault();
+      const firstName =  editFirstNInputRef.current.value;
+      const lastName =  editLastNInputRef.current.value;
+      const address =  editAddressInputRef.current.value;
+      const dob =  editDOBInputRef.current.value;
+
+      try{
+        const userRef = doc(db, "users", selectedUser.username)
+
+        await updateDoc(userRef, {
+          firstname: firstName,
+          lastname: lastName,
+          address: address,
+          dob: dob,
+        });
+
+        setEditStatus("Edit Info Successful!")
+        setOpenEditAlert(true)
+      }
+      catch(error){
+        setEditStatus("Something went wrong")
+        setOpenEditAlert(true)
+      }
     }
 
     const SendApprovalEmail = (e)=>{
@@ -381,6 +478,9 @@ export default function RequestsPage() {
                         <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         Email
                         </MDBBtn>
+                        <MDBBtn onClick={() => { editInfoOnClick() }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        Edit Info
+                        </MDBBtn>
                     </div>
                 )
               }
@@ -437,7 +537,20 @@ export default function RequestsPage() {
                 <MDBBtn onClick={SendEmailOnClick} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
                 <MDBBtn onClick={handleCloseSendEmail} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
-        </Modal>           
+        </Modal>
+        <Modal
+            open={openEditInfo}
+            onClose={handleCloseEditInfo}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+        >
+            <Box sx={style}>
+                {SendAlertEdit()}
+                {getUserRow()}
+                <MDBBtn onClick={updateUser} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Apply Changes</MDBBtn>
+                <MDBBtn onClick={handleCloseEditInfo} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+            </Box>
+        </Modal> 
         <DataGrid
             sx={{ "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "rgba(41,121,255,1)",
@@ -447,10 +560,11 @@ export default function RequestsPage() {
               '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
                 outline: 'none', }
             }}
-          rowHeight={120}
+          rowHeight={160}
           rows={rows}
           columns={columns}
           pageSize={10}
+          onCellClick = {currentlySelected}
           components={{ 
             Pagination: CustomPagination
             }}
