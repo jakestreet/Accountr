@@ -1,7 +1,7 @@
 import { auth, app } from '../components/utils/firebase';
 import { doc, getDoc, getFirestore} from "firebase/firestore";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext';
 import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem } from 'mdb-react-ui-kit';
 import Avatar from '@mui/material/Avatar';
@@ -14,7 +14,7 @@ export default function NavBar() {
     const [usersNav, setUsersNav] = useState("");
     const [profileNav, setProfileNav] = useState("");
     const [haveInfo, setHaveInfo] = useState(false);
-    const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays } = useAuth();
+    const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
 
     const HomeNavigate = async (e)=>{
         e.preventDefault();
@@ -30,6 +30,7 @@ export default function NavBar() {
         e.preventDefault();
         navigate("/edit-profile");
     }
+    
 
     const GetRole = async (e)=>{
         if(auth.currentUser && haveInfo === false) {
@@ -63,6 +64,16 @@ export default function NavBar() {
         return Math.round(diffInTime / oneDay);
       }
 
+    function RenderPasswordExpirationNotif() {
+        if(passExpirationDays <= 3) {
+            return (
+                <span className="navbar-text">
+                Password Expires in {passExpirationDays} days
+                </span>
+            )
+        }
+    }
+
     const RenderProfilePicture = (e)=>{
         if(auth.currentUser) {
             return (
@@ -81,8 +92,7 @@ export default function NavBar() {
     }
 
     const LogOut = async (e)=>{
-        logout()
-        console.log("logged out");
+        logout();
         navigate("/");
     }
 
@@ -147,6 +157,7 @@ export default function NavBar() {
                         </li>
                     </ul>
                     <div className="gap-2 d-flex">
+                        {RenderPasswordExpirationNotif()}
                         {RenderProfilePicture()}
                         <span className="navbar-text">
                         {currentUser && currentUser.displayName}

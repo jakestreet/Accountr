@@ -25,7 +25,7 @@ export default function ProfilePage() {
                   <MDBCardText className='ms-4'>Full Name:</MDBCardText>
                 </MDBCol>
                 <MDBCol sm="8">
-                  <MDBCardText className="text-end me-4 text-muted">{currentUserInfo.firstName + " " + currentUserInfo.lastName}</MDBCardText>
+                  <MDBCardText className="text-end me-4 text-muted">{currentUserInfo && currentUserInfo.firstName + " " + currentUserInfo.lastName}</MDBCardText>
                 </MDBCol>
               </MDBRow>
               <hr />
@@ -34,7 +34,7 @@ export default function ProfilePage() {
                   <MDBCardText className='ms-4'>Email:</MDBCardText>
                 </MDBCol>
                 <MDBCol sm="8">
-                  <MDBCardText className="text-end me-4 text-muted">{currentUser.email}</MDBCardText>
+                  <MDBCardText className="text-end me-4 text-muted">{currentUserInfo && currentUser.email}</MDBCardText>
                 </MDBCol>
               </MDBRow>
               <hr />
@@ -43,7 +43,7 @@ export default function ProfilePage() {
                   <MDBCardText className='ms-4'>Address:</MDBCardText>
                 </MDBCol>
                 <MDBCol sm="8">
-                  <MDBCardText className="text-end me-4 text-muted">{currentUserInfo.address}</MDBCardText>
+                  <MDBCardText className="text-end me-4 text-muted">{currentUserInfo && currentUserInfo.address}</MDBCardText>
                 </MDBCol>
               </MDBRow>
               <hr />
@@ -52,7 +52,7 @@ export default function ProfilePage() {
                   <MDBCardText className='ms-4'>Date of Birth:</MDBCardText>
                 </MDBCol>
                 <MDBCol sm="8">
-                  <MDBCardText className="text-end me-4 text-muted">{currentUserInfo.dob}</MDBCardText>
+                  <MDBCardText className="text-end me-4 text-muted">{currentUserInfo && currentUserInfo.dob}</MDBCardText>
                 </MDBCol>
               </MDBRow>
               <hr />
@@ -61,7 +61,7 @@ export default function ProfilePage() {
                   <MDBCardText className='ms-4'>Password Expiration:</MDBCardText>
                 </MDBCol>
                 <MDBCol sm="8">
-                  <MDBCardText className="text-end me-4 text-muted">Password expires in {passExpirationDays} days</MDBCardText>
+                  <MDBCardText className="text-end me-4 text-muted">Password expires in {currentUserInfo && passExpirationDays} days</MDBCardText>
                 </MDBCol>
               </MDBRow>
             </MDBCardBody>

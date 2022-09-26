@@ -65,7 +65,7 @@ export default function EditProfilePage() {
                     <MDBCardText className="mt-2">First Name:</MDBCardText>
                     </MDBCol>
                     <MDBCol sm="4">
-                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo.firstName} id='upFirst' type='text' inputRef={fNameInputRef}/>
+                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.firstName} id='upFirst' type='text' inputRef={fNameInputRef}/>
                     </MDBCol>
                 </MDBRow>
                 <MDBRow className="row d-flex justify-content-center">
@@ -73,7 +73,7 @@ export default function EditProfilePage() {
                     <MDBCardText className="mt-2">Last Name:</MDBCardText>
                     </MDBCol>
                     <MDBCol sm="4">
-                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo.lastName} id='upLast' type='text' inputRef={lNameInputRef}/>
+                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.lastName} id='upLast' type='text' inputRef={lNameInputRef}/>
                     </MDBCol>
                 </MDBRow>
                 <MDBRow className="row d-flex justify-content-center">
@@ -81,7 +81,7 @@ export default function EditProfilePage() {
                     <MDBCardText className="mt-2">Address:</MDBCardText>
                     </MDBCol>
                     <MDBCol sm="4">
-                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo.address} id='upAddress' type='text' inputRef={addressInputRef}/>
+                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.address} id='upAddress' type='text' inputRef={addressInputRef}/>
                     </MDBCol>
                 </MDBRow>
                 <MDBRow className="row d-flex justify-content-center">
@@ -89,7 +89,7 @@ export default function EditProfilePage() {
                     <MDBCardText className="mt-2">Date of Birth:</MDBCardText>
                     </MDBCol>
                     <MDBCol sm="4">
-                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo.dob} id='upDOB' type='date' inputRef={dobInputRef}/>
+                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.dob} id='upDOB' type='date' inputRef={dobInputRef}/>
                     </MDBCol>
                 </MDBRow>
                 <MDBRow className="row d-flex justify-content-center">

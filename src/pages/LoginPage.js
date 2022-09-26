@@ -40,10 +40,11 @@ export default function LoginPage() {
     const [justifyActive, setJustifyActive] = useState('tab1');
     const [open, setOpen] = useState(true);
     const db = getFirestore(app);
-    const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setPassExpirationDays } = useAuth();
+    const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
     const [password, setPassword] = useState("")
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
+    const [haveInfo, setHaveInfo] = useState(false);
     
     
     useEffect(() => {
@@ -142,6 +143,38 @@ export default function LoginPage() {
         }
     }
 
+    const GetRole = async (e)=>{
+      if(auth.currentUser && haveInfo === false) {
+          const docRef = doc(db, "users", auth.currentUser.displayName);
+          const docSnap = await getDoc(docRef);
+          const userInfo = {
+              firstName: docSnap.data().firstname,
+              lastName: docSnap.data().lastname,
+              address: docSnap.data().address,
+              dob: docSnap.data().dob
+          }
+          const days = await GetPasswordExpiration(docSnap.data().passwordExpiration);
+          setPassExpirationDays(days);
+          setCurrentUserInfo(userInfo)
+          setCurrentRole(docSnap.data().role);
+          setHaveInfo(true)
+      }   
+  }
+  
+  function GetPasswordExpiration(passwordExpiration) {
+      const MyDate = new Date();
+      const currentYear = String(MyDate.getFullYear());
+      const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+      const currentDay = ('0' + (MyDate.getDate())).slice(-2);
+      const currentDate = new Date(currentYear + "-" + currentMonth + "-" + currentDay);
+      const passwordExpirationDate = new Date(passwordExpiration);
+              
+      const oneDay = 1000 * 60 * 60 * 24;
+      const diffInTime = passwordExpirationDate.getTime() - currentDate.getTime();
+      
+      return Math.round(diffInTime / oneDay);
+    }
+
     const LoginForm = async (e)=>{
         e.preventDefault();
         const username = usernameInputRef.current.value;
@@ -165,6 +198,7 @@ export default function LoginPage() {
                   })
                   console.log(auth.currentUser.displayName);
                 }
+                const getInfo = await GetRole();
                 navigate("/home");
               }
               else if(docSnap.data().status === "Requested") {
