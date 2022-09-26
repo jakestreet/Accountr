@@ -29,9 +29,7 @@ export default function RequestsPage() {
     const { currentRole, signupAdmin, logoutAdmin, sendEmail, currentUser, emailMessage } = useAuth();
 
     const [rows, setRows] = useState([]);
-
     const [selectedUser, setSelectedUser] = useState({});
-
     const [openNewUser, setOpenNewUser] = useState(false);
     const handleOpenNewUser = () => setOpenNewUser(true);
     const handleCloseNewUser = () => setOpenNewUser(false);
@@ -362,10 +360,10 @@ export default function RequestsPage() {
     const getUserRow = () => {
       return(
         <div>
-          <MDBInput label={selectedUser.firstName} id='regFirst' type='text' inputRef={editFirstNInputRef}/>
-          <MDBInput label={selectedUser.lastName} id='regLast' type='text' inputRef={editLastNInputRef}/>
-          <MDBInput label={selectedUser.address} id='regRole' type='text' inputRef={editAddressInputRef}/>
-          <MDBInput label={selectedUser.dob} id='regRole' type='date' inputRef={editDOBInputRef}/>
+          <MDBInput defaultValue={selectedUser.firstName} id='regFirst' type='text' inputRef={editFirstNInputRef}/>
+          <MDBInput defaultValue={selectedUser.lastName} id='regLast' type='text' inputRef={editLastNInputRef}/>
+          <MDBInput defaultValue={selectedUser.address} id='regRole' type='text' inputRef={editAddressInputRef}/>
+          <MDBInput defaultValue={selectedUser.dob} id='regRole' type='date' inputRef={editDOBInputRef}/>
         </div>
       );
     }
