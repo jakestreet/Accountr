@@ -40,7 +40,7 @@ export default function LoginPage() {
     const [justifyActive, setJustifyActive] = useState('tab1');
     const [open, setOpen] = useState(true);
     const db = getFirestore(app);
-    const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setPassExpirationDays, setCurrentUserInfo } = useAuth();
+    const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setPassExpirationDays } = useAuth();
     const [password, setPassword] = useState("")
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
@@ -111,7 +111,8 @@ export default function LoginPage() {
                 role: role,
                 status: "Requested",
                 passwordExpiration: passwordExpiration,
-                passwordAttempts: 1
+                passwordAttempts: 1,
+                suspensionDate: "none"
               });
               setLoginStatus("Registration Successful!")
               setOpen(true)
@@ -164,16 +165,6 @@ export default function LoginPage() {
                   })
                   console.log(auth.currentUser.displayName);
                 }
-                const days = await GetPasswordExpiration(docSnap.data().passwordExpiration);
-                setPassExpirationDays(days);
-                const userInfo = {
-                  firstName: docSnap.data().firstname,
-                  lastName: docSnap.data().lastname,
-                  address: docSnap.data().address,
-                  dob: docSnap.data().dob
-                }
-                console.log(userInfo)
-                setCurrentUserInfo(userInfo)
                 navigate("/home");
               }
               else if(docSnap.data().status === "Requested") {
@@ -277,21 +268,6 @@ export default function LoginPage() {
   
       setJustifyActive(value);
     };
-  
-
-    function GetPasswordExpiration(passwordExpiration) {
-      const MyDate = new Date();
-      const currentYear = String(MyDate.getFullYear());
-      const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
-      const currentDay = ('0' + (MyDate.getDate())).slice(-2);
-      const currentDate = new Date(currentYear + "-" + currentMonth + "-" + currentDay);
-      const passwordExpirationDate = new Date(passwordExpiration);
-              
-      const oneDay = 1000 * 60 * 60 * 24;
-      const diffInTime = passwordExpirationDate.getTime() - currentDate.getTime();
-      
-      return Math.round(diffInTime / oneDay);
-    }
 
     return (
           <div>
