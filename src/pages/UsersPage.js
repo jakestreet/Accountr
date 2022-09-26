@@ -62,7 +62,8 @@ export default function RequestsPage() {
     const dobInputRef = useRef();
     const subjectInputRef = useRef();
     const bodyInputRef = useRef();
-    const suspensionDateInputRef = useRef();
+    const suspensionStartDateInputRef = useRef();
+    const suspensionEndDateInputRef = useRef();
     const editFirstNInputRef = useRef();
     const editLastNInputRef = useRef();
     const editAddressInputRef = useRef();
@@ -219,7 +220,14 @@ export default function RequestsPage() {
             else if(status === "Remove Suspension") {
               await updateDoc(userRef, {
                 status: "Approved",
-                suspensionDate: "none"
+                suspensionStartDate: "none",
+                suspensionEndDate: "none"
+            });
+            await GetRequests();
+            }
+            else if(status === "Add Suspension") {
+              await updateDoc(userRef, {
+                status: "Suspended"
             });
             await GetRequests();
             }
@@ -238,16 +246,36 @@ export default function RequestsPage() {
     async function SuspendUser(username) {
       try{
         const userRef = doc(db, "users", username)
-        const suspensionDate = suspensionDateInputRef.current.value;
+        const suspensionStartDate = suspensionStartDateInputRef.current.value;
+        const suspensionEndDate = suspensionEndDateInputRef.current.value;
 
-        await updateDoc(userRef, {
+        const MyDate = new Date();
+        const currentYear = String(MyDate.getFullYear());
+        const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+        const currentDay = ('0' + (MyDate.getDate())).slice(-2);
+        const currentDate = new Date(currentYear + "-" + currentMonth + "-" + currentDay);
+
+        if(currentDate >= suspensionStartDate) {
+          await updateDoc(userRef, {
             status: "Suspended",
-            suspensionDate: suspensionDate
-        });
-        handleCloseSuspension();
-        await GetRequests();
+            suspensionStartDate: suspensionStartDate,
+            suspensionEndDate: suspensionEndDate
+          });
+          handleCloseSuspension();
+          await GetRequests();
+        }
+        else {
+          await updateDoc(userRef, {
+            suspensionStartDate: suspensionStartDate,
+            suspensionEndDate: suspensionEndDate
+          });
+          handleCloseSuspension();
+          await GetRequests();
+        }
+        
       }
       catch (error) {
+        console.log(error)
       }
     }
 
@@ -362,7 +390,7 @@ export default function RequestsPage() {
           
             const querySnapshotExpiration = await getDocs(q);
 
-            
+            console.log("ran")
             const MyDate = new Date();
             const currentYear = String(MyDate.getFullYear());
             const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
@@ -377,10 +405,19 @@ export default function RequestsPage() {
                   await GetRequests()
                 }
               }
-              if(doc.data().suspensionDate !== "none") {
-                const suspensionDate = new Date(doc.data().suspensionDate)
-                if(currentDate >= suspensionDate) {
-                  await UpdateStatus(doc.data().username, "Remove Suspension")
+              if(doc.data().suspensionStartDate !== "none") {
+                const suspensionStartDate = new Date(doc.data().suspensionStartDate)
+                const suspensionEndDate = new Date(doc.data().suspensionEndDate)
+                if(doc.data().status === "Suspended") {
+                  console.log("ran")
+                  if(currentDate >= suspensionEndDate) {
+                    await UpdateStatus(doc.data().username, "Remove Suspension")
+                  }
+                }
+                else {
+                  if(currentDate >= suspensionStartDate) {
+                    await UpdateStatus(doc.data().username, "Add Suspension")
+                  }
                 }
               }
             });
@@ -401,7 +438,8 @@ export default function RequestsPage() {
                     address: doc.data().address,
                     statusText: doc.data().status,
                     statusPill: UpdateStatusPill(doc.data().status),
-                    passwordExpiration: doc.data().passwordExpiration
+                    passwordExpiration: doc.data().passwordExpiration,
+                    suspensionDate: doc.data().suspensionStartDate + " to " + doc.data().suspensionEndDate,
                 })
             });
 
@@ -480,11 +518,11 @@ export default function RequestsPage() {
       }
     }
 
-    function RenderActions(username, statusText) {
+    function RenderActions(username, statusText, email) {
       if(statusText === "Requested") {
         return (
           <div>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Approved") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            <MDBBtn onClick={() => { UpdateStatus(username, "Approved"); sendEmail(email, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + username + " at https://accountr.netlify.app/"); }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
             Approve
             </MDBBtn>
             <MDBBtn onClick={() => { UpdateStatus(username, "Rejected") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
@@ -588,11 +626,16 @@ export default function RequestsPage() {
               flex: 1
             },
             {
+              field: "suspensionDate",
+              headerName: "Suspension Date",
+              flex: 1
+            },
+            {
               field: "Actions", flex: 1,
               renderCell: (cellValues) => {
                 return (
                     <div>
-                        {RenderActions(cellValues.row.username, cellValues.row.statusText)}
+                        {RenderActions(cellValues.row.username, cellValues.row.statusText, cellValues.row.email)}
                         <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         Email
                         </MDBBtn>
@@ -653,7 +696,7 @@ export default function RequestsPage() {
                 <label>From: {currentUser.email}</label>
                 <MDBInput wrapperClass='mb-4 mt-2' label='Subject' id='subject' type='text' inputRef={subjectInputRef}/>
                 <MDBTextArea label="Body" id="body" type="text" rows={10} inputRef={bodyInputRef}></MDBTextArea>
-                <MDBBtn onClick={() => {SendEmailOnClick()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
+                <MDBBtn onClick={SendEmailOnClick} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
                 <MDBBtn onClick={() => {handleCloseSendEmail()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>
@@ -665,7 +708,8 @@ export default function RequestsPage() {
         >
             <Box sx={style}>
                 <label>User: {userToSuspend}</label>
-                <MDBInput wrapperClass='mb-4 mt-4' label='Date for Suspension' id='regDoB' type='date' inputRef={suspensionDateInputRef}/>
+                <MDBInput wrapperClass='mb-4 mt-4' label='Date for Start of Suspension' id='regDoB' type='date' inputRef={suspensionStartDateInputRef}/>
+                <MDBInput wrapperClass='mb-4 mt-4' label='Date for End of Suspension' id='regDoB' type='date' inputRef={suspensionEndDateInputRef}/>
                 <MDBBtn onClick={() => {SuspendUser(userToSuspend)}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Suspend</MDBBtn>
                 <MDBBtn onClick={() => {handleCloseSuspension()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>

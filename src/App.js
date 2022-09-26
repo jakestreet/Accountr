@@ -3,6 +3,7 @@ import HomePage from "./pages/HomePage"
 import EditProfilePage from "./pages/EditProfilePage"
 import ProfilePage from "./pages/ProfilePage"
 import ResetPage from "./pages/ResetPage"
+import QuestionsPage from "./pages/QuestionsPage"
 import ForgotPage from "./pages/ForgotPage"
 import UsersPage from "./pages/UsersPage"
 import PrivateRoutes from "./components/PrivateRoutes"
@@ -22,6 +23,7 @@ function App() {
             <Route index element={<LoginPage />} />
             <Route path="forgot-password" element={<ForgotPage />} />
             <Route path="reset-password" element={<ResetPage />} />
+            <Route path="answer-questions" element={<QuestionsPage />} />
             <Route element={<PrivateRoutes/>}>
               <Route path="home" element={<HomePage />} />
               <Route path="edit-profile" element={<EditProfilePage />} />

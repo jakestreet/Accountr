@@ -16,6 +16,12 @@ export function AuthProvider({children}) {
     const [emailMessage, setEmailMessage] = useState();
     const [passExpirationDays, setPassExpirationDays] = useState();
     const [loading, setLoading] = useState(true);
+    const [resetUser, setResetUser] = useState();
+    const [resetEmail, setResetEmail] = useState();
+    const [questionOne, setQuestionOne] = useState("");
+    const [questionTwo, setQuestionTwo] = useState("");
+    const [questionOneAnswer, setQuestionOneAnswer] = useState("");
+    const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
 
     function signup(email, password) {
         return createUserWithEmailAndPassword(auth, email, password)
@@ -93,6 +99,12 @@ export function AuthProvider({children}) {
         emailMessage,
         passExpirationDays,
         currentUserInfo,
+        resetEmail,
+        resetUser,
+        questionOne,
+        questionTwo,
+        questionOneAnswer,
+        questionTwoAnswer,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -104,7 +116,13 @@ export function AuthProvider({children}) {
         upload,
         sendEmail,
         setPassExpirationDays,
-        setCurrentUserInfo
+        setCurrentUserInfo,
+        setResetEmail,
+        setResetUser,
+        setQuestionOne,
+        setQuestionTwo,
+        setQuestionOneAnswer,
+        setQuestionTwoAnswer
     }
 
   return (

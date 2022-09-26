@@ -15,7 +15,7 @@ import {
   MDBTabsContent,
   MDBTabsPane,
   MDBBtn,
-  MDBInput
+  MDBInput,
 }
 from 'mdb-react-ui-kit';
 import { Alert } from '@mui/material';
@@ -23,6 +23,7 @@ import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
 import CloseIcon from '@mui/icons-material/Close'
 import PasswordChecklist from "react-password-checklist"
+import Select from 'react-select'
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -36,6 +37,8 @@ export default function LoginPage() {
     const lNameInputRef = useRef();
     const addressInputRef = useRef();
     const dobInputRef = useRef();
+    const secQuestionOneInputRef = useRef();
+    const secQuestionTwoInputRef = useRef();
     const [loginStatus, setLoginStatus] = useState("");
     const [justifyActive, setJustifyActive] = useState('tab1');
     const [open, setOpen] = useState(true);
@@ -45,6 +48,8 @@ export default function LoginPage() {
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
     const [haveInfo, setHaveInfo] = useState(false);
+    const [choiceOne, setChoiceOne] = useState("");
+    const [choiceTwo, setChoiceTwo] = useState("");
     
     
     useEffect(() => {
@@ -83,6 +88,10 @@ export default function LoginPage() {
         const address = addressInputRef.current.value;
         const dob = dobInputRef.current.value;
         const role = roleInputRef.current.value;
+        const questionOneAnswer = secQuestionOneInputRef.current.value;
+        const questionTwoAnswer = secQuestionTwoInputRef.current.value;
+        const questionOne = choiceOne;
+        const questionTwo = choiceTwo;
 
         try {
           const MyDate = new Date();
@@ -113,7 +122,12 @@ export default function LoginPage() {
                 status: "Requested",
                 passwordExpiration: passwordExpiration,
                 passwordAttempts: 1,
-                suspensionDate: "none"
+                suspensionStartDate: "none",
+                suspensionEndDate: "none",
+                questionOne: questionOne,
+                questionOneAnswer: questionOneAnswer,
+                questionTwo: questionTwo,
+                questionTwoAnswer: questionTwoAnswer,
               });
               setLoginStatus("Registration Successful!")
               setOpen(true)
@@ -303,6 +317,17 @@ export default function LoginPage() {
       setJustifyActive(value);
     };
 
+    const optionsQuestionOne = [
+      { value: "What is your mother's maiden name?", label: "What is your mother's maiden name?" },
+      { value: "In what city were you born?", label: "In what city were you born?" },
+      { value: "What high school did you attend?", label: "What high school did you attend?" },
+    ]
+    const optionsQuestionTwo = [
+      { value: "What was the name of your elementary school?", label: "What was the name of your elementary school?" },
+      { value: "What was the make of your first car?", label: "What was the make of your first car?" },
+      { value: "What year was your father born?", label: "What year was your father born?" },
+    ]
+
     return (
           <div>
             {SendAlert()}
@@ -351,6 +376,24 @@ export default function LoginPage() {
                   }}
                   onChange={(isValid) => {setValidPass(isValid)}}
                   />
+                  <Select
+                  className="mb-2"
+                  classNamePrefix="select"
+                  name="color"
+                  options={optionsQuestionOne}
+                  placeholder="Select Security Question 1"
+                  onChange={(choice) => setChoiceOne(choice.value)}
+                  />
+                  <MDBInput wrapperClass='mb-4' label='Security Question 1 Answer' id='regSec1' type='text' inputRef={secQuestionOneInputRef}/>
+                  <Select
+                  className="mb-2"
+                  classNamePrefix="select"
+                  name="color"
+                  options={optionsQuestionTwo}
+                  placeholder="Select Security Question 2"
+                  onChange={(choice) => setChoiceTwo(choice.value)}
+                  />
+                  <MDBInput wrapperClass='mb-4' label='Security Question 2 Answer' id='regSec2' type='text' inputRef={secQuestionTwoInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='First Name' id='regFirst' type='text' inputRef={fNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>

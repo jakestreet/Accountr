@@ -129,7 +129,7 @@ export default function NavBar() {
 
         
         
-        if(location.pathname !== "/" && location.pathname !== "/forgot-password" && location.pathname !== "/reset-password") {
+        if(location.pathname !== "/" && location.pathname !== "/forgot-password" && location.pathname !== "/reset-password" && location.pathname !== "/answer-questions") {
             GetRole();
             return(
                 <div className="container-fluid">
