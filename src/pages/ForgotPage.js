@@ -77,9 +77,6 @@ export default function ForgotPage() {
         {SendAlert()}
         <MDBContainer className="p-3 my-5 d-flex flex-column w-50">
           <h1>Forgot Password</h1>
-          <MDBInput wrapperClass='mb-4 w-50 m-auto mt-4' label='Email address' id='resetEmail' type='email' inputRef={emailInputRef}/>
-          <MDBBtn onClick={SendResetEmail}className="mb-4 w-25 m-auto mt-2">Send Reset Link</MDBBtn>
-          <MDBCardText className='m-auto'>Or</MDBCardText>
           <MDBInput wrapperClass='mb-2 w-50 m-auto mt-4' label='Username' id='resetEmail' type='email' inputRef={userInputRef}/>
           <MDBInput wrapperClass='mb-4 w-50 m-auto mt-2' label='Email address' id='resetEmail' type='email' inputRef={emailQuestionsInputRef}/>
           <MDBBtn onClick={NavigateToQuestions}className="mb-4 w-25 m-auto mt-2">Get Security Questions</MDBBtn>
