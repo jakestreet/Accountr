@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import '../App.css'
 import { app, auth } from '../components/utils/firebase'
-import { doc, setDoc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { updateProfile } from 'firebase/auth';
 import bcrypt from 'bcryptjs'
@@ -40,7 +40,7 @@ export default function LoginPage() {
     const [justifyActive, setJustifyActive] = useState('tab1');
     const [open, setOpen] = useState(true);
     const db = getFirestore(app);
-    const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, emailMessage } = useAuth();
+    const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setPassExpirationDays } = useAuth();
     const [password, setPassword] = useState("")
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
@@ -52,7 +52,27 @@ export default function LoginPage() {
         navigate("/home");
       }
     })
-    
+
+    async function getRegisteredEmail() {
+      try{
+        const usersRef = collection(db, "users");
+        
+        const q = query(usersRef, where("email", "==", emailInputRef.current.value));
+      
+        const querySnapshot = await getDocs(q);
+
+        if(querySnapshot.docs[0]) {
+          return querySnapshot.docs[0].data().email;
+        }
+        else {
+          return "none"
+        }
+      }
+      catch (error) {
+        console.log(error)
+      }
+    }
+
     const SignUpForm = async (e)=>{
         e.preventDefault();
         const email = emailInputRef.current.value;
@@ -66,15 +86,19 @@ export default function LoginPage() {
         try {
           const MyDate = new Date();
           const currentYear = String(MyDate.getFullYear());
+          const expirationYear = String(MyDate.getFullYear() + 1);
           const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
+          const currentDay = ('0' + (MyDate.getDate())).slice(-2);
           const username = firstName.toLowerCase().substring(0,1) + lastName.toLowerCase() + currentMonth + currentYear.slice(-2)
-          
+          const passwordExpiration = expirationYear + "-" + currentMonth + "-" + currentDay;
+
           const docRef = doc(db, "users", username);
           const docSnap = await getDoc(docRef);
-          console.log(validPass)
+          const registeredEmail = await getRegisteredEmail();
+          
 
           if(validPass === true) {
-            if (!docSnap.exists()) {
+            if (!docSnap.exists() && registeredEmail === "none") {
               const hashedPass = await bcrypt.hash(password, 10);
               setDoc(docRef, {
                 username: username,
@@ -86,18 +110,25 @@ export default function LoginPage() {
                 dob: dob,
                 role: role,
                 status: "Requested",
-                passwordAttempts: 1
+                passwordExpiration: passwordExpiration,
+                passwordAttempts: 1,
+                suspensionDate: "none"
               });
               setLoginStatus("Registration Successful!")
+              setOpen(true)
               sendEmail("teamjest4713@gmail.com", "Accountr Registration Request", email + " has requested an account. Please login to approve or reject the request.")
               await signupAdmin(email, password, username)
               .then((userCredential) => {
                 logoutAdmin();
               })
             }
-            else {
+            else if(registeredEmail !== "none") {
               setOpen(true);
               setLoginStatus("Email already in use!")
+            }
+            else if(docSnap.exists()) {
+              setOpen(true);
+              setLoginStatus("Generated username already exists!")
             }
           }
           else {
@@ -151,6 +182,10 @@ export default function LoginPage() {
               else if(docSnap.data().status === "Suspended") {
                 setOpen(true);
                 setLoginStatus("Your account is currently suspended.")
+              }
+              else if(docSnap.data().status === "Expired") {
+                setOpen(true);
+                setLoginStatus("Your password has expired. Please reset your password by clicking 'Forgot Password?'")
               }
               
             } else {
@@ -233,9 +268,6 @@ export default function LoginPage() {
   
       setJustifyActive(value);
     };
-  
-
-
 
     return (
           <div>
@@ -284,7 +316,7 @@ export default function LoginPage() {
                     specialChar: "Password has a special character.",
                   }}
                   onChange={(isValid) => {setValidPass(isValid)}}
-                />
+                  />
                   <MDBInput wrapperClass='mb-4' label='First Name' id='regFirst' type='text' inputRef={fNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>

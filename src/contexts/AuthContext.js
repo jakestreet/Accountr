@@ -11,8 +11,10 @@ export function useAuth() {
 
 export function AuthProvider({children}) {
     const [currentUser, setCurrentUser] = useState();
+    const [currentUserInfo, setCurrentUserInfo] = useState();
     const [currentRole, setCurrentRole] = useState();
     const [emailMessage, setEmailMessage] = useState();
+    const [passExpirationDays, setPassExpirationDays] = useState();
     const [loading, setLoading] = useState(true);
 
     function signup(email, password) {
@@ -44,11 +46,12 @@ export function AuthProvider({children}) {
     }
 
     async function upload(file, currentUser, setLoading) {
+        // eslint-disable-next-line
         const fileRef = ref(storage, currentUser.displayName + '/' + 'ProfilePicture.png');
       
         setLoading(true);
         
-        const snapshot = await uploadBytes(fileRef, file);
+        await uploadBytes(fileRef, file);
         const photoURL = await getDownloadURL(fileRef);
       
         updateProfile(currentUser, {photoURL});
@@ -58,7 +61,6 @@ export function AuthProvider({children}) {
       }
     
     function sendEmail(emailTo, subject, body) { 
-        setEmailMessage("")
         return window.Email.send({
             SecureToken : "ce629ac7-e05d-45c6-b41e-943099ad36ef",
             To : emailTo,
@@ -67,8 +69,11 @@ export function AuthProvider({children}) {
             Body : body
         }).then(
             message => {if(message === "OK") {
-                alert("Email Sent!")
-            }}
+                setEmailMessage("Email Sent!")
+            }
+        else{
+            setEmailMessage(message);
+        }}
         );
       
     }
@@ -86,6 +91,8 @@ export function AuthProvider({children}) {
         currentUser,
         currentRole,
         emailMessage,
+        passExpirationDays,
+        currentUserInfo,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -96,6 +103,8 @@ export function AuthProvider({children}) {
         resetPassword,
         upload,
         sendEmail,
+        setPassExpirationDays,
+        setCurrentUserInfo
     }
 
   return (
