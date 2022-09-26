@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, getFirestore, doc, updateDoc, getDoc
 import bcrypt from 'bcryptjs'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { MDBBadge, MDBBtn, MDBTextArea } from 'mdb-react-ui-kit';
+import { MDBBadge, MDBBtn, MDBTextArea, MDBCardText } from 'mdb-react-ui-kit';
 import { Alert } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
@@ -44,6 +44,12 @@ export default function RequestsPage() {
     const [openSuspension, setOpenSuspension] = useState(false);
     const handleOpenSuspension = () => setOpenSuspension(true);
     const handleCloseSuspension = () => setOpenSuspension(false);
+    const [openEditInfo, setEditInfo] = useState(false);
+    const handleOpenEditInfo = () => setEditInfo(true);
+    const handleCloseEditInfo = () => setEditInfo(false);
+    const [openEditAlert, setOpenEditAlert] = useState(true);
+    const [editStatus, setEditStatus] = useState("");
+    const [selectedUser, setSelectedUser] = useState({});
     
 
     const emailInputRef = useRef();
@@ -57,6 +63,10 @@ export default function RequestsPage() {
     const subjectInputRef = useRef();
     const bodyInputRef = useRef();
     const suspensionDateInputRef = useRef();
+    const editFirstNInputRef = useRef();
+    const editLastNInputRef = useRef();
+    const editAddressInputRef = useRef();
+    const editDOBInputRef =useRef();
     const [loginStatus, setLoginStatus] = useState("");
     const [emailTo, setEmailTo] = useState("");
     const [password, setPassword] = useState("")
@@ -229,8 +239,6 @@ export default function RequestsPage() {
       try{
         const userRef = doc(db, "users", username)
         const suspensionDate = suspensionDateInputRef.current.value;
-        console.log(suspensionDate)
-        console.log("suspend user")
 
         await updateDoc(userRef, {
             status: "Suspended",
@@ -251,7 +259,6 @@ export default function RequestsPage() {
               passwordExpiration: "EXPIRED",
               status: "Expired",
           });
-          console.log("Updated Expiration")
       }
       catch (error) {
       }
@@ -312,7 +319,40 @@ export default function RequestsPage() {
             </Alert>
           </Collapse>
         )
-  }
+    }
+
+    const SendAlertEdit = (e)=>{
+      if(editStatus !== "") {
+        
+        var alertSeverity = "warning";
+        
+        if(editStatus === "Edit Info Successful!"){
+          alertSeverity = "success";
+        }
+        
+        return (
+          <Collapse in={openEditAlert}>
+            <Alert severity={alertSeverity}
+              action={
+                <IconButton
+                  aria-label="close"
+                  color="inherit"
+                  size="small"
+                  onClick={() => {
+                    setOpenEditAlert(false);
+                  }}
+                >
+                  <CloseIcon fontSize="inherit" />
+                </IconButton>
+              }
+              sx={{ mb: 2 }}
+            >
+              {editStatus}
+            </Alert>
+          </Collapse>
+        )
+      } 
+    }
 
     async function GetRequests() {
         try {
@@ -357,6 +397,8 @@ export default function RequestsPage() {
                     lastName: doc.data().lastname,
                     email: doc.data().email,
                     role: doc.data().role,
+                    dob: doc.data().dob,
+                    address: doc.data().address,
                     statusText: doc.data().status,
                     statusPill: UpdateStatusPill(doc.data().status),
                     passwordExpiration: doc.data().passwordExpiration
@@ -366,7 +408,6 @@ export default function RequestsPage() {
             
 
             setRows(rowsArray);
-            console.log("set rows")
             } catch (error) {
             }
     }
@@ -383,6 +424,60 @@ export default function RequestsPage() {
         sendEmail(emailTo, subject, body);
         //handleCloseSendEmail();
         setOpenEmailAlert(true);
+    }
+
+    function editInfoOnClick(){
+      handleOpenEditInfo();
+    }
+
+    const getUserRow = () => {
+      return(
+        <div>
+          <MDBCardText className='mb-0'>First Name</MDBCardText>
+          <MDBInput defaultValue={selectedUser.firstName} id='regFirst' type='text' inputRef={editFirstNInputRef}/>
+          <MDBCardText className='mb-0'>Last Name</MDBCardText>
+          <MDBInput defaultValue={selectedUser.lastName} id='regLast' type='text' inputRef={editLastNInputRef}/>
+          <MDBCardText className='mb-0'>Address</MDBCardText>
+          <MDBInput defaultValue={selectedUser.address} id='regRole' type='text' inputRef={editAddressInputRef}/>
+          <MDBCardText className='mb-0'>Date of Birth</MDBCardText>
+          <MDBInput defaultValue={selectedUser.dob} id='regRole' type='date' inputRef={editDOBInputRef}/>
+        </div>
+      );
+    }
+
+    // Janky solution (?)
+    useEffect(() => {
+    }, [selectedUser]);
+
+    function currentlySelected(GridCellParams){
+      const currentUser = GridCellParams.row
+      setSelectedUser(currentUser)
+    }
+
+    const updateUser = async (e) =>{
+      e.preventDefault();
+      const firstName =  editFirstNInputRef.current.value;
+      const lastName =  editLastNInputRef.current.value;
+      const address =  editAddressInputRef.current.value;
+      const dob =  editDOBInputRef.current.value;
+
+      try{
+        const userRef = doc(db, "users", selectedUser.username)
+
+        await updateDoc(userRef, {
+          firstname: firstName,
+          lastname: lastName,
+          address: address,
+          dob: dob,
+        });
+
+        setEditStatus("Edit Info Successful!")
+        setOpenEditAlert(true)
+      }
+      catch(error){
+        setEditStatus("Something went wrong")
+        setOpenEditAlert(true)
+      }
     }
 
     function RenderActions(username, statusText) {
@@ -501,6 +596,9 @@ export default function RequestsPage() {
                         <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                         Email
                         </MDBBtn>
+                        <MDBBtn onClick={() => { editInfoOnClick() }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        Edit Info
+                        </MDBBtn>
                     </div>
                 )
               }
@@ -571,7 +669,20 @@ export default function RequestsPage() {
                 <MDBBtn onClick={() => {SuspendUser(userToSuspend)}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Suspend</MDBBtn>
                 <MDBBtn onClick={() => {handleCloseSuspension()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
-        </Modal>           
+        </Modal>
+        <Modal
+            open={openEditInfo}
+            onClose={handleCloseEditInfo}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+        >
+            <Box sx={style}>
+                {SendAlertEdit()}
+                {getUserRow()}
+                <MDBBtn onClick={updateUser} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Apply Changes</MDBBtn>
+                <MDBBtn onClick={handleCloseEditInfo} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+            </Box>
+        </Modal>            
         <DataGrid
             sx={{ "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "rgba(41,121,255,1)",
@@ -581,10 +692,11 @@ export default function RequestsPage() {
               '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
                 outline: 'none', }
             }}
-          rowHeight={120}
+          rowHeight={160}
           rows={rows}
           columns={columns}
           pageSize={10}
+          onCellClick = {currentlySelected}
           components={{ 
             Pagination: CustomPagination
             }}
