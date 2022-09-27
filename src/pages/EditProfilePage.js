@@ -119,7 +119,7 @@ export default function EditProfilePage() {
                 }
                 sx={{ mb: 2 }}
               >
-                Information updated succesfully!
+                Information updated successfully!
               </Alert>
             </Collapse>
           )
