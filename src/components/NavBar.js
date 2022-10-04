@@ -1,7 +1,7 @@
 import { auth, app } from '../components/utils/firebase';
 import { doc, getDoc, getFirestore} from "firebase/firestore";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext';
 import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem } from 'mdb-react-ui-kit';
 import Avatar from '@mui/material/Avatar';
@@ -12,6 +12,7 @@ export default function NavBar() {
     const location = useLocation();
     const [homeNav, setHomeNav] = useState("");
     const [usersNav, setUsersNav] = useState("");
+    const [eventLogNav, setEventLogNav] = useState("");
     const [profileNav, setProfileNav] = useState("");
     const [haveInfo, setHaveInfo] = useState(false);
     const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
@@ -29,6 +30,11 @@ export default function NavBar() {
     const EditProfileNavigate = async (e)=>{
         e.preventDefault();
         navigate("/edit-profile");
+    }
+
+    const EventLogNavigate = async (e)=>{
+        e.preventDefault();
+        navigate("/event-log");
     }
     
 
@@ -103,28 +109,40 @@ export default function NavBar() {
         {
             setHomeNav("nav-link active");
             setUsersNav("nav-link");
-            setProfileNav("nav-link")
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link");
         }
         
         if(location.pathname === "/users" && usersNav !== "nav-link active")
         {
             setHomeNav("nav-link");
             setUsersNav("nav-link active");
-            setProfileNav("nav-link")
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link");
+        }
+
+        if(location.pathname === "/event-log" && eventLogNav !== "nav-link active")
+        {
+            setHomeNav("nav-link");
+            setUsersNav("nav-link");
+            setEventLogNav("nav-link active");
+            setProfileNav("nav-link");
         }
 
         if(location.pathname === "/profile" && profileNav !== "nav-link active")
         {
             setHomeNav("nav-link");
             setUsersNav("nav-link");
-            setProfileNav("nav-link active")
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link active");
         }
 
         if(location.pathname === "/edit-profile" && profileNav !== "nav-link active")
         {
             setHomeNav("nav-link");
             setUsersNav("nav-link");
-            setProfileNav("nav-link active")
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link active");
         }
 
         
@@ -151,6 +169,7 @@ export default function NavBar() {
                         <a className={homeNav} onClick={HomeNavigate} href="" aria-current="page">Home</a>
                         </li>
                         {RenderUsersTab()}
+                        {RenderEventLogTab()}
                         <li className="nav-item">
                         {/* eslint-disable-next-line*/}
                         <a className={profileNav} onClick={ProfileNavigate} href="" aria-current="page">Profile</a>
@@ -183,6 +202,19 @@ export default function NavBar() {
                     <li className="nav-item">
                     {/* eslint-disable-next-line*/}
                     <a className={usersNav} onClick={UsersNavigate} href="">Users</a>
+                    </li>
+                )
+            }
+        } 
+    }
+
+    function RenderEventLogTab() {
+        if(currentUser) {
+            if(currentRole === "Admin") {
+                return (
+                    <li className="nav-item">
+                    {/* eslint-disable-next-line*/}
+                    <a className={eventLogNav} onClick={EventLogNavigate} href="">Event Log</a>
                     </li>
                 )
             }

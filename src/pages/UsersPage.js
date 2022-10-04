@@ -390,7 +390,7 @@ export default function RequestsPage() {
           
             const querySnapshotExpiration = await getDocs(q);
 
-            console.log("ran")
+            console.log("got users")
             const MyDate = new Date();
             const currentYear = String(MyDate.getFullYear());
             const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
