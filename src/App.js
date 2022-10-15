@@ -6,6 +6,7 @@ import ResetPage from "./pages/ResetPage"
 import QuestionsPage from "./pages/QuestionsPage"
 import ForgotPage from "./pages/ForgotPage"
 import UsersPage from "./pages/UsersPage"
+import AccountsPage from "./pages/AccountsPage"
 import PrivateRoutes from "./components/PrivateRoutes"
 
 import './App.css';
@@ -29,6 +30,7 @@ function App() {
               <Route path="edit-profile" element={<EditProfilePage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="accounts" element={<AccountsPage />} />
             </Route>   
         </Routes>     
       </BrowserRouter>
