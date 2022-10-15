@@ -13,6 +13,7 @@ export default function NavBar() {
     const [homeNav, setHomeNav] = useState("");
     const [usersNav, setUsersNav] = useState("");
     const [profileNav, setProfileNav] = useState("");
+    const [accountsNav, setAccountsNav] = useState("");
     const [haveInfo, setHaveInfo] = useState(false);
     const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
 
@@ -30,7 +31,11 @@ export default function NavBar() {
         e.preventDefault();
         navigate("/edit-profile");
     }
-    
+
+    const AccountsNavigate = async (e)=>{
+        e.preventDefault();
+        navigate("/accounts");
+    }
 
     const GetRole = async (e)=>{
         if(auth.currentUser && haveInfo === false) {
@@ -104,13 +109,15 @@ export default function NavBar() {
             setHomeNav("nav-link active");
             setUsersNav("nav-link");
             setProfileNav("nav-link")
+            setAccountsNav("nav-link");
         }
         
         if(location.pathname === "/users" && usersNav !== "nav-link active")
         {
             setHomeNav("nav-link");
             setUsersNav("nav-link active");
-            setProfileNav("nav-link")
+            setProfileNav("nav-link");
+            setAccountsNav("nav-link");
         }
 
         if(location.pathname === "/profile" && profileNav !== "nav-link active")
@@ -118,6 +125,7 @@ export default function NavBar() {
             setHomeNav("nav-link");
             setUsersNav("nav-link");
             setProfileNav("nav-link active")
+            setAccountsNav("nav-link");
         }
 
         if(location.pathname === "/edit-profile" && profileNav !== "nav-link active")
@@ -125,7 +133,17 @@ export default function NavBar() {
             setHomeNav("nav-link");
             setUsersNav("nav-link");
             setProfileNav("nav-link active")
+            setAccountsNav("nav-link");
         }
+
+        if(location.pathname === "/accounts" && accountsNav !== "nav-link active")
+        {
+            setHomeNav("nav-link");
+            setUsersNav("nav-link");
+            setProfileNav("nav-link");
+            setAccountsNav("nav-link active")
+        }
+
 
         
         
@@ -154,6 +172,10 @@ export default function NavBar() {
                         <li className="nav-item">
                         {/* eslint-disable-next-line*/}
                         <a className={profileNav} onClick={ProfileNavigate} href="" aria-current="page">Profile</a>
+                        </li>
+                        <li className="nav-item">
+                        {/* eslint-disable-next-line*/}
+                        <a className={accountsNav} onClick={AccountsNavigate} href="" aria-current="page">Accounts</a>
                         </li>
                     </ul>
                     <div className="gap-2 d-flex">
