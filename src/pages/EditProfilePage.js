@@ -93,8 +93,8 @@ export default function EditProfilePage() {
                     </MDBCol>
                 </MDBRow>
                 <MDBRow className="row d-flex justify-content-center">
-                    <MDBCol sm="4">
-                    <MDBBtn onClick={()=>{UpdateInformation()}} className="mt-2 mb-4 ms-3">Confirm</MDBBtn>
+                    <MDBCol sm="4" className="col d-flex justify-content-center">
+                    <MDBBtn onClick={()=>{UpdateInformation()}} className="mt-2 mb-4">Confirm</MDBBtn>
                     </MDBCol>
                 </MDBRow>
             </div>
