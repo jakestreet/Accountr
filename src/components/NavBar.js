@@ -5,6 +5,9 @@ import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext';
 import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem } from 'mdb-react-ui-kit';
 import Avatar from '@mui/material/Avatar';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+
 export default function NavBar() {
 
     const db = getFirestore(app);
@@ -271,6 +274,7 @@ export default function NavBar() {
                 <div className="container-fluid">
                     {/* eslint-disable-next-line*/}
                     {RenderNav()}
+                    <Calendar/>
                 </div>  
             </nav> 
         </div>       
