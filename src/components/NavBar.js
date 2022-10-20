@@ -14,6 +14,7 @@ export default function NavBar() {
     const [usersNav, setUsersNav] = useState("");
     const [eventLogNav, setEventLogNav] = useState("");
     const [profileNav, setProfileNav] = useState("");
+    const [accountsNav, setAccountsNav] = useState("");
     const [haveInfo, setHaveInfo] = useState(false);
     const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
 
@@ -37,6 +38,10 @@ export default function NavBar() {
         navigate("/event-log");
     }
     
+    const AccountsNavigate = async (e)=>{
+        e.preventDefault();
+        navigate("/accounts");
+    }
 
     const GetRole = async (e)=>{
         if(auth.currentUser && haveInfo === false) {
@@ -111,6 +116,7 @@ export default function NavBar() {
             setUsersNav("nav-link");
             setEventLogNav("nav-link");
             setProfileNav("nav-link");
+            setAccountsNav("nav-link");
         }
         
         if(location.pathname === "/users" && usersNav !== "nav-link active")
@@ -119,6 +125,7 @@ export default function NavBar() {
             setUsersNav("nav-link active");
             setEventLogNav("nav-link");
             setProfileNav("nav-link");
+            setAccountsNav("nav-link");
         }
 
         if(location.pathname === "/event-log" && eventLogNav !== "nav-link active")
@@ -127,6 +134,7 @@ export default function NavBar() {
             setUsersNav("nav-link");
             setEventLogNav("nav-link active");
             setProfileNav("nav-link");
+            setAccountsNav("nav-link");
         }
 
         if(location.pathname === "/profile" && profileNav !== "nav-link active")
@@ -135,6 +143,7 @@ export default function NavBar() {
             setUsersNav("nav-link");
             setEventLogNav("nav-link");
             setProfileNav("nav-link active");
+            setAccountsNav("nav-link");
         }
 
         if(location.pathname === "/edit-profile" && profileNav !== "nav-link active")
@@ -143,7 +152,18 @@ export default function NavBar() {
             setUsersNav("nav-link");
             setEventLogNav("nav-link");
             setProfileNav("nav-link active");
+            setAccountsNav("nav-link");
         }
+
+        if(location.pathname === "/accounts" && accountsNav !== "nav-link active")
+        {
+            setHomeNav("nav-link");
+            setUsersNav("nav-link");
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link");
+            setAccountsNav("nav-link active")
+        }
+
 
         
         
@@ -173,6 +193,10 @@ export default function NavBar() {
                         <li className="nav-item">
                         {/* eslint-disable-next-line*/}
                         <a className={profileNav} onClick={ProfileNavigate} href="" aria-current="page">Profile</a>
+                        </li>
+                        <li className="nav-item">
+                        {/* eslint-disable-next-line*/}
+                        <a className={accountsNav} onClick={AccountsNavigate} href="" aria-current="page">Accounts</a>
                         </li>
                     </ul>
                     <div className="gap-2 d-flex">
