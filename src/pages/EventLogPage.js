@@ -3,7 +3,7 @@ import { MDBBtn } from 'mdb-react-ui-kit';
 import Pagination from '@mui/material/Pagination';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
-import { app } from '../components/utils/firebase'
+import { app, storage } from '../components/utils/firebase'
 import { collection, getDocs, getFirestore } from "firebase/firestore";
 import {
     DataGrid,
@@ -12,13 +12,21 @@ import {
     useGridApiContext,
     useGridSelector,
   } from '@mui/x-data-grid';
+import { useAuth } from '../contexts/AuthContext';
+import { getDownloadURL, ref } from 'firebase/storage';
+import { CircularProgress } from '@mui/material';
 
 export default function EventLogPage() {
     const db = getFirestore(app);
 
     const [selectedUser, setSelectedUser] = useState({});
+    const [imageBefore, setImageBefore] = useState();
+    const [imageAfter, setImageAfter] = useState();
     const [openImages, setOpenImages] = useState(false);
-    const handleOpenImages = () => setOpenImages(true);
+    const handleOpenImages = (id) => {
+      setOpenImages(true)
+      getImages(id);
+    };
     const handleCloseImages = () => {
       setOpenImages(false)
     }
@@ -37,6 +45,13 @@ export default function EventLogPage() {
     
     const [rows, setRows] = useState([]);
 
+    async function getImages(id) {
+      const imageURLBefore = await getDownloadURL(ref(storage, `/events/${id}/before.jpg`));
+      setImageBefore(imageURLBefore);
+      const imageURLAfter = await getDownloadURL(ref(storage, `/events/${id}/after.jpg`));
+      setImageAfter(imageURLAfter);
+    }
+
     async function GetEvents() {
         console.log("got events")
         try {
@@ -47,11 +62,11 @@ export default function EventLogPage() {
             const rowsArray = [];
 
             querySnapshot.forEach(async (doc) => {
+              console.log(doc.data().timeStamp);
                 rowsArray.push({
                     id: doc.id,
                     username: doc.data().username,
-                    time: doc.data().time,
-                    date: doc.data().date
+                    date: doc.data().timeStamp.toDate()
                 })
             });
 
@@ -84,6 +99,11 @@ export default function EventLogPage() {
 
     const columns = [
         {
+            field: "date",
+            headerName: "Time Stamp",
+            flex: 1
+        },
+        {
             field: "id",
             headerName: "ID",
             flex: 1
@@ -94,21 +114,11 @@ export default function EventLogPage() {
             flex: 1
         },
         {
-            field: "time",
-            headerName: "Time",
-            flex: 1
-        },
-        {
-            field: "date",
-            headerName: "Date",
-            flex: 1
-        },
-        {
           field: "Actions", flex: 1,
           renderCell: (cellValues) => {
             return (
                 <div>
-                    <MDBBtn onClick={() => { handleOpenImages() }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                    <MDBBtn onClick={() => { handleOpenImages(cellValues.row.id) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                     View Images
                     </MDBBtn>
                 </div>
@@ -139,7 +149,9 @@ export default function EventLogPage() {
             <Box sx={style}>
                 <label>ID: {selectedUser.id}</label>
                 <label>Before Image</label>
+                {imageBefore ? <img src={imageBefore} width="500" /> : <CircularProgress/>}
                 <label>After Image</label>
+                {imageAfter ? <img src={imageAfter} width="500" /> : <CircularProgress/>}
                 <MDBBtn onClick={() => {handleCloseImages()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>
@@ -152,7 +164,7 @@ export default function EventLogPage() {
               '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
                 outline: 'none', }
             }}
-            rowHeight={160}
+            rowHeight={100}
             rows={rows}
             columns={columns}
             pageSize={10}
@@ -162,6 +174,7 @@ export default function EventLogPage() {
                 }}
             hideFooterRowCount={true}
             hideFooterSelectedRowCount={true}
+            initialState={{sorting: { sortModel: [{ field: 'date', sort: 'desc' }]}}}
         />
     </div>
   )

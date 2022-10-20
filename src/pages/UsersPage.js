@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, createRef } from 'react'
 import { app } from '../components/utils/firebase'
 import { collection, query, where, getDocs, getFirestore, doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
 import bcrypt from 'bcryptjs'
@@ -20,13 +20,14 @@ import Pagination from '@mui/material/Pagination';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { MDBInput } from 'mdb-react-ui-kit';
-import PasswordChecklist from "react-password-checklist"
+import PasswordChecklist from "react-password-checklist";
+
 
 export default function RequestsPage() {
 
     const db = getFirestore(app);
     const navigate = useNavigate();
-    const { currentRole, signupAdmin, logoutAdmin, sendEmail, currentUser, emailMessage } = useAuth();
+    const { currentRole, signupAdmin, logoutAdmin, sendEmail, currentUser, emailMessage, captureEvent, storeEvent } = useAuth();
 
     const [rows, setRows] = useState([]);
 
@@ -74,6 +75,7 @@ export default function RequestsPage() {
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
     const [userToSuspend, setUserToSuspend] = useState("");
+    const screenShotRef = useRef(null);
 
     const style = {
         position: 'absolute',
@@ -108,6 +110,12 @@ export default function RequestsPage() {
         }
       }
 
+
+      async function handleEventCapture() {
+        const id = await storeEvent(currentUser.displayName);
+        captureEvent(screenShotRef, id, "before");
+        captureEvent(screenShotRef, id, "after");
+      }
 
       const SignUpForm = async (e)=>{
         e.preventDefault();
@@ -232,10 +240,12 @@ export default function RequestsPage() {
             await GetRequests();
             }
             else {
+              const id = await storeEvent(currentUser.displayName);
+              captureEvent(screenShotRef, id, "before");
               await updateDoc(userRef, {
                 status: status
             });
-            await GetRequests();
+            await GetRequests().then(captureEvent(screenShotRef, id, "after"));
             }
 
         }
@@ -653,6 +663,7 @@ export default function RequestsPage() {
         <div className="d-md-flex m-auto mb-3 gap-2">
             <MDBBtn onClick={() => {GetRequests()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
             <MDBBtn onClick={() => {handleOpenNewUser()}} style={{background: 'rgba(41,121,255,1)'}}>Create New User</MDBBtn>
+            <MDBBtn onClick={() => {handleEventCapture()}} style={{background: 'rgba(41,121,255,1)'}}>Take Screenshot</MDBBtn>
         </div>
         <Modal
             open={openNewUser}
@@ -726,7 +737,8 @@ export default function RequestsPage() {
                 <MDBBtn onClick={updateUser} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Apply Changes</MDBBtn>
                 <MDBBtn onClick={handleCloseEditInfo} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
-        </Modal>            
+        </Modal>
+        <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}} ref={screenShotRef}>            
         <DataGrid
             sx={{ "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "rgba(41,121,255,1)",
@@ -747,6 +759,7 @@ export default function RequestsPage() {
             hideFooterRowCount={true}
             hideFooterSelectedRowCount={true}
         />
+        </div>
       </div>
    )
 }
