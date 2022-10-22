@@ -153,15 +153,17 @@ export default function EventLogPage() {
                 justifyContent="space-evenly"
                 spacing={2}
               >
-                <div >
+                {(imageBefore && imageAfter) ? <div>
                   <h1 className='mb-4'>Before Image</h1>
-                  {imageBefore ? <img src={imageBefore} height="500" /> : <CircularProgress/>}
-                </div>
-                <div >
+                  <img src={imageBefore} height="500" />
+                </div> : <CircularProgress/>}
+                {(imageBefore && imageAfter) ? <div >
                   <h1 className='mb-4'>After Image</h1>
-                  {imageAfter ? <img src={imageAfter} height="500" /> : <CircularProgress/>}
-                </div>
+                  <img src={imageAfter} height="500" />
+                </div> : null}
+                
               </Grid>
+
                 <MDBBtn onClick={() => {handleCloseImages()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>
