@@ -75,7 +75,6 @@ export default function RequestsPage() {
     const [passwordAgain, setPasswordAgain] = useState("")
     const [validPass, setValidPass] = useState("invalid")
     const [userToSuspend, setUserToSuspend] = useState("");
-    const screenShotRef = useRef(null);
 
     const style = {
         position: 'absolute',
@@ -108,13 +107,6 @@ export default function RequestsPage() {
         catch (error) {
           console.log(error)
         }
-      }
-
-
-      async function handleEventCapture() {
-        const id = await storeEvent(currentUser.displayName);
-        captureEvent(screenShotRef, id, "before");
-        captureEvent(screenShotRef, id, "after");
       }
 
       const SignUpForm = async (e)=>{
@@ -226,28 +218,34 @@ export default function RequestsPage() {
               handleOpenSuspension();
             }
             else if(status === "Remove Suspension") {
-              await updateDoc(userRef, {
-                status: "Approved",
-                suspensionStartDate: "none",
-                suspensionEndDate: "none"
-            });
-            await GetRequests();
+              const id = await storeEvent(currentUser.displayName)
+              const beforeCapture = await captureEvent(id, "before").then(async () => {
+                await updateDoc(userRef, {
+                  status: "Approved",
+                  suspensionStartDate: "none",
+                  suspensionEndDate: "none"
+                });
+              })
+              await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 500))
             }
             else if(status === "Add Suspension") {
-              await updateDoc(userRef, {
-                status: "Suspended"
-            });
-            await GetRequests();
+              const id = await storeEvent(currentUser.displayName)
+              const beforeCapture = await captureEvent(id, "before").then(async () => {
+                await updateDoc(userRef, {
+                  status: "Suspended"
+                });
+              })
+              await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 500))
             }
             else {
-              const id = await storeEvent(currentUser.displayName);
-              captureEvent(screenShotRef, id, "before");
-              await updateDoc(userRef, {
+              const id = await storeEvent(currentUser.displayName)
+              const beforeCapture = await captureEvent(id, "before").then(async () => {
+                await updateDoc(userRef, {
                 status: status
-            });
-            await GetRequests().then(captureEvent(screenShotRef, id, "after"));
+                });
+              })
+              await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 500))
             }
-
         }
         catch (error) {
         }
@@ -663,7 +661,6 @@ export default function RequestsPage() {
         <div className="d-md-flex m-auto mb-3 gap-2">
             <MDBBtn onClick={() => {GetRequests()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
             <MDBBtn onClick={() => {handleOpenNewUser()}} style={{background: 'rgba(41,121,255,1)'}}>Create New User</MDBBtn>
-            <MDBBtn onClick={() => {handleEventCapture()}} style={{background: 'rgba(41,121,255,1)'}}>Take Screenshot</MDBBtn>
         </div>
         <Modal
             open={openNewUser}
@@ -738,27 +735,27 @@ export default function RequestsPage() {
                 <MDBBtn onClick={handleCloseEditInfo} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>
-        <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}} ref={screenShotRef}>            
-        <DataGrid
-            sx={{ "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "rgba(41,121,255,1)",
-                color: "rgba(255,255,255,1)",
-                fontSize: 16,
-              }, 
-              '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
-                outline: 'none', }
-            }}
-          rowHeight={160}
-          rows={rows}
-          columns={columns}
-          pageSize={10}
-          onCellClick = {currentlySelected}
-          components={{ 
-            Pagination: CustomPagination
-            }}
-            hideFooterRowCount={true}
-            hideFooterSelectedRowCount={true}
-        />
+        <div id="capture" style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}}>
+          <DataGrid
+              sx={{ "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "rgba(41,121,255,1)",
+                  color: "rgba(255,255,255,1)",
+                  fontSize: 16,
+                }, 
+                '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
+                  outline: 'none', }
+              }}
+            rowHeight={160}
+            rows={rows}
+            columns={columns}
+            pageSize={10}
+            onCellClick = {currentlySelected}
+            components={{ 
+              Pagination: CustomPagination
+              }}
+              hideFooterRowCount={true}
+              hideFooterSelectedRowCount={true}
+          />
         </div>
       </div>
    )
