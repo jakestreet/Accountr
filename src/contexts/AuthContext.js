@@ -2,10 +2,10 @@ import React, { useContext, useEffect, useState } from 'react'
 import { app, auth, authAdmin, storage } from '../components/utils/firebase'
 import { confirmPasswordReset, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getDownloadURL, ref, uploadBytes, uploadString } from "firebase/storage";
-import { useScreenshot } from 'use-react-screenshot';
 import { collection, getFirestore, addDoc } from 'firebase/firestore';
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
+import html2canvas from 'html2canvas';
 
 const AuthContext = React.createContext();
 
@@ -26,7 +26,6 @@ export function AuthProvider({children}) {
     const [questionTwo, setQuestionTwo] = useState("");
     const [questionOneAnswer, setQuestionOneAnswer] = useState("");
     const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
-    const [image, takeScreenShot] = useScreenshot({type: "image/jpeg", quality: 1.0});
     const db = getFirestore(app);
     const serverStamp = firebase.firestore.Timestamp
     
@@ -102,14 +101,13 @@ export function AuthProvider({children}) {
 
     }
 
-    function captureEvent(locRef, id, when) {
-        takeScreenShot(locRef.current)
-        const imageRef = ref(storage, `/events/${id}/${when}.jpg`)
-        uploadString(imageRef, image, 'data_url').then((snapshot) => {
-            alert('Uploaded an event image');
+    async function captureEvent(id, when) {
+        html2canvas(document.getElementById('capture')).then(async (canvas) => {
+            var base64URL = canvas.toDataURL('image/jpeg').replace('image/jpeg', 'image/octet-stream');
+            const imageRef = ref(storage, `/events/${id}/${when}.jpg`)
+            const uploading = await uploadString(imageRef, base64URL, 'data_url');
         });
     }
-
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(user => {

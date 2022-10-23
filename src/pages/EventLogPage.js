@@ -12,9 +12,8 @@ import {
     useGridApiContext,
     useGridSelector,
   } from '@mui/x-data-grid';
-import { useAuth } from '../contexts/AuthContext';
 import { getDownloadURL, ref } from 'firebase/storage';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Grid } from '@mui/material';
 
 export default function EventLogPage() {
     const db = getFirestore(app);
@@ -29,6 +28,8 @@ export default function EventLogPage() {
     };
     const handleCloseImages = () => {
       setOpenImages(false)
+      setImageBefore(undefined)
+      setImageAfter(undefined)
     }
 
     const style = {
@@ -36,7 +37,7 @@ export default function EventLogPage() {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 1000,
+        width: 1600,
         bgcolor: 'background.paper',
         border: '5px solid rgba(255,255,255,1)',
         boxShadow: 24,
@@ -62,7 +63,6 @@ export default function EventLogPage() {
             const rowsArray = [];
 
             querySnapshot.forEach(async (doc) => {
-              console.log(doc.data().timeStamp);
                 rowsArray.push({
                     id: doc.id,
                     username: doc.data().username,
@@ -147,11 +147,23 @@ export default function EventLogPage() {
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
-                <label>ID: {selectedUser.id}</label>
-                <label>Before Image</label>
-                {imageBefore ? <img src={imageBefore} width="500" /> : <CircularProgress/>}
-                <label>After Image</label>
-                {imageAfter ? <img src={imageAfter} width="500" /> : <CircularProgress/>}
+              <Grid container
+                direction="row"
+                alignItems="center"
+                justifyContent="space-evenly"
+                spacing={2}
+              >
+                {(imageBefore && imageAfter) ? <div>
+                  <h1 className='mb-4'>Before Image</h1>
+                  <img src={imageBefore} height="500" />
+                </div> : <CircularProgress/>}
+                {(imageBefore && imageAfter) ? <div >
+                  <h1 className='mb-4'>After Image</h1>
+                  <img src={imageAfter} height="500" />
+                </div> : null}
+                
+              </Grid>
+
                 <MDBBtn onClick={() => {handleCloseImages()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>
