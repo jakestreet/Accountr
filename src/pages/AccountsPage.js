@@ -1,6 +1,6 @@
-import { auth, app } from '../components/utils/firebase';
+import { app } from '../components/utils/firebase';
 import { useState, useEffect, useRef } from 'react'
-import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc, updateDoc, where  } from "firebase/firestore";
 import { useAuth } from '../contexts/AuthContext';
 import { MDBBtn, MDBCardText } from 'mdb-react-ui-kit';
 import { Alert, CircularProgress } from '@mui/material';
@@ -28,7 +28,7 @@ export default function AccountsPage() {
 
     const [rows, setRows] = useState([]);
 
-    const {currentUser, setCurrentUserInfo, captureEvent, storeEvent} = useAuth();
+    const {currentUser, captureEvent, storeEvent} = useAuth();
 
 
     const [openNewAccount, setOpenNewAccount] = useState(false);
@@ -57,7 +57,6 @@ export default function AccountsPage() {
     const orderInputRef = useRef();
     const statementInputRef = useRef();
     const subCategoryInputRef = useRef();
-    const accountNumberInputRef = useRef();
     const serverStamp = firebase.firestore.Timestamp
 
     const editCategoryInputRef = useRef();
@@ -81,20 +80,6 @@ export default function AccountsPage() {
         boxShadow: 24,
         p: 4,
     };
-
-    const GetRole = async (e)=>{
-
-            const docRef = doc(db, "users", auth.currentUser.displayName);
-            const docSnap = await getDoc(docRef);
-            const userInfo = {
-                firstName: docSnap.data().firstname,
-                lastName: docSnap.data().lastname,
-                address: docSnap.data().address,
-                dob: docSnap.data().dob
-            }
-            setCurrentUserInfo(userInfo)
-
-    }
     
     const DeleteAccount = async (e)=>{
         const accountNumber = selectedAcc.id;
@@ -113,12 +98,48 @@ export default function AccountsPage() {
         const order = orderInputRef.current.value;
         const statement = statementInputRef.current.value;
         const subCategory = subCategoryInputRef.current.value;
-        const accountNumber = accountNumberInputRef.current.value;
+        var accountNumber;
 
         try{
+            setLoading(true);
+            const accountsRef = collection(db, "accounts");
+        
+            var lowerRange;
+            if(category === "assets") {
+                lowerRange = 100;
+            }
+            else if(category === "liabilities") {
+                lowerRange = 200;
+            }
+            else if(category === "equity") {
+                lowerRange = 300;
+            }
+            else if(category === "revenues") {
+                lowerRange = 400;
+            }
+            else if(category === "expenses") {
+                lowerRange = 500;
+            }
+            const upperRange = lowerRange + 100;
+    
+            const q = query(accountsRef, where('accountNumber', '>=', lowerRange), where('accountNumber', '<', upperRange));
+    
+            const querySnapshot = await getDocs(q);
+    
+            const length = querySnapshot.docs.length;
+
+            if(length === 0) {
+                accountNumber = lowerRange;
+            }
+            else{
+                const newAccountNumber = parseInt(querySnapshot.docs[length - 1].data().accountNumber) + 1;
+                accountNumber = newAccountNumber;
+            }
+
             const userID = currentUser.displayName;
 
-            const docRef = doc(db, "accounts", accountNumber)
+            const docRef = doc(db, "accounts", accountNumber.toString())
+            console.log("reached");
             
             setDoc(docRef, {
                 category: category,
@@ -131,11 +152,14 @@ export default function AccountsPage() {
                 order: order,
                 statement: statement,
                 subCategory: subCategory,
-                userID: userID
+                userID: userID,
+                accountNumber: accountNumber
             });
-            setLoading(true);
+            
             const id = await storeEvent(currentUser.displayName);
+            // eslint-disable-next-line no-unused-vars
             const beforeCapture = await captureEvent(id, "before");
+            // eslint-disable-next-line no-unused-vars
             const refresh = await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 1000));
             setLoading(false);
             setAlert("Account succesfully created!")
@@ -144,6 +168,7 @@ export default function AccountsPage() {
         catch (error){
             setAlert(error.message);
             setOpenAlert(true);
+            setLoading(false);
         }
     }
 
@@ -153,6 +178,7 @@ export default function AccountsPage() {
 
             const q = query(accountsRef);
 
+            // eslint-disable-next-line no-unused-vars
             const querySnapshotExpiration = await getDocs(q);
 
             const rowsArray = [];
@@ -420,7 +446,6 @@ export default function AccountsPage() {
                     <MDBInput wrapperClass='mb-4' label='Order' id='regOrder' type='text' inputRef={orderInputRef}/>
                     <MDBInput wrapperClass='mb-4' label='Statement' id='regStatement' type='text' inputRef={statementInputRef}/>
                     <MDBInput wrapperClass='mb-4' label='Sub-Category' id='regSubCategory' type='text' inputRef={subCategoryInputRef}/>
-                    <MDBInput wrapperClass='mb-4' label='Account Number' id='accountNumberbCategory' type='text' inputRef={accountNumberInputRef}/>
                     {loading ? <CircularProgress className='d-md-flex mb-2 m-auto'/> : <MDBBtn onClick={() => {NewAccountForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create Account</MDBBtn>}
                     <MDBBtn onClick={() => {handleCloseNewAccount()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
