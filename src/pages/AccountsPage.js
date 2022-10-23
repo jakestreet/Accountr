@@ -15,6 +15,7 @@ import {
     gridPageSelector,
     useGridApiContext,
     useGridSelector,
+    GridToolbar,
   } from '@mui/x-data-grid';
 import Pagination from '@mui/material/Pagination';
 import Box from '@mui/material/Box';
@@ -313,10 +314,17 @@ export default function AccountsPage() {
                 pageSize={10}
                 getRowId={(row) => row.id}
                 components={{ 
-                    Pagination: CustomPagination
+                    Pagination: CustomPagination,
+                    Toolbar: GridToolbar, 
                     }}
-                    hideFooterRowCount={true}
-                    hideFooterSelectedRowCount={true}
+                hideFooterRowCount={true}
+                hideFooterSelectedRowCount={true}
+                componentsProps={{
+                    toolbar: {
+                      showQuickFilter: true,
+                      quickFilterProps: { debounceMs: 500 },
+                    },
+                }}
                 />
             </div>
         </div> 

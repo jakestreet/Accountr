@@ -15,6 +15,7 @@ import {
     gridPageSelector,
     useGridApiContext,
     useGridSelector,
+    GridToolbar
   } from '@mui/x-data-grid';
 import Pagination from '@mui/material/Pagination';
 import Box from '@mui/material/Box';
@@ -554,7 +555,7 @@ export default function RequestsPage() {
       else if(statusText === "Suspended") {
         return (
           <div>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Approved") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            <MDBBtn onClick={() => { UpdateStatus(username, "Remove Suspension") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
             Resume
             </MDBBtn>
             <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
@@ -751,10 +752,17 @@ export default function RequestsPage() {
             pageSize={10}
             onCellClick = {currentlySelected}
             components={{ 
-              Pagination: CustomPagination
+              Pagination: CustomPagination,
+              Toolbar: GridToolbar, 
               }}
-              hideFooterRowCount={true}
-              hideFooterSelectedRowCount={true}
+            hideFooterRowCount={true}
+            hideFooterSelectedRowCount={true}
+            componentsProps={{
+                toolbar: {
+                  showQuickFilter: true,
+                  quickFilterProps: { debounceMs: 500 },
+                },
+            }}
           />
         </div>
       </div>
