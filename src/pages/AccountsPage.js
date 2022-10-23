@@ -1,6 +1,6 @@
 import { app } from '../components/utils/firebase';
 import { useState, useEffect, useRef } from 'react'
-import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc, updateDoc, where  } from "firebase/firestore";
+import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc, updateDoc, where, deleteDoc  } from "firebase/firestore";
 import { useAuth } from '../contexts/AuthContext';
 import { MDBBtn, MDBCardText } from 'mdb-react-ui-kit';
 import { Alert, CircularProgress } from '@mui/material';
@@ -43,9 +43,12 @@ export default function AccountsPage() {
     const [openEditAcc, setEditAcc] = useState(false);
     const handleOpenEditAcc = () => setEditAcc(true);
     const handleCloseEditAcc = () => setEditAcc(false);
-    const [openEditAlert, setOpenEditAlert] = useState(true);
-    const [editStatus, setEditStatus] = useState("")
     const [selectedAcc, setSelectedAcc] = useState({});
+
+    // Remove Account
+    const [openRemoveConfirmation, setRemoveConfirmation] = useState(false);
+    const handleOpenRemoveConfirmation = () => setRemoveConfirmation(true);
+    const handleCloseRemoveConfirmation = () => setRemoveConfirmation(false);
 
     // Input References
     const categoryInputRef = useRef();
@@ -85,6 +88,19 @@ export default function AccountsPage() {
         const accountNumber = selectedAcc.id;
 
         console.log(`Removing ${accountNumber}`);
+
+        try{
+            const accRef = doc(db, "accounts", selectedAcc.id)
+
+            await deleteDoc(accRef);
+            GetRequests()
+            setAlert("Account removed succesful!");
+            setOpenAlert(true);
+        }
+        catch(error){
+            setAlert(`Account removed succesful!\n${error.message}`);
+            setOpenAlert(true);
+        }
     }
 
     const NewAccountForm = async (e)=> {
@@ -239,6 +255,9 @@ export default function AccountsPage() {
             else if(alert === "Edit Account Succesful!"){
                 alertSeverity = "success";
             }
+            else if(alert === "Account removed succesful!"){
+                alertSeverity = "success";
+            }
 
 
             return (
@@ -263,6 +282,14 @@ export default function AccountsPage() {
             </Collapse>
             )
         } 
+    }
+
+    const RemoveConfirmation = () =>{
+        return(
+            <div>
+                <label>Do you want to delete the account {selectedAcc.name}?</label>
+            </div>
+        )
     }
 
     const getAccRow = () =>{
@@ -407,7 +434,7 @@ export default function AccountsPage() {
                         <MDBBtn onClick={() => { (handleOpenEditAcc()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                             Edit
                         </MDBBtn>
-                        <MDBBtn onClick={() => { (DeleteAccount()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        <MDBBtn onClick={() => { (handleOpenRemoveConfirmation()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                             Remove
                         </MDBBtn>
                     </div>
@@ -456,6 +483,14 @@ export default function AccountsPage() {
                     {getAccRow()}
                     <MDBBtn onClick={updateAccount} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Apply Changes</MDBBtn>
                     <MDBBtn onClick={handleCloseEditAcc} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                </Box>
+            </Modal>
+            <Modal open={openRemoveConfirmation} onClose={handleCloseRemoveConfirmation} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+                <Box sx={style}>
+                    {SendAlert()}
+                    {RemoveConfirmation()}
+                    <MDBBtn onClick={DeleteAccount} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Delete</MDBBtn>
+                    <MDBBtn onClick={handleCloseRemoveConfirmation} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
             </Modal>
             <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}} id="capture">            
