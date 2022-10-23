@@ -7,6 +7,9 @@ import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem } from
 import Avatar from '@mui/material/Avatar';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import Popover from '@mui/material/Popover';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 export default function NavBar() {
 
@@ -20,6 +23,18 @@ export default function NavBar() {
     const [accountsNav, setAccountsNav] = useState("");
     const [haveInfo, setHaveInfo] = useState(false);
     const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const open = Boolean(anchorEl);
+    const id = open ? 'simple-popover' : undefined;
 
     const HomeNavigate = async (e)=>{
         e.preventDefault();
@@ -271,10 +286,28 @@ export default function NavBar() {
     return (
         <div>
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
-                <div className="container-fluid">
+               
+      <Button aria-describedby={id} variant="contained" onClick={handleClick}>
+        Calendar
+      </Button>
+      <Popover
+        id={id}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+      >
+        <Typography sx={{ p: 2 }}><Calendar/></Typography>
+      </Popover>
+      <div className="container-fluid">
                     {/* eslint-disable-next-line*/}
                     {RenderNav()}
-                    <Calendar/>
+                    <div>
+    </div>
+                    
                 </div>  
             </nav> 
         </div>       
