@@ -1,8 +1,8 @@
 import { auth, app } from '../components/utils/firebase';
 import { useState, useEffect, useRef } from 'react'
-import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useAuth } from '../contexts/AuthContext';
-import { MDBBtn } from 'mdb-react-ui-kit';
+import { MDBBtn, MDBCardText } from 'mdb-react-ui-kit';
 import { Alert, CircularProgress } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
@@ -21,6 +21,7 @@ import Modal from '@mui/material/Modal';
 import { MDBInput } from 'mdb-react-ui-kit';
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
+import { GTranslate } from '@mui/icons-material';
 
 export default function AccountsPage() {
     const db = getFirestore(app);
@@ -29,16 +30,24 @@ export default function AccountsPage() {
 
     const {currentUser, setCurrentUserInfo, captureEvent, storeEvent} = useAuth();
 
-    // const 
 
     const [openNewAccount, setOpenNewAccount] = useState(false);
     const handleOpenNewAccount = () => setOpenNewAccount(true);
     const handleCloseNewAccount = () => setOpenNewAccount(false);
 
-    const [loginStatus, setLoginStatus] = useState("");
+    const [alert, setAlert] = useState("");
     const [openAlert, setOpenAlert] = useState(true);
     const [loading, setLoading] = useState(false);
 
+    // Edit Account
+    const [openEditAcc, setEditAcc] = useState(false);
+    const handleOpenEditAcc = () => setEditAcc(true);
+    const handleCloseEditAcc = () => setEditAcc(false);
+    const [openEditAlert, setOpenEditAlert] = useState(true);
+    const [editStatus, setEditStatus] = useState("")
+    const [selectedAcc, setSelectedAcc] = useState({});
+
+    // Input References
     const categoryInputRef = useRef();
     const commentInputRef = useRef();
     const descriptionInputRef = useRef();
@@ -48,10 +57,18 @@ export default function AccountsPage() {
     const orderInputRef = useRef();
     const statementInputRef = useRef();
     const subCategoryInputRef = useRef();
-    //Maybe generate an UUID???
     const accountNumberInputRef = useRef();
     const serverStamp = firebase.firestore.Timestamp
 
+    const editCategoryInputRef = useRef();
+    const editCommentInputRef = useRef();
+    const editDescriptionInputRef = useRef();
+    const editInitialBalInputRef = useRef();
+    const editNameInputRef = useRef();
+    const editNormalSideInputRef = useRef();
+    const editOrderInputRef = useRef();
+    const editStatementInputRef = useRef();
+    const editSubCategoryInputRef = useRef();
 
     const style = {
         position: 'absolute',
@@ -77,6 +94,12 @@ export default function AccountsPage() {
             }
             setCurrentUserInfo(userInfo)
 
+    }
+    
+    const DeleteAccount = async (e)=>{
+        const accountNumber = selectedAcc.id;
+
+        console.log(`Removing ${accountNumber}`);
     }
 
     const NewAccountForm = async (e)=> {
@@ -115,11 +138,11 @@ export default function AccountsPage() {
             const beforeCapture = await captureEvent(id, "before");
             const refresh = await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 1000));
             setLoading(false);
-            setLoginStatus("Account succesfully created!")
+            setAlert("Account succesfully created!")
             setOpenAlert(true);
         }
         catch (error){
-            setLoginStatus(error.message);
+            setAlert(error.message);
             setOpenAlert(true);
         }
     }
@@ -179,36 +202,123 @@ export default function AccountsPage() {
     }
 
     const SendAlert = (e)=>{
-        if(loginStatus !== "") {
+        if(alert !== "") {
           
-          var alertSeverity = "warning";
-          
-          if(loginStatus === "Account succesfully created!"){
-            alertSeverity = "success";
-          }
-          
-          return (
+            var alertSeverity = "warning";
+
+
+            if(alert === "Account succesfully created!"){
+                alertSeverity = "success";
+            }
+            else if(alert === "Edit Account Succesful!"){
+                alertSeverity = "success";
+            }
+
+
+            return (
             <Collapse in={openAlert}>
-              <Alert severity={alertSeverity}
+                <Alert severity={alertSeverity}
                 action={
-                  <IconButton
+                    <IconButton
                     aria-label="close"
                     color="inherit"
                     size="small"
                     onClick={() => {
-                      setOpenAlert(false);
+                        setOpenAlert(false);
                     }}
-                  >
+                    >
                     <CloseIcon fontSize="inherit" />
-                  </IconButton>
+                    </IconButton>
                 }
                 sx={{ mb: 2 }}
-              >
-                {loginStatus}
-              </Alert>
+                >
+                    {alert}
+                </Alert>
             </Collapse>
-          )
+            )
         } 
+    }
+
+    const getAccRow = () =>{
+        return(
+            <div>
+                <MDBCardText className='mb-0'>Category</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.category} id='regCategory' type='text' inputRef={editCategoryInputRef}/>
+                
+                <MDBCardText className='mb-0'>Comment</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.comment} id='regCategory' type='text' inputRef={editCommentInputRef}/>
+                
+                <MDBCardText className='mb-0'>Description</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.description} id='regCategory' type='text' inputRef={editDescriptionInputRef}/>
+                
+                <MDBCardText className='mb-0'>Initial Balance</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.initialBal} id='regCategory' type='text' inputRef={editInitialBalInputRef}/>
+                
+                <MDBCardText className='mb-0'>Account Name</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.name} id='regCategory' type='text' inputRef={editNameInputRef}/>
+
+                {/* <MDBCardText className='mb-0'>Account Number</MDBCardText>
+                <MDBInput defaultValue={selectedUser.category} id='regCategory' type='text' inputRef={editAccountNumberInputRef}/> */}
+                
+                <MDBCardText className='mb-0'>Normal Side</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.normalSide} id='regCategory' type='text' inputRef={editNormalSideInputRef}/>
+                
+                <MDBCardText className='mb-0'>Order</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.order} id='regCategory' type='text' inputRef={editOrderInputRef}/>
+                
+                <MDBCardText className='mb-0'>Statement</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.statement} id='regCategory' type='text' inputRef={editStatementInputRef}/>
+                
+                <MDBCardText className='mb-0'>Sub Category</MDBCardText>
+                <MDBInput defaultValue={selectedAcc.subCategory} id='regCategory' type='text' inputRef={editSubCategoryInputRef}/>
+            </div>
+        )
+    }
+
+    useEffect(() => {
+    }, [selectedAcc]);
+
+    function currentlySelected(GridCellParams){
+        const currentAccount = GridCellParams.row;
+        setSelectedAcc(currentAccount);
+    }
+
+    const updateAccount = async(e) => {
+        e.preventDefault();
+        const category = editCategoryInputRef.current.value;
+        const comment = editCommentInputRef.current.value;
+        const description = editDescriptionInputRef.current.value;
+        const initialBal = editInitialBalInputRef.current.value;
+        const accountName = editNameInputRef.current.value;
+        const normalSide = editNormalSideInputRef.current.value;
+        const order = editOrderInputRef.current.value;
+        const statement = editStatementInputRef.current.value;
+        const subCategory = editSubCategoryInputRef.current.value;
+
+        console.log(selectedAcc);
+
+        try{
+            const accRef = doc(db, "accounts", selectedAcc.id)
+            
+            await updateDoc(accRef, {
+                category: category,
+                comment: comment,
+                description: description,
+                initialBal: initialBal,
+                accountName: accountName,
+                normalSide: normalSide,
+                order: order,
+                statement: statement,
+                subCategory: subCategory
+            });
+
+            setAlert("Edit Account Succesful!");
+            setOpenAlert(true);
+        }
+        catch(error){
+            setAlert("Something went wrong");
+            setOpenAlert(true);
+        }
     }
     
     const columns = [
@@ -262,6 +372,21 @@ export default function AccountsPage() {
             field: "userID",
             headerName: "User ID",
             flex: 1
+        },
+        {
+            field: "Actions", flex: 1,
+            renderCell: (cellValues) => {
+                return(
+                    <div>
+                        <MDBBtn onClick={() => { (handleOpenEditAcc()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                            Edit
+                        </MDBBtn>
+                        <MDBBtn onClick={() => { (DeleteAccount()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                            Remove
+                        </MDBBtn>
+                    </div>
+                )
+            }
         }
     ];
     useEffect(() => {
@@ -300,6 +425,14 @@ export default function AccountsPage() {
                     <MDBBtn onClick={() => {handleCloseNewAccount()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
             </Modal>
+            <Modal open={openEditAcc} onClose={handleCloseEditAcc} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+                <Box sx={style}>
+                    {SendAlert()}
+                    {getAccRow()}
+                    <MDBBtn onClick={updateAccount} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Apply Changes</MDBBtn>
+                    <MDBBtn onClick={handleCloseEditAcc} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                </Box>
+            </Modal>
             <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}} id="capture">            
                 <DataGrid
                     sx={{ "& .MuiDataGrid-columnHeaders": {
@@ -310,10 +443,11 @@ export default function AccountsPage() {
                     '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
                         outline: 'none', }
                     }}
-                rowHeight={160}
+                rowHeight={80}
                 rows={rows}
                 columns={columns}
                 pageSize={10}
+                onCellClick = {currentlySelected}
                 getRowId={(row) => row.id}
                 components={{ 
                     Pagination: CustomPagination,
