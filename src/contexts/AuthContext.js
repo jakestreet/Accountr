@@ -1,7 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { auth, authAdmin, storage } from '../components/utils/firebase'
+import { app, auth, authAdmin, storage } from '../components/utils/firebase'
 import { confirmPasswordReset, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { getDownloadURL, ref, uploadBytes, uploadString } from "firebase/storage";
+import { useScreenshot } from 'use-react-screenshot';
+import { collection, getFirestore, addDoc } from 'firebase/firestore';
+import firebase from "firebase/compat/app";
+import "firebase/compat/firestore";
 
 const AuthContext = React.createContext();
 
@@ -22,6 +26,10 @@ export function AuthProvider({children}) {
     const [questionTwo, setQuestionTwo] = useState("");
     const [questionOneAnswer, setQuestionOneAnswer] = useState("");
     const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
+    const [image, takeScreenShot] = useScreenshot({type: "image/jpeg", quality: 1.0});
+    const db = getFirestore(app);
+    const serverStamp = firebase.firestore.Timestamp
+    
 
     function signup(email, password) {
         return createUserWithEmailAndPassword(auth, email, password)
@@ -84,6 +92,25 @@ export function AuthProvider({children}) {
       
     }
 
+    async function storeEvent(username) {
+        const newEventAdded = await addDoc(collection(db, "events"), {
+            timeStamp: serverStamp.now(),
+            username: username
+        });
+        console.log("Added event with ID: ", newEventAdded.id);
+        return newEventAdded.id;
+
+    }
+
+    function captureEvent(locRef, id, when) {
+        takeScreenShot(locRef.current)
+        const imageRef = ref(storage, `/events/${id}/${when}.jpg`)
+        uploadString(imageRef, image, 'data_url').then((snapshot) => {
+            alert('Uploaded an event image');
+        });
+    }
+
+
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(user => {
             setCurrentUser(user)
@@ -122,7 +149,9 @@ export function AuthProvider({children}) {
         setQuestionOne,
         setQuestionTwo,
         setQuestionOneAnswer,
-        setQuestionTwoAnswer
+        setQuestionTwoAnswer,
+        captureEvent,
+        storeEvent
     }
 
   return (

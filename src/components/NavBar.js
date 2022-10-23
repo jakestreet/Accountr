@@ -1,7 +1,7 @@
 import { auth, app } from '../components/utils/firebase';
 import { doc, getDoc, getFirestore} from "firebase/firestore";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext';
 import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem } from 'mdb-react-ui-kit';
 import Avatar from '@mui/material/Avatar';
@@ -12,7 +12,9 @@ export default function NavBar() {
     const location = useLocation();
     const [homeNav, setHomeNav] = useState("");
     const [usersNav, setUsersNav] = useState("");
+    const [eventLogNav, setEventLogNav] = useState("");
     const [profileNav, setProfileNav] = useState("");
+    const [accountsNav, setAccountsNav] = useState("");
     const [haveInfo, setHaveInfo] = useState(false);
     const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
 
@@ -30,7 +32,16 @@ export default function NavBar() {
         e.preventDefault();
         navigate("/edit-profile");
     }
+
+    const EventLogNavigate = async (e)=>{
+        e.preventDefault();
+        navigate("/event-log");
+    }
     
+    const AccountsNavigate = async (e)=>{
+        e.preventDefault();
+        navigate("/accounts");
+    }
 
     const GetRole = async (e)=>{
         if(auth.currentUser && haveInfo === false) {
@@ -77,7 +88,10 @@ export default function NavBar() {
     const RenderProfilePicture = (e)=>{
         if(auth.currentUser) {
             return (
-                <Avatar src={currentUser.photoURL} />
+                <div className='d-flex justify-content-center'>
+                    <Avatar src={currentUser.photoURL} />
+                </div>
+                
             )
         }
        
@@ -103,29 +117,56 @@ export default function NavBar() {
         {
             setHomeNav("nav-link active");
             setUsersNav("nav-link");
-            setProfileNav("nav-link")
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link");
+            setAccountsNav("nav-link");
         }
         
         if(location.pathname === "/users" && usersNav !== "nav-link active")
         {
             setHomeNav("nav-link");
             setUsersNav("nav-link active");
-            setProfileNav("nav-link")
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link");
+            setAccountsNav("nav-link");
+        }
+
+        if(location.pathname === "/event-log" && eventLogNav !== "nav-link active")
+        {
+            setHomeNav("nav-link");
+            setUsersNav("nav-link");
+            setEventLogNav("nav-link active");
+            setProfileNav("nav-link");
+            setAccountsNav("nav-link");
         }
 
         if(location.pathname === "/profile" && profileNav !== "nav-link active")
         {
             setHomeNav("nav-link");
             setUsersNav("nav-link");
-            setProfileNav("nav-link active")
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link active");
+            setAccountsNav("nav-link");
         }
 
         if(location.pathname === "/edit-profile" && profileNav !== "nav-link active")
         {
             setHomeNav("nav-link");
             setUsersNav("nav-link");
-            setProfileNav("nav-link active")
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link active");
+            setAccountsNav("nav-link");
         }
+
+        if(location.pathname === "/accounts" && accountsNav !== "nav-link active")
+        {
+            setHomeNav("nav-link");
+            setUsersNav("nav-link");
+            setEventLogNav("nav-link");
+            setProfileNav("nav-link");
+            setAccountsNav("nav-link active")
+        }
+
 
         
         
@@ -145,33 +186,55 @@ export default function NavBar() {
                     <i className="fas fa-bars"></i>
                     </button>
                     <div className="collapse navbar-collapse" id="navbarText">
-                    <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li className="nav-item">
-                        {/* eslint-disable-next-line*/}
-                        <a className={homeNav} onClick={HomeNavigate} href="" aria-current="page">Home</a>
-                        </li>
-                        {RenderUsersTab()}
-                        <li className="nav-item">
-                        {/* eslint-disable-next-line*/}
-                        <a className={profileNav} onClick={ProfileNavigate} href="" aria-current="page">Profile</a>
-                        </li>
-                    </ul>
-                    <div className="gap-2 d-flex">
-                        {RenderPasswordExpirationNotif()}
-                        {RenderProfilePicture()}
-                        <span className="navbar-text">
-                        {currentUser && currentUser.displayName}
-                        </span>
-                        <MDBDropdown>
-                            <MDBDropdownToggle style={{background: 'rgba(41,121,255,1)'}}>Options</MDBDropdownToggle>
-                            <MDBDropdownMenu>
-                                <MDBDropdownItem onClick={EditProfileNavigate} link>Edit Profile</MDBDropdownItem>
-                                <MDBDropdownItem onClick={LogOut} link>Log Out</MDBDropdownItem>
-                            </MDBDropdownMenu>
-                        </MDBDropdown>
-                    </div>
+                        <div className="gap-2 d-flex">
+                            <MDBDropdown>
+                                <MDBDropdownToggle floating className='mx-auto' style={{background: 'rgba(255,255,255,1)'}}>
+                                {RenderProfilePicture()}
+                                </MDBDropdownToggle>
+                                <MDBDropdownMenu>
+                                    <MDBDropdownItem onClick={EditProfileNavigate} link>Edit Profile</MDBDropdownItem>
+                                    <MDBDropdownItem onClick={LogOut} link>Log Out</MDBDropdownItem>
+                                </MDBDropdownMenu>
+                            </MDBDropdown>
+                            <span className="navbar-text">
+                            {currentUser && currentUser.displayName + " | "}
+                            </span>
+                            {RenderPasswordExpirationNotif()}
+                        </div>
+                        <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li className="nav-item">
+                            {/* eslint-disable-next-line*/}
+                            <a className={homeNav} onClick={HomeNavigate} href="" aria-current="page">Home</a>
+                            </li>
+                            {RenderUsersTab()}
+                            {RenderEventLogTab()}
+                            <li className="nav-item">
+                            {/* eslint-disable-next-line*/}
+                            <a className={profileNav} onClick={ProfileNavigate} href="" aria-current="page">Profile</a>
+                            </li>
+                            <li className="nav-item">
+                            {/* eslint-disable-next-line*/}
+                            <a className={accountsNav} onClick={AccountsNavigate} href="" aria-current="page">Accounts</a>
+                            </li>
+                        </ul>
+                        <img
+                        src='/images/logo.png'
+                        className="rounded-pill"
+                        alt="Townhouses and Skyscrapers"
+                        width="175"
+                        />
                     </div>
                 </div>
+            )
+        }
+        else {
+            return (
+                <img
+                        src='/images/logo.png'
+                        className="rounded-pill"
+                        alt="Townhouses and Skyscrapers"
+                        width="175"
+                        />
             )
         }
     }
@@ -189,17 +252,24 @@ export default function NavBar() {
         } 
     }
 
+    function RenderEventLogTab() {
+        if(currentUser) {
+            if(currentRole === "Admin") {
+                return (
+                    <li className="nav-item">
+                    {/* eslint-disable-next-line*/}
+                    <a className={eventLogNav} onClick={EventLogNavigate} href="">Event Log</a>
+                    </li>
+                )
+            }
+        } 
+    }
+
     return (
         <div>
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
                 <div className="container-fluid">
                     {/* eslint-disable-next-line*/}
-                    <img
-                    src='/images/logo.png'
-                    className="rounded-pill"
-                    alt="Townhouses and Skyscrapers"
-                    width="175"
-                    />
                     {RenderNav()}
                 </div>  
             </nav> 
