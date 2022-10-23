@@ -1,11 +1,9 @@
 import { auth, app } from '../components/utils/firebase';
 import { useState, useEffect, useRef } from 'react'
-import { collection, query, where, getDocs, getFirestore, doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
-import bcrypt from 'bcryptjs'
-import { useNavigate } from 'react-router-dom';
+import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { useAuth } from '../contexts/AuthContext';
-import { MDBBadge, MDBBtn, MDBTextArea, MDBCardText } from 'mdb-react-ui-kit';
-import { Alert } from '@mui/material';
+import { MDBBtn } from 'mdb-react-ui-kit';
+import { Alert, CircularProgress } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
 import CloseIcon from '@mui/icons-material/Close'
@@ -21,14 +19,15 @@ import Pagination from '@mui/material/Pagination';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { MDBInput } from 'mdb-react-ui-kit';
-import PasswordChecklist from "react-password-checklist"
+import firebase from "firebase/compat/app";
+import "firebase/compat/firestore";
 
 export default function AccountsPage() {
     const db = getFirestore(app);
 
     const [rows, setRows] = useState([]);
 
-    const {currentUser, setCurrentUserInfo} = useAuth();
+    const {currentUser, setCurrentUserInfo, captureEvent, storeEvent} = useAuth();
 
     // const 
 
@@ -38,6 +37,7 @@ export default function AccountsPage() {
 
     const [loginStatus, setLoginStatus] = useState("");
     const [openAlert, setOpenAlert] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     const categoryInputRef = useRef();
     const commentInputRef = useRef();
@@ -50,6 +50,7 @@ export default function AccountsPage() {
     const subCategoryInputRef = useRef();
     //Maybe generate an UUID???
     const accountNumberInputRef = useRef();
+    const serverStamp = firebase.firestore.Timestamp
 
 
     const style = {
@@ -92,11 +93,6 @@ export default function AccountsPage() {
         const accountNumber = accountNumberInputRef.current.value;
 
         try{
-            const MyDate = new Date();
-            const currentYear = String(MyDate.getFullYear());
-            const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
-            const currentDay = ('0' + (MyDate.getDate())).slice(-2);
-            const currentDate = currentYear + "-" + currentMonth + "-" + currentDay;
             const userID = currentUser.displayName;
 
             const docRef = doc(db, "accounts", accountNumber)
@@ -104,7 +100,7 @@ export default function AccountsPage() {
             setDoc(docRef, {
                 category: category,
                 comment: comment,
-                dateAdded: currentDate,
+                dateAdded: serverStamp.now(),
                 description: description,
                 initialBal: initialBal,
                 name: accountName,
@@ -114,7 +110,12 @@ export default function AccountsPage() {
                 subCategory: subCategory,
                 userID: userID
             });
-            setLoginStatus("Account succesfully created! An email with the username has been sent to the new account.")
+            setLoading(true);
+            const id = await storeEvent(currentUser.displayName);
+            const beforeCapture = await captureEvent(id, "before");
+            const refresh = await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 1000));
+            setLoading(false);
+            setLoginStatus("Account succesfully created!")
             setOpenAlert(true);
         }
         catch (error){
@@ -143,7 +144,7 @@ export default function AccountsPage() {
                     id: doc.id,
                     category: doc.data().category,
                     comment: doc.data().comment,
-                    dateAdded: doc.data().dateAdded,
+                    dateAdded: doc.data().dateAdded.toDate(),
                     description: doc.data().description,
                     initialBal: doc.data().initialBal,
                     name: doc.data().name,
@@ -182,7 +183,7 @@ export default function AccountsPage() {
           
           var alertSeverity = "warning";
           
-          if(loginStatus === "Account succesfully created! An email with the username has been sent to the new account."){
+          if(loginStatus === "Account succesfully created!"){
             alertSeverity = "success";
           }
           
@@ -224,7 +225,8 @@ export default function AccountsPage() {
         {
             field: "dateAdded",
             headerName: "Date Added",
-            flex: 1
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleDateString('en-US'),
         },
         {
             field: "initialBal",
@@ -294,11 +296,11 @@ export default function AccountsPage() {
                     <MDBInput wrapperClass='mb-4' label='Statement' id='regStatement' type='text' inputRef={statementInputRef}/>
                     <MDBInput wrapperClass='mb-4' label='Sub-Category' id='regSubCategory' type='text' inputRef={subCategoryInputRef}/>
                     <MDBInput wrapperClass='mb-4' label='Account Number' id='accountNumberbCategory' type='text' inputRef={accountNumberInputRef}/>
-                    <MDBBtn onClick={() => {NewAccountForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create Account</MDBBtn>
+                    {loading ? <CircularProgress className='d-md-flex mb-2 m-auto'/> : <MDBBtn onClick={() => {NewAccountForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create Account</MDBBtn>}
                     <MDBBtn onClick={() => {handleCloseNewAccount()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
             </Modal>
-            <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}}>            
+            <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}} id="capture">            
                 <DataGrid
                     sx={{ "& .MuiDataGrid-columnHeaders": {
                         backgroundColor: "rgba(41,121,255,1)",
