@@ -441,9 +441,9 @@ export default function LoginPage() {
                   <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Date of Birth' id='regDoB' type='date' inputRef={dobInputRef}/>
-                  <MDBTooltip tag='a' placement="auto" title="Finish sign up process">
+                  {/* <MDBTooltip tag='a' placement="auto" title="Finish sign up process"> */}
                     <MDBBtn onClick={SignUpForm} className="mb-4 w-100">Sign up</MDBBtn>
-                  </MDBTooltip>
+                  {/* </MDBTooltip> */}
                   
         
                 </MDBTabsPane>
