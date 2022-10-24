@@ -1,10 +1,13 @@
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext';
 import Avatar from '@mui/material/Avatar';
-import { MDBCol, MDBRow, MDBCard, MDBCardBody, MDBCardText, MDBBtn } from 'mdb-react-ui-kit';
+import { MDBCol, MDBRow, MDBCard, MDBCardBody, MDBCardText, MDBBtn, MDBTooltip } from 'mdb-react-ui-kit';
 import { useNavigate } from 'react-router-dom';
-
+import Modal from '@mui/material/Modal';
 export default function ProfilePage() {
-  
+    const [openHelp, setOpenHelp] = useState(false);
+    const handleOpenHelp = () => setOpenHelp(true);
+    const handleCloseHelp = () => setOpenHelp(false);  
 
     const { currentUser, currentRole, passExpirationDays, currentUserInfo } = useAuth();
     const navigate = useNavigate();
@@ -72,12 +75,37 @@ export default function ProfilePage() {
                 </MDBCol>
               </MDBRow>
               <MDBCardBody className="text-center mt-4">
+              <MDBTooltip tag='a' placement="auto" title="Edit your profile information">
                 <MDBBtn onClick={(e) => {EditProfileNavigate(e)}} className=''>Edit Profile</MDBBtn>
+              </MDBTooltip>
+                
               </MDBCardBody>
             </MDBCardBody>
           </MDBCard>
         </MDBCol>
       </MDBRow>
+      <div class="fixed-bottom">
+      <MDBTooltip tag='a' placement="auto" title="Help">
+        <button type="button" class="btn btn-primary btn-floating" onClick={() => {handleOpenHelp()}}>?</button>
+      </MDBTooltip>
+        
+        <Modal
+          open={openHelp}
+          onClose={handleOpenHelp}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <div class="card">
+              <div class="card-body">
+                  <dl class = "row">
+                    <dt class="col-sm-3">View personal account information:</dt>
+                    <dd class="col-sm-9">Profile picture, full name, email, address, date of birth, and password expiration date are displayed.</dd> 
+                  </dl>
+              </div>
+            <MDBBtn onClick={handleCloseHelp} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+          </div>
+        </Modal>
+      </div>
   </div> 
     )   
 }

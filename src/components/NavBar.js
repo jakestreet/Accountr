@@ -3,7 +3,7 @@ import { doc, getDoc, getFirestore} from "firebase/firestore";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext';
-import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem } from 'mdb-react-ui-kit';
+import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem, MDBTooltip } from 'mdb-react-ui-kit';
 import Avatar from '@mui/material/Avatar';
 import Calendar from 'react-calendar';
 import '../styling/Calendar.css'
@@ -202,21 +202,32 @@ export default function NavBar() {
                     <div className="collapse navbar-collapse" id="navbarText" style={{display: "flex", justifyContent: "space-between"}}>
                         <div className="gap-2 d-flex" style={{flexGrow: 1, flexBasis: 0}}>
                             <MDBDropdown>
+                            <MDBTooltip tag='a' placement="auto" title="View profile options">
                                 <MDBDropdownToggle floating className='mx-auto' style={{background: 'rgba(255,255,255,1)'}}>
                                 {RenderProfilePicture()}
                                 </MDBDropdownToggle>
+                            </MDBTooltip>
+                                
                                 <MDBDropdownMenu>
+                                <MDBTooltip tag='a' placement="auto" title="View profile">
                                     <MDBDropdownItem onClick={ProfileNavigate} link>Profile</MDBDropdownItem>
+                                </MDBTooltip>
+                                <MDBTooltip tag='a' placement="auto" title="Log out of this account">
                                     <MDBDropdownItem onClick={LogOut} link>Log Out</MDBDropdownItem>
+                                </MDBTooltip>
+                                    
                                 </MDBDropdownMenu>
                             </MDBDropdown>
                             <span className="navbar-text">
                             {currentUser && currentUser.displayName + " | "}
                             </span>
                             {RenderPasswordExpirationNotif()}
-                            <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
-                            <CalendarMonthIcon/>{new Date().toLocaleDateString()}
-                            </Button>
+                            <MDBTooltip tag='a' placement="auto" title="View calendar">
+                                <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
+                                    <CalendarMonthIcon/>{new Date().toLocaleDateString()}
+                                </Button>
+                            </MDBTooltip>
+                            
                             <Popover
                                 id={id}
                                 open={open}

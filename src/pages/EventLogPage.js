@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MDBBtn } from 'mdb-react-ui-kit';
+import { MDBBtn, MDBTooltip } from 'mdb-react-ui-kit';
 import Pagination from '@mui/material/Pagination';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
@@ -17,7 +17,9 @@ import { CircularProgress, Grid } from '@mui/material';
 
 export default function EventLogPage() {
     const db = getFirestore(app);
-
+    const [openHelp, setOpenHelp] = useState(false);
+    const handleOpenHelp = () => setOpenHelp(true);
+    const handleCloseHelp = () => setOpenHelp(false);
     const [selectedUser, setSelectedUser] = useState({});
     const [imageBefore, setImageBefore] = useState();
     const [imageAfter, setImageAfter] = useState();
@@ -119,9 +121,12 @@ export default function EventLogPage() {
           renderCell: (cellValues) => {
             return (
                 <div>
+                  <MDBTooltip tag='a' placement="auto" title="View recent changes">
                     <MDBBtn onClick={() => { handleOpenImages(cellValues.row.id) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                     View Images
                     </MDBBtn>
+                  </MDBTooltip>
+                    
                 </div>
             )
           }
@@ -139,7 +144,10 @@ export default function EventLogPage() {
   return (
     <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
         <div className="d-md-flex m-auto mb-3 gap-2">
-            <MDBBtn onClick={() => {GetEvents()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
+        <MDBTooltip tag='a' placement="auto" title="Refresh to view new changes">
+          <MDBBtn onClick={() => {GetEvents()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
+        </MDBTooltip>
+            
         </div>
         <Modal
             open={openImages}
@@ -164,7 +172,7 @@ export default function EventLogPage() {
                 </div> : null}
                 
               </Grid>
-
+                  
                 <MDBBtn onClick={() => {handleCloseImages()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>
@@ -189,6 +197,34 @@ export default function EventLogPage() {
             hideFooterSelectedRowCount={true}
             initialState={{sorting: { sortModel: [{ field: 'date', sort: 'desc' }]}}}
         />
+      <div class="fixed-bottom">
+      <MDBTooltip tag='a' placement="auto" title="Help">
+        <button type="button" class="btn btn-primary btn-floating" onClick={() => {handleOpenHelp()}}>?</button>
+      </MDBTooltip>
+        
+        <Modal
+          open={openHelp}
+          onClose={handleOpenHelp}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <div class="card">
+            <div class="card-body">
+              <dl class = "row">
+                <dt class="col-sm-3">View event logs:</dt>
+                <dd class="col-sm-9">Time stamp, ID, username, and actions are displayed.</dd>
+                <dt class="col-sm-3">Actions:</dt>
+                <dd class="col-sm-9">The Actions functionality tracks changes by saving before and after pictures, which allows for a visual display of changes made.</dd>
+                <dt class="col-sm-3">Sorting event logs:</dt>
+                <dd class="col-sm-9">Event logs can be sorted by ascending, descending, filtered by specified values, and by the removal of columns.</dd>
+                <dt class="col-sm-3">Tip:</dt>
+                <dd class="col-sm-9">Make sure to refresh the page, by using the refresh button, to view the most recent changes.</dd> 
+              </dl>
+            </div>
+            <MDBBtn onClick={handleCloseHelp} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+          </div>
+        </Modal>
+      </div>
     </div>
   )
 }
