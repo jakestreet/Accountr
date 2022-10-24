@@ -2,7 +2,7 @@ import { app } from '../components/utils/firebase';
 import { useState, useEffect, useRef } from 'react'
 import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc, updateDoc, where, deleteDoc  } from "firebase/firestore";
 import { useAuth } from '../contexts/AuthContext';
-import { MDBBtn, MDBCardText } from 'mdb-react-ui-kit';
+import { MDBBtn, MDBCardText, MDBTooltip } from 'mdb-react-ui-kit';
 import { Alert, CircularProgress } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
@@ -34,7 +34,9 @@ export default function AccountsPage() {
 
     const {currentUser, captureEvent, storeEvent, currentRole} = useAuth();
 
-
+    const [openHelp, setOpenHelp] = useState(false);
+    const handleOpenHelp = () => setOpenHelp(true);
+    const handleCloseHelp = () => setOpenHelp(false);
     const [openNewAccount, setOpenNewAccount] = useState(false);
     const handleOpenNewAccount = () => setOpenNewAccount(true);
     const handleCloseNewAccount = () => {
@@ -449,22 +451,33 @@ export default function AccountsPage() {
                 return(
                     currentRole === "Admin" ? 
                     <div className="d-flex gap-2">
-                        <MDBBtn onClick={() => {  }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                            View
-                        </MDBBtn>
-                        <MDBBtn onClick={() => { (handleOpenEditAcc()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                            Edit
-                        </MDBBtn>
+                        <MDBTooltip tag='a' placement="auto" title="View this account">
+                            <MDBBtn onClick={() => {  }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                                View
+                            </MDBBtn>
+                        </MDBTooltip>
+                        <MDBTooltip tag='a' placement="auto" title="Edit this account">
+                            <MDBBtn onClick={() => { (handleOpenEditAcc()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                                Edit
+                            </MDBBtn>
+                        </MDBTooltip>
+                        
                         {cellValues.row.initialBal === 0 ? 
-                        <MDBBtn onClick={() => { (handleOpenRemoveConfirmation()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(255,0,0,1)'}}>
-                            Remove
-                        </MDBBtn> : null}
+                        <MDBTooltip tag='a' placement="auto" title="Remove this account">
+                            <MDBBtn onClick={() => { (handleOpenRemoveConfirmation()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(255,0,0,1)'}}>
+                                Remove
+                            </MDBBtn>
+                        </MDBTooltip>
+                         : null}
                     </div>
                     : 
                     <div>
-                        <MDBBtn onClick={() => {  }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                            View
-                        </MDBBtn>
+                        <MDBTooltip tag='a' placement="auto" title="View this account">
+                            <MDBBtn onClick={() => {  }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                                View
+                            </MDBBtn>
+                        </MDBTooltip>
+                        
                     </div>
                 )
             }
@@ -480,8 +493,15 @@ export default function AccountsPage() {
     return(
         <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
             <div className="d-md-flex m-auto mb-3 gap-2">
+            <MDBTooltip tag='a' placement="auto" title="Refresh to view new totals">
                 <MDBBtn onClick={() => {GetRequests()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
-                {currentRole === "Admin" ? <MDBBtn onClick={() => {handleOpenNewAccount()}} style={{background: 'rgba(41,121,255,1)'}}>Create New Account</MDBBtn> : null}
+            </MDBTooltip>
+                
+                {currentRole === "Admin" ?
+                <MDBTooltip tag='a' placement="auto" title="Create a new account">
+                    <MDBBtn onClick={() => {handleOpenNewAccount()}} style={{background: 'rgba(41,121,255,1)'}}>Create New Account</MDBBtn>
+                </MDBTooltip>                  
+                : null}
             </div>
             <Modal
                 open={openNewAccount}
@@ -591,6 +611,38 @@ export default function AccountsPage() {
                     },
                 }}
                 />
+            </div>
+            <div class="fixed-bottom">
+            <MDBTooltip tag='a' placement="auto" title="Help">
+                <button type="button" class="btn btn-primary btn-floating" onClick={() => {handleOpenHelp()}}>?</button>
+            </MDBTooltip>
+                
+                <Modal
+                    open={openHelp}
+                    onClose={handleOpenHelp}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                >    
+                    <div class="card">
+                        <div class="card-body">
+                            <dl class = "row">
+                                <dt class="col-sm-3">View accounts:</dt>
+                                <dd class="col-sm-9">All current accounts including, but not limited to, the account time, account type, initial balance, and date added.</dd>
+                                <dt class="col-sm-3">Create account:</dt>
+                                <dd class="col-sm-9">Create a new account by using the Create New Account button and inputting the required information.</dd>
+                                <dt class="col-sm-3">Edit and delete account:</dt>
+                                <dd class="col-sm-9">The Action functionality allows for easy editing and removal of current accounts.</dd>
+                                <dt class="col-sm-3">Sort accounts:</dt>
+                                <dd class="col-sm-9">Accounts can be sorted by sub-categories (account name, date added, etc) or the entire table can be filtered by specified values, or by eliminating columns.</dd>
+                                <dt class="col-sm-3">Export account information:</dt>
+                                <dd class="col-sm-9">Export information by using the Export functionality, take note that data can be filtered prior to exporting for a personalized report.</dd>
+                                <dt class="col-sm-3">Tip:</dt>
+                                <dd class="col-sm-9">Make sure to refresh the page, by using the refresh button, to view the most recent changes.</dd> 
+                            </dl>
+                        </div>
+                        <MDBBtn onClick={handleCloseHelp} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                    </div>
+                </Modal>    
             </div>
         </div> 
     )

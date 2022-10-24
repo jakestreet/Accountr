@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useState, useRef } from 'react'
 import Avatar from '@mui/material/Avatar';
-import { MDBBtn, MDBCol, MDBInput, MDBRow, MDBCard, MDBCardText } from 'mdb-react-ui-kit';
+import { MDBBtn, MDBCol, MDBInput, MDBRow, MDBCard, MDBCardText, MDBTooltip } from 'mdb-react-ui-kit';
 import { Alert } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
@@ -100,12 +100,18 @@ export default function EditProfilePage() {
                 </MDBRow>
                 <MDBRow className="row d-flex justify-content-center">
                     <MDBCol sm="4" className="col d-flex justify-content-center">
-                    <MDBBtn onClick={()=>{UpdateInformation()}} className="mt-2 mb-2">Confirm</MDBBtn>
+                    <MDBTooltip tag='a' placement="auto" title="Finish editing profile">
+                      <MDBBtn onClick={()=>{UpdateInformation()}} className="mt-2 mb-2">Confirm</MDBBtn>
+                    </MDBTooltip>
+                    
                     </MDBCol>
                 </MDBRow>
                 <MDBRow className="row d-flex justify-content-center">
                     <MDBCol sm="4" className="col d-flex justify-content-center">
-                    <MDBBtn onClick={(e)=>{ProfileNavigate(e)}} className="mt-2 mb-4">Return</MDBBtn>
+                    <MDBTooltip tag='a' placement="auto" title="Cancel editing profile">
+                      <MDBBtn onClick={(e)=>{ProfileNavigate(e)}} className="mt-2 mb-4">Return</MDBBtn>
+                    </MDBTooltip>
+                    
                     </MDBCol>
                 </MDBRow>
             </div>
@@ -149,7 +155,10 @@ export default function EditProfilePage() {
                             <MDBRow >
                                 <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
                                     <MDBInput type="file" onChange={handleChange} />
-                                    <MDBBtn disabled={loading || !photo} onClick={handleClick}>Upload</MDBBtn>
+                                    <MDBTooltip tag='a' placement="auto" title="Upload new profile picture">
+                                      <MDBBtn disabled={loading || !photo} onClick={handleClick}>Upload</MDBBtn>
+                                    </MDBTooltip>
+                                    
                                 </MDBCol>
                             </MDBRow>
                             {RenderInformation()}

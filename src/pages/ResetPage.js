@@ -3,6 +3,7 @@ import {
     MDBContainer,
     MDBInput,
     MDBBtn,
+    MDBTooltip
   }
 from 'mdb-react-ui-kit';
 import { useAuth } from '../contexts/AuthContext';
@@ -152,8 +153,13 @@ export default function ResetPage() {
                   }}
                   onChange={(isValid) => {setValidPass(isValid)}}
                 />
-          <MDBBtn onClick={ResetPassword}className="mb-4 w-25 m-auto mt-2">Reset Password</MDBBtn>
-          <MDBBtn className="mb-4 w-25 m-auto" href="/" color="link">Return to Log In</MDBBtn>
+          <MDBTooltip tag='a' placement="auto" title="Finish resetting password">
+            <MDBBtn onClick={ResetPassword}className="mb-4 w-25 m-auto mt-2">Reset Password</MDBBtn>
+          </MDBTooltip>
+          <MDBTooltip tag='a' placement="auto" title="Return to log in screen">
+            <MDBBtn className="mb-4 w-25 m-auto" href="/" color="link">Return to Log In</MDBBtn>
+          </MDBTooltip>
+          
         </MDBContainer>
       </div>
     )

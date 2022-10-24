@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, getFirestore, doc, updateDoc, getDoc
 import bcrypt from 'bcryptjs'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { MDBBadge, MDBBtn, MDBTextArea, MDBCardText } from 'mdb-react-ui-kit';
+import { MDBBadge, MDBBtn, MDBTextArea, MDBCardText, MDBTooltip } from 'mdb-react-ui-kit';
 import { Alert } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
@@ -22,10 +22,9 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { MDBInput } from 'mdb-react-ui-kit';
 import PasswordChecklist from "react-password-checklist";
-
-
+import { minWidth } from '@mui/system';
 export default function RequestsPage() {
-
+    
     const db = getFirestore(app);
     const navigate = useNavigate();
     const { currentRole, signupAdmin, logoutAdmin, sendEmail, currentUser, emailMessage, captureEvent, storeEvent } = useAuth();
@@ -35,6 +34,9 @@ export default function RequestsPage() {
     const [openNewUser, setOpenNewUser] = useState(false);
     const handleOpenNewUser = () => setOpenNewUser(true);
     const handleCloseNewUser = () => setOpenNewUser(false);
+    const [openHelp, setOpenHelp] = useState(false);
+    const handleOpenHelp = () => setOpenHelp(true);
+    const handleCloseHelp = () => setOpenHelp(false);
     const [openSendEmail, setOpenSendEmail] = useState(false);
     const [openAlert, setOpenAlert] = useState(true);
     const [openEmailAlert, setOpenEmailAlert] = useState(false);
@@ -531,45 +533,64 @@ export default function RequestsPage() {
       if(statusText === "Requested") {
         return (
           <div>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Approved"); sendEmail(email, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + username + " at https://accountr.netlify.app/"); }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            <MDBTooltip tag='a' placement="auto" title="approve this user">
+              <MDBBtn onClick={() => { UpdateStatus(username, "Approved"); sendEmail(email, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + username + " at https://accountr.netlify.app/"); }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
             Approve
             </MDBBtn>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Rejected") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            </MDBTooltip>
+            <MDBTooltip tag='a' placement="auto" title="Reject this user">
+              <MDBBtn onClick={() => { UpdateStatus(username, "Rejected") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
             Reject
             </MDBBtn>
+            </MDBTooltip>
+            
           </div>
         )
       }
       else if(statusText === "Approved") {
         return (
           <div>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Suspended") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            <MDBTooltip tag='a' placement="auto" title="Suspend this user">
+              <MDBBtn onClick={() => { UpdateStatus(username, "Suspended") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
             Suspend
             </MDBBtn>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+            </MDBTooltip>
+            
+            <MDBTooltip tag='a' placement="auto" title="Disable this user">
+              <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
             Disable
             </MDBBtn>
+            </MDBTooltip>
+            
           </div>
         )
       }
       else if(statusText === "Suspended") {
         return (
           <div>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Remove Suspension") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            Resume
-            </MDBBtn>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            Disable
-            </MDBBtn>
+            <MDBTooltip tag='a' placement="auto" title="Resume this user activity">
+              <MDBBtn onClick={() => { UpdateStatus(username, "Remove Suspension") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                Resume
+              </MDBBtn>
+            </MDBTooltip>
+            <MDBTooltip tag='a' placement="auto" title="Disable this user">
+              <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                Disable
+              </MDBBtn>
+            </MDBTooltip>
+            
           </div>
         )
       }
       else if(statusText === "Disabled" || statusText === "Rejected") {
         return (
           <div>
-            <MDBBtn onClick={() => { UpdateStatus(username, "Approved") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            Resume
-            </MDBBtn>
+            <MDBTooltip tag='a' placement="auto" title="Resume this user activity">
+              <MDBBtn onClick={() => { UpdateStatus(username, "Approved") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                Resume
+              </MDBBtn>
+            </MDBTooltip>
+            
           </div>
         )
       }
@@ -645,12 +666,17 @@ export default function RequestsPage() {
                 return (
                     <div>
                         {RenderActions(cellValues.row.username, cellValues.row.statusText, cellValues.row.email)}
-                        <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                        Email
-                        </MDBBtn>
-                        <MDBBtn onClick={() => { editInfoOnClick() }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                        Edit Info
-                        </MDBBtn>
+                        <MDBTooltip tag='a' placement="auto" title="Email this user">
+                          <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                            Email
+                          </MDBBtn>
+                        </MDBTooltip>
+                        <MDBTooltip tag='a' placement="auto" title="Edit user information">
+                          <MDBBtn onClick={() => { editInfoOnClick() }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                            Edit Info
+                          </MDBBtn>
+                        </MDBTooltip>
+                        
                     </div>
                 )
               }
@@ -660,8 +686,13 @@ export default function RequestsPage() {
    return (
         <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
         <div className="d-md-flex m-auto mb-3 gap-2">
+          <MDBTooltip tag='a' placement="auto" title="Refresh user list">
             <MDBBtn onClick={() => {GetRequests()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
+          </MDBTooltip>
+          <MDBTooltip tag='a' placement="auto" title="Create a new user">
             <MDBBtn onClick={() => {handleOpenNewUser()}} style={{background: 'rgba(41,121,255,1)'}}>Create New User</MDBBtn>
+          </MDBTooltip>
+            
         </div>
         <Modal
             open={openNewUser}
@@ -689,8 +720,13 @@ export default function RequestsPage() {
                 <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
                 <MDBInput wrapperClass='mb-4' label='Date of Birth' id='regDoB' type='date' inputRef={dobInputRef}/>
-                <MDBBtn onClick={() => {SignUpForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create User</MDBBtn>
-                <MDBBtn onClick={() => {handleCloseNewUser()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                <MDBTooltip tag='a' placement="auto" title="Finish creating user">
+                  <MDBBtn onClick={() => {SignUpForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create User</MDBBtn>
+                </MDBTooltip>
+                <MDBTooltip tag='a' placement="auto" title="Cancel creating user">
+                  <MDBBtn onClick={() => {handleCloseNewUser()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                </MDBTooltip>
+                
             </Box>
         </Modal>
         <Modal
@@ -705,8 +741,13 @@ export default function RequestsPage() {
                 <label>From: {currentUser.email}</label>
                 <MDBInput wrapperClass='mb-4 mt-2' label='Subject' id='subject' type='text' inputRef={subjectInputRef}/>
                 <MDBTextArea label="Body" id="body" type="text" rows={10} inputRef={bodyInputRef}></MDBTextArea>
-                <MDBBtn onClick={SendEmailOnClick} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
-                <MDBBtn onClick={() => {handleCloseSendEmail()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                <MDBTooltip tag='a' placement="auto" title="Finish sending email">
+                  <MDBBtn onClick={SendEmailOnClick} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
+                </MDBTooltip>
+                <MDBTooltip tag='a' placement="auto" title="Cancel sending email">
+                  <MDBBtn onClick={() => {handleCloseSendEmail()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                </MDBTooltip>
+                
             </Box>
         </Modal>
         <Modal
@@ -765,6 +806,35 @@ export default function RequestsPage() {
             }}
           />
         </div>
+        <div class="fixed-bottom">
+        <MDBTooltip tag='a' placement="auto" title="Help">
+          <button type="button" class="btn btn-primary btn-floating" onClick={() => {handleOpenHelp()}}>?</button>
+        </MDBTooltip>
+        <Modal
+          open={openHelp}
+          onClose={handleOpenHelp}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <div class="card">
+              <div class="card-body">
+                <dl class = "row">
+                <dt class="col-sm-3">View users: </dt>
+                <dd class="col-sm-9">All users with a description including, but not limited to, the account time, account type, initial balance, and date added. The search bar can also be used to quickly find a specified value.</dd>
+                <dt class="col-sm-3">Create users:</dt><dd class="col-sm-9">Create a new user by using the Create New User button and inputting the required information and credentials.</dd>
+                <dt class="col-sm-3">Managing users:</dt><dd class="col-sm-9">The Action functionality allows for easy access to edit, suspend, disable, email, and edit current users.</dd>
+                <dt class="col-sm-3">Email User:</dt><dd class="col-sm-9">The Email functionality allows for emails to be sent to the specified user. Include information in the subject and body, and an email will be sent to the user's email address.</dd>  
+                <dt class="col-sm-3">Sort accounts:</dt><dd class="col-sm-9">Accounts can be sorted by sub-categories (username, email, role, status, etc) or the entire table can be filtered by specified values, or by eliminating columns.</dd>
+                <dt class="col-sm-3">Export account information:</dt><dd class="col-sm-9">Export information by using the Export functionality. Take note that data can be filtered prior to exporting for a personalized report.</dd>  
+                <dt class="col-sm-3">Tip:</dt><dd class="col-sm-9">Make sure to refresh the page, by using the refresh button, to view the most recent changes.</dd> 
+                </dl>
+              </div>
+              <MDBTooltip tag='a' placement="auto" title="Exit help screen">
+                <MDBBtn onClick={handleCloseHelp} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+              </MDBTooltip>
+          </div>
+        </Modal>
+      </div>
       </div>
    )
 }
