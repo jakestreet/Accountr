@@ -223,7 +223,7 @@ export default function NavBar() {
                             </span>
                             {RenderPasswordExpirationNotif()}
                             <MDBTooltip tag='a' placement="auto" title="View calendar">
-                                <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
+                                <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2 mt-1">
                                     <CalendarMonthIcon/>{new Date().toLocaleDateString()}
                                 </Button>
                             </MDBTooltip>
@@ -270,9 +270,11 @@ export default function NavBar() {
                 <div className="container-fluid">
                     <div className="collapse navbar-collapse" id="navbarText" style={{display: "flex", justifyContent: "space-between"}}>
                         <div style={{flexGrow: 1, flexBasis: 0}}>
-                            <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
-                            <CalendarMonthIcon/>{new Date().toLocaleDateString()}
-                            </Button>
+                            <MDBTooltip tag='a' placement="auto" title="View calendar" className="mt-1">
+                                <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2 mt-1">
+                                <CalendarMonthIcon/>{new Date().toLocaleDateString()}
+                                </Button>
+                            </MDBTooltip>
                             <Popover
                                 id={id}
                                 open={open}
