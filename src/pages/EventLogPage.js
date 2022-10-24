@@ -103,7 +103,8 @@ export default function EventLogPage() {
         {
             field: "date",
             headerName: "Time Stamp",
-            flex: 1
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleString('en-US'),
         },
         {
             field: "id",
