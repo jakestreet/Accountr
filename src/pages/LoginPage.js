@@ -25,6 +25,10 @@ import Collapse from '@mui/material/Collapse';
 import CloseIcon from '@mui/icons-material/Close'
 import PasswordChecklist from "react-password-checklist"
 import Select from 'react-select'
+import TextField from '@mui/material/TextField'; 
+import InputAdornment from '@mui/material/InputAdornment'; 
+import VisibilityIcon from '@mui/icons-material/Visibility'; 
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -51,6 +55,10 @@ export default function LoginPage() {
     const [haveInfo, setHaveInfo] = useState(false);
     const [choiceOne, setChoiceOne] = useState("");
     const [choiceTwo, setChoiceTwo] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const handleClickShowPassword = () => setShowPassword(!showPassword);
+    const handleMouseDownPassword = () => setShowPassword(!showPassword);
+    const [pass, setPass] = useState("");
     
     
     useEffect(() => {
@@ -193,7 +201,7 @@ export default function LoginPage() {
     const LoginForm = async (e)=>{
         e.preventDefault();
         const username = usernameInputRef.current.value;
-        const password = loginPasswdInputRef.current.value;
+        const password = pass;
         
         try {
                     
@@ -357,8 +365,31 @@ export default function LoginPage() {
         
                 <MDBTabsPane show={justifyActive === 'tab1'}>
         
-                  <MDBInput wrapperClass='mb-4' label='Username' id='username' type='text' inputRef={usernameInputRef}/>
-                  <MDBInput wrapperClass='mb-4' label='Password' id='loginPassword' type='password' inputRef={loginPasswdInputRef}/>
+                  <TextField fullWidth size="small" className='mb-4' label='Username' id='username' type='text' inputRef={usernameInputRef}/>
+                  <TextField
+                    label='Password'
+                    variant="outlined"
+                    type={showPassword ? "text" : "password"} // <-- This is where the magic happens
+                    inputRef={loginPasswdInputRef}
+                    size="small"
+                    fullWidth
+                    className='mb-4'
+                    onChange={(event) => {setPass(event.target.value)}}
+                    InputProps={{ // <-- This is where the toggle button is added.
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={handleClickShowPassword}
+                            onMouseDown={handleMouseDownPassword}
+                          >
+                            {showPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                  {/* <MDBInput wrapperClass='mb-4' label='Password' id='loginPassword' type='password' inputRef={loginPasswdInputRef}/> */}
                   <MDBTooltip tag='a' placement="auto" title="Follow link to reset password">
                     <a onClick={ResetNav} href="!#" >Forgot password?</a>
                   </MDBTooltip>
