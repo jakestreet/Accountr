@@ -113,7 +113,7 @@ export default function RequestsPage() {
       }
 
       const SignUpForm = async (e)=>{
-        e.preventDefault();
+        //e.preventDefault();
         const email = emailInputRef.current.value;
         const password = passwdInputRef.current.value;
         const firstName = fNameInputRef.current.value;
