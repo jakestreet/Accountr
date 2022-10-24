@@ -5,6 +5,13 @@ import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext';
 import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem } from 'mdb-react-ui-kit';
 import Avatar from '@mui/material/Avatar';
+import Calendar from 'react-calendar';
+import '../styling/Calendar.css'
+import Popover from '@mui/material/Popover';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+
 export default function NavBar() {
 
     const db = getFirestore(app);
@@ -17,6 +24,18 @@ export default function NavBar() {
     const [accountsNav, setAccountsNav] = useState("");
     const [haveInfo, setHaveInfo] = useState(false);
     const { currentUser, logout, currentRole, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const open = Boolean(anchorEl);
+    const id = open ? 'simple-popover' : undefined;
 
     const HomeNavigate = async (e)=>{
         e.preventDefault();
@@ -186,6 +205,21 @@ export default function NavBar() {
                     <i className="fas fa-bars"></i>
                     </button>
                     <div className="collapse navbar-collapse" id="navbarText">
+                        <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
+                        <CalendarMonthIcon/>{new Date().toLocaleDateString()}
+                        </Button>
+                        <Popover
+                            id={id}
+                            open={open}
+                            anchorEl={anchorEl}
+                            onClose={handleClose}
+                            anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'left',
+                            }}
+                        >
+                            <Typography sx={{ p: 2 }}><Calendar/></Typography>
+                        </Popover>
                         <div className="gap-2 d-flex">
                             <MDBDropdown>
                                 <MDBDropdownToggle floating className='mx-auto' style={{background: 'rgba(255,255,255,1)'}}>
@@ -220,7 +254,7 @@ export default function NavBar() {
                         <img
                         src='/images/logo.png'
                         className="rounded-pill"
-                        alt="Townhouses and Skyscrapers"
+                        alt="Accountr"
                         width="175"
                         />
                     </div>
@@ -231,8 +265,8 @@ export default function NavBar() {
             return (
                 <img
                         src='/images/logo.png'
-                        className="rounded-pill"
-                        alt="Townhouses and Skyscrapers"
+                        className="rounded-pill m-auto"
+                        alt="Accountr"
                         width="175"
                         />
             )
@@ -270,7 +304,7 @@ export default function NavBar() {
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
                 <div className="container-fluid">
                     {/* eslint-disable-next-line*/}
-                    {RenderNav()}
+                    {RenderNav()}       
                 </div>  
             </nav> 
         </div>       
