@@ -2,7 +2,7 @@ import { app } from '../components/utils/firebase';
 import { useState, useEffect, useRef } from 'react'
 import { collection, query, getDocs, getFirestore, doc, getDoc, setDoc, updateDoc, where, deleteDoc  } from "firebase/firestore";
 import { useAuth } from '../contexts/AuthContext';
-import { MDBBtn, MDBCardText } from 'mdb-react-ui-kit';
+import { MDBBtn, MDBCard, MDBCardBody, MDBCardText, MDBRow, MDBCol } from 'mdb-react-ui-kit';
 import { Alert, CircularProgress } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
@@ -51,8 +51,16 @@ export default function AccountsPage() {
 
     // Edit Account
     const [openEditAcc, setEditAcc] = useState(false);
-    const handleOpenEditAcc = () => setEditAcc(true);
+    const [openViewAcc, setViewAcc] = useState(false);
+    const handleOpenEditAcc = () => {
+        setChoiceCategory(selectedAcc.category);
+        setChoiceNormal(selectedAcc.normalSide);
+        setValue(selectedAcc.initialBal);
+        setEditAcc(true);
+    }
+    const handleOpenViewAcc = () => setViewAcc(true);
     const handleCloseEditAcc = () => setEditAcc(false);
+    const handleCloseViewAcc = () => setViewAcc(false);
     const [selectedAcc, setSelectedAcc] = useState({});
 
     // Remove Account
@@ -88,6 +96,18 @@ export default function AccountsPage() {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: 400,
+        bgcolor: 'background.paper',
+        border: '5px solid rgba(255,255,255,1)',
+        boxShadow: 24,
+        p: 4,
+    };
+
+    const styleView = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 800,
         bgcolor: 'background.paper',
         border: '5px solid rgba(255,255,255,1)',
         boxShadow: 24,
@@ -328,35 +348,160 @@ export default function AccountsPage() {
     const getAccRow = () =>{
         return(
             <div>
-                <MDBCardText className='mb-0'>Category</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.category} id='regCategory' type='text' inputRef={editCategoryInputRef}/>
-                
-                <MDBCardText className='mb-0'>Comment</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.comment} id='regCategory' type='text' inputRef={editCommentInputRef}/>
-                
-                <MDBCardText className='mb-0'>Description</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.description} id='regCategory' type='text' inputRef={editDescriptionInputRef}/>
-                
-                <MDBCardText className='mb-0'>Initial Balance</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.initialBal} id='regCategory' type='text' inputRef={editInitialBalInputRef}/>
-                
-                <MDBCardText className='mb-0'>Account Name</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.name} id='regCategory' type='text' inputRef={editNameInputRef}/>
+                <MDBInput className="mb-4" defaultValue={selectedAcc.name} id='regCategory' label="Account Name" type='text' inputRef={editNameInputRef}/>
+                <FormControl fullWidth className="mb-4" size="small">
+                    <InputLabel id="category-select-label">Category</InputLabel>
+                    <Select
+                        labelId="category-select-label"
+                        id="category-select"
+                        value={choiceCategory}
+                        label="Category"
+                        onChange={(event) => {setChoiceCategory(event.target.value)}} 
+                    >
+                        <MenuItem value={"Assets"}>Assets</MenuItem>
+                        <MenuItem value={"Liabilities"}>Liabilities</MenuItem>
+                        <MenuItem value={"Equity"}>Equity</MenuItem>
+                        <MenuItem value={"Revenue"}>Revenue</MenuItem>
+                        <MenuItem value={"Expenses"}>Expenses</MenuItem>
+                    </Select>
+                </FormControl>
+                <MDBInput className="mb-4" defaultValue={selectedAcc.subCategory} id='regCategory' label="Sub Category" type='text' inputRef={editSubCategoryInputRef}/>
+                <FormControl fullWidth className="mb-4" size="small">
+                    <InputLabel id="normal-select-label">Normal Side</InputLabel>
+                    <Select
+                        labelId="normal-select-label"
+                        id="normal-select"
+                        value={choiceNormal}
+                        label="Normal Side"
+                        onChange={(event) => {setChoiceNormal(event.target.value)}} 
+                    >
+                        <MenuItem value={"Debit"}>Debit</MenuItem>
+                        <MenuItem value={"Credit"}>Credit</MenuItem>
+                    </Select>
+                </FormControl>
+                <CurrencyTextField
+                    label="Initial Balance"
+                    placeholder="0.00"
+                    variant="outlined"
+                    value={value}
+                    currencySymbol="$"
+                    fixedDecimalLength='2'
+                    outputFormat="number"
+                    decimalCharacter="."
+                    digitGroupSeparator=","
+                    onChange={(event, value)=> setValue(value)}
+                    className='mb-4'
+                    size="small"
+                    fullWidth
+                />
+                <MDBInput className="mb-4" defaultValue={selectedAcc.order} id='regCategory' label="Order" type='text' inputRef={editOrderInputRef}/>
+                <MDBInput className="mb-4" defaultValue={selectedAcc.statement} id='regCategory' label="Statement" type='text' inputRef={editStatementInputRef}/>
+                <MDBInput className="mb-4" defaultValue={selectedAcc.description} id='regCategory' label="Description" type='text' inputRef={editDescriptionInputRef}/>
+                <MDBInput className="mb-4" defaultValue={selectedAcc.comment} id='regCategory' label="Comment" type='text' inputRef={editCommentInputRef}/>
+            </div>
+        )
+    }
 
-                {/* <MDBCardText className='mb-0'>Account Number</MDBCardText>
-                <MDBInput defaultValue={selectedUser.category} id='regCategory' type='text' inputRef={editAccountNumberInputRef}/> */}
-                
-                <MDBCardText className='mb-0'>Normal Side</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.normalSide} id='regCategory' type='text' inputRef={editNormalSideInputRef}/>
-                
-                <MDBCardText className='mb-0'>Order</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.order} id='regCategory' type='text' inputRef={editOrderInputRef}/>
-                
-                <MDBCardText className='mb-0'>Statement</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.statement} id='regCategory' type='text' inputRef={editStatementInputRef}/>
-                
-                <MDBCardText className='mb-0'>Sub Category</MDBCardText>
-                <MDBInput defaultValue={selectedAcc.subCategory} id='regCategory' type='text' inputRef={editSubCategoryInputRef}/>
+    const getViewAccRow = () =>{
+        return(
+            <div>
+                <MDBCard className="mb-4">
+                    <MDBCardBody>
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Account Name:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.name}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Category:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.category}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Sub-Category:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.subCategory}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Normal Side:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.normalSide}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Initial Balance:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.initialBal?.toLocaleString('en-us', {
+                                    style: 'currency',
+                                    currency: 'USD'
+                                })}
+                            </MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Order:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.order}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Statement:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.statement}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Description:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.description}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Comment:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.comment}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                        <hr />
+                        <MDBRow>
+                            <MDBCol sm="4">
+                            <MDBCardText className='ms-4'>Date Added:</MDBCardText>
+                            </MDBCol>
+                            <MDBCol sm="8">
+                            <MDBCardText className="text-end me-4 text-muted">{selectedAcc.dateAdded?.toLocaleDateString()}</MDBCardText>
+                            </MDBCol>
+                        </MDBRow>
+                    </MDBCardBody>
+                </MDBCard>
             </div>
         )
     }
@@ -449,7 +594,7 @@ export default function AccountsPage() {
                 return(
                     currentRole === "Admin" ? 
                     <div className="d-flex gap-2">
-                        <MDBBtn onClick={() => {  }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        <MDBBtn onClick={() => { handleOpenViewAcc() }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                             View
                         </MDBBtn>
                         <MDBBtn onClick={() => { (handleOpenEditAcc()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
@@ -526,7 +671,6 @@ export default function AccountsPage() {
                         size="small"
                         fullWidth
                     />
-                    {/* <MDBInput wrapperClass='mb-4' label='Initial Balance' id='regInitialBal' type='text'  inputRef={initialBalInputRef}></MDBInput> */}
                     <FormControl fullWidth className="mb-4" size="small">
                         <InputLabel id="normal-select-label">Normal Side</InputLabel>
                         <Select
@@ -544,6 +688,13 @@ export default function AccountsPage() {
                     <MDBInput wrapperClass='mb-4' label='Statement' id='regStatement' type='text' inputRef={statementInputRef}/>
                     {loading ? <CircularProgress className='d-md-flex mb-2 m-auto'/> : <MDBBtn onClick={() => {NewAccountForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create Account</MDBBtn>}
                     <MDBBtn onClick={() => {handleCloseNewAccount()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                </Box>
+            </Modal>
+            <Modal open={openViewAcc} onClose={handleCloseViewAcc} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+                <Box sx={styleView}>
+                    {getViewAccRow()}
+                    <MDBBtn className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>View Ledger</MDBBtn>
+                    <MDBBtn onClick={handleCloseViewAcc} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
             </Modal>
             <Modal open={openEditAcc} onClose={handleCloseEditAcc} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
