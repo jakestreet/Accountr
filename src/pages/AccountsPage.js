@@ -674,7 +674,7 @@ export default function AccountsPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
         },[]);
     return(
-        <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
+        <div style={{ height: "85vh", marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
             <div className="d-md-flex m-auto mb-3 gap-2">
             <MDBTooltip tag='a' placement="auto" title="Refresh to view new totals">
                 <MDBBtn onClick={() => {GetRequests()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
@@ -771,35 +771,38 @@ export default function AccountsPage() {
                     <MDBBtn onClick={handleCloseRemoveConfirmation} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
             </Modal>
-            <div style={{ height: 1000, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}} id="capture">            
-                <DataGrid
-                    sx={{ "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: "rgba(41,121,255,1)",
-                        color: "rgba(255,255,255,1)",
-                        fontSize: 16,
-                    }, 
-                    '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
-                        outline: 'none', }
+            <div style={{ display: 'flex', height: '100%' }}>
+                <div id="capture" style={{ flexGrow: 1}}>
+                    <DataGrid
+                        sx={{ "& .MuiDataGrid-columnHeaders": {
+                            backgroundColor: "rgba(41,121,255,1)",
+                            color: "rgba(255,255,255,1)",
+                            fontSize: 16,
+                        }, 
+                        '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
+                            outline: 'none', }
+                        }}
+                    rowHeight={100}
+                    rows={rows}
+                    columns={columns}
+                    autoPageSize
+                    disableDensitySelector
+                    onCellClick = {currentlySelected}
+                    getRowId={(row) => row.id}
+                    components={{ 
+                        Pagination: CustomPagination,
+                        Toolbar: GridToolbar, 
+                        }}
+                    hideFooterRowCount={true}
+                    hideFooterSelectedRowCount={true}
+                    componentsProps={{
+                        toolbar: {
+                        showQuickFilter: true,
+                        quickFilterProps: { debounceMs: 500 },
+                        },
                     }}
-                rowHeight={100}
-                rows={rows}
-                columns={columns}
-                pageSize={10}
-                onCellClick = {currentlySelected}
-                getRowId={(row) => row.id}
-                components={{ 
-                    Pagination: CustomPagination,
-                    Toolbar: GridToolbar, 
-                    }}
-                hideFooterRowCount={true}
-                hideFooterSelectedRowCount={true}
-                componentsProps={{
-                    toolbar: {
-                      showQuickFilter: true,
-                      quickFilterProps: { debounceMs: 500 },
-                    },
-                }}
-                />
+                    />
+                </div>
             </div>
             <div class="fixed-bottom">
             <MDBTooltip tag='a' placement="auto" title="Help">

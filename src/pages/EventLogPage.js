@@ -9,6 +9,7 @@ import {
     DataGrid,
     gridPageCountSelector,
     gridPageSelector,
+    GridToolbar,
     useGridApiContext,
     useGridSelector,
   } from '@mui/x-data-grid';
@@ -142,7 +143,7 @@ export default function EventLogPage() {
         },[]);
 
   return (
-    <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
+    <div style={{ height: "85vh", marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
         <div className="d-md-flex m-auto mb-3 gap-2">
         <MDBTooltip tag='a' placement="auto" title="Refresh to view new changes">
           <MDBBtn onClick={() => {GetEvents()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
@@ -176,27 +177,39 @@ export default function EventLogPage() {
                 <MDBBtn onClick={() => {handleCloseImages()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
             </Box>
         </Modal>
-        <DataGrid
-            sx={{ "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "rgba(41,121,255,1)",
-                color: "rgba(255,255,255,1)",
-                fontSize: 16,
-              }, 
-              '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
-                outline: 'none', }
-            }}
-            rowHeight={100}
-            rows={rows}
-            columns={columns}
-            pageSize={10}
-            onCellClick = {currentlySelected}
-            components={{ 
-                Pagination: CustomPagination
-                }}
-            hideFooterRowCount={true}
-            hideFooterSelectedRowCount={true}
-            initialState={{sorting: { sortModel: [{ field: 'date', sort: 'desc' }]}}}
-        />
+        <div style={{ display: 'flex', height: '100%' }}>
+          <div id="capture" style={{ flexGrow: 1}}>
+            <DataGrid
+              sx={{ "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "rgba(41,121,255,1)",
+                  color: "rgba(255,255,255,1)",
+                  fontSize: 16,
+                }, 
+                '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
+                  outline: 'none', }
+              }}
+              rowHeight={80}
+              rows={rows}
+              columns={columns}
+              autoPageSize
+              disableDensitySelector
+              onCellClick = {currentlySelected}
+              components={{ 
+                  Pagination: CustomPagination,
+                  Toolbar: GridToolbar, 
+                  }}
+              hideFooterRowCount={true}
+              hideFooterSelectedRowCount={true}
+              initialState={{sorting: { sortModel: [{ field: 'date', sort: 'desc' }]}}}
+              componentsProps={{
+                toolbar: {
+                  showQuickFilter: true,
+                  quickFilterProps: { debounceMs: 500 },
+                },
+              }}
+            />
+          </div>
+        </div>
       <div class="fixed-bottom">
       <MDBTooltip tag='a' placement="auto" title="Help">
         <button type="button" class="btn btn-primary btn-floating" onClick={() => {handleOpenHelp()}}>?</button>
