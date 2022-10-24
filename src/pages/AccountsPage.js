@@ -169,8 +169,16 @@ export default function AccountsPage() {
         const statement = statementInputRef.current.value;
         const subCategory = subCategoryInputRef.current.value;
         var accountNumber;
+        var duplicate = false;
+
+        rows.forEach(element => {
+            if(accountName === element.name) {
+                duplicate = true;
+            }
+        });
 
         try{
+            if(duplicate === false) {
             setLoading(true);
             const accountsRef = collection(db, "accounts");
         
@@ -234,6 +242,12 @@ export default function AccountsPage() {
             setLoading(false);
             setAlert("Account succesfully created!")
             setOpenAlert(true);
+            }
+            else {
+                setAlert("Account name already exists!")
+                setOpenAlert(true);
+            }
+            
         }
         catch (error){
             setAlert(error.message);
@@ -518,35 +532,58 @@ export default function AccountsPage() {
 
     const updateAccount = async(e) => {
         e.preventDefault();
-        const category = editCategoryInputRef.current.value;
+        const category = choiceCategory
         const comment = editCommentInputRef.current.value;
         const description = editDescriptionInputRef.current.value;
-        const initialBal = editInitialBalInputRef.current.value;
+        const initialBal = value
         const accountName = editNameInputRef.current.value;
-        const normalSide = editNormalSideInputRef.current.value;
+        const normalSide = choiceNormal
         const order = editOrderInputRef.current.value;
         const statement = editStatementInputRef.current.value;
         const subCategory = editSubCategoryInputRef.current.value;
+        var duplicate = false;
 
+        rows.forEach(element => {
+            if(accountName === element.name) {
+                duplicate = true;
+            }
+        });
+        if(accountName === selectedAcc.name) {
+            duplicate = false;
+        }
         console.log(selectedAcc);
 
         try{
-            const accRef = doc(db, "accounts", selectedAcc.id)
+            if(duplicate === false) {
+                setLoading(true);
+                const accRef = doc(db, "accounts", selectedAcc.id)
             
-            await updateDoc(accRef, {
-                category: category,
-                comment: comment,
-                description: description,
-                initialBal: initialBal,
-                accountName: accountName,
-                normalSide: normalSide,
-                order: order,
-                statement: statement,
-                subCategory: subCategory
-            });
+                await updateDoc(accRef, {
+                    category: category,
+                    comment: comment,
+                    description: description,
+                    initialBal: initialBal,
+                    accountName: accountName,
+                    normalSide: normalSide,
+                    order: order,
+                    statement: statement,
+                    subCategory: subCategory
+                });
 
-            setAlert("Edit Account Succesful!");
-            setOpenAlert(true);
+                const id = await storeEvent(currentUser.displayName);
+                // eslint-disable-next-line no-unused-vars
+                const beforeCapture = await captureEvent(id, "before");
+                // eslint-disable-next-line no-unused-vars
+                const refresh = await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 1000));
+                setLoading(false);
+                setAlert("Account succesfully created!")
+                setOpenAlert(true);
+            }
+            else {
+                setAlert("Account name already exists!")
+                setOpenAlert(true);
+            }
+
         }
         catch(error){
             setAlert("Something went wrong");
@@ -619,7 +656,7 @@ export default function AccountsPage() {
                     : 
                     <div>
                         <MDBTooltip tag='a' placement="auto" title="View this account">
-                            <MDBBtn onClick={() => {  }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                            <MDBBtn onClick={() => { handleOpenViewAcc() }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                                 View
                             </MDBBtn>
                         </MDBTooltip>
@@ -722,7 +759,7 @@ export default function AccountsPage() {
                 <Box sx={style}>
                     {SendAlert()}
                     {getAccRow()}
-                    <MDBBtn onClick={updateAccount} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Apply Changes</MDBBtn>
+                    {loading ? <CircularProgress className='d-md-flex mb-2 m-auto'/> : <MDBBtn onClick={updateAccount} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Apply Changes</MDBBtn>}
                     <MDBBtn onClick={handleCloseEditAcc} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
             </Modal>

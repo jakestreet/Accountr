@@ -252,6 +252,10 @@ export default function NavBar() {
                             {/* eslint-disable-next-line*/}
                             <a className={accountsNav} onClick={AccountsNavigate} href="" aria-current="page" style={{fontSize: 20}}>Accounts</a>
                             </li>
+                            <li className="nav-item">
+                            {/* eslint-disable-next-line*/}
+                            <a className={profileNav} onClick={ (event) => event.preventDefault() } href="" aria-current="page" style={{fontSize: 20}}>Journalizing</a>
+                            </li>
                         </ul>
                         <div style={{display: "flex", justifyContent: "flex-end", flexGrow: 1, flexBasis: 0}}>
                             <img
