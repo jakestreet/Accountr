@@ -47,11 +47,6 @@ export default function NavBar() {
         navigate("/profile");
     }
 
-    const EditProfileNavigate = async (e)=>{
-        e.preventDefault();
-        navigate("/edit-profile");
-    }
-
     const EventLogNavigate = async (e)=>{
         e.preventDefault();
         navigate("/event-log");
@@ -204,29 +199,14 @@ export default function NavBar() {
                     >
                     <i className="fas fa-bars"></i>
                     </button>
-                    <div className="collapse navbar-collapse" id="navbarText">
-                        <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
-                        <CalendarMonthIcon/>{new Date().toLocaleDateString()}
-                        </Button>
-                        <Popover
-                            id={id}
-                            open={open}
-                            anchorEl={anchorEl}
-                            onClose={handleClose}
-                            anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'left',
-                            }}
-                        >
-                            <Typography sx={{ p: 2 }}><Calendar/></Typography>
-                        </Popover>
-                        <div className="gap-2 d-flex">
+                    <div className="collapse navbar-collapse" id="navbarText" style={{display: "flex", justifyContent: "space-between"}}>
+                        <div className="gap-2 d-flex" style={{flexGrow: 1, flexBasis: 0}}>
                             <MDBDropdown>
                                 <MDBDropdownToggle floating className='mx-auto' style={{background: 'rgba(255,255,255,1)'}}>
                                 {RenderProfilePicture()}
                                 </MDBDropdownToggle>
                                 <MDBDropdownMenu>
-                                    <MDBDropdownItem onClick={EditProfileNavigate} link>Edit Profile</MDBDropdownItem>
+                                    <MDBDropdownItem onClick={ProfileNavigate} link>Profile</MDBDropdownItem>
                                     <MDBDropdownItem onClick={LogOut} link>Log Out</MDBDropdownItem>
                                 </MDBDropdownMenu>
                             </MDBDropdown>
@@ -234,41 +214,80 @@ export default function NavBar() {
                             {currentUser && currentUser.displayName + " | "}
                             </span>
                             {RenderPasswordExpirationNotif()}
+                            <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
+                            <CalendarMonthIcon/>{new Date().toLocaleDateString()}
+                            </Button>
+                            <Popover
+                                id={id}
+                                open={open}
+                                anchorEl={anchorEl}
+                                onClose={handleClose}
+                                anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'left',
+                                }}
+                            >
+                                <Typography sx={{ p: 2 }}><Calendar/></Typography>
+                            </Popover>
                         </div>
-                        <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                        <ul className="navbar-nav">
                             <li className="nav-item">
                             {/* eslint-disable-next-line*/}
-                            <a className={homeNav} onClick={HomeNavigate} href="" aria-current="page">Home</a>
+                            <a className={homeNav} onClick={HomeNavigate} href="" aria-current="page" style={{fontSize: 20}}>Home</a>
                             </li>
                             {RenderUsersTab()}
                             {RenderEventLogTab()}
                             <li className="nav-item">
                             {/* eslint-disable-next-line*/}
-                            <a className={profileNav} onClick={ProfileNavigate} href="" aria-current="page">Profile</a>
-                            </li>
-                            <li className="nav-item">
-                            {/* eslint-disable-next-line*/}
-                            <a className={accountsNav} onClick={AccountsNavigate} href="" aria-current="page">Accounts</a>
+                            <a className={accountsNav} onClick={AccountsNavigate} href="" aria-current="page" style={{fontSize: 20}}>Accounts</a>
                             </li>
                         </ul>
-                        <img
-                        src='/images/logo.png'
-                        className="rounded-pill"
-                        alt="Accountr"
-                        width="175"
-                        />
+                        <div style={{display: "flex", justifyContent: "flex-end", flexGrow: 1, flexBasis: 0}}>
+                            <img
+                                src='/images/logo.png'
+                                className="rounded-pill"
+                                alt="Accountr"
+                                width="175"
+                            />
+                        </div>
                     </div>
                 </div>
             )
         }
         else {
             return (
-                <img
-                        src='/images/logo.png'
-                        className="rounded-pill m-auto"
-                        alt="Accountr"
-                        width="175"
-                        />
+                <div className="container-fluid">
+                    <div className="collapse navbar-collapse" id="navbarText" style={{display: "flex", justifyContent: "space-between"}}>
+                        <div style={{flexGrow: 1, flexBasis: 0}}>
+                            <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
+                            <CalendarMonthIcon/>{new Date().toLocaleDateString()}
+                            </Button>
+                            <Popover
+                                id={id}
+                                open={open}
+                                anchorEl={anchorEl}
+                                onClose={handleClose}
+                                anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'left',
+                                }}
+                            >
+                                <Typography sx={{ p: 2 }}><Calendar/></Typography>
+                            </Popover>
+                        </div>
+                        <div>
+                            <h2>Login</h2>
+                        </div>
+                        <div style={{display: "flex", justifyContent: "flex-end", flexGrow: 1, flexBasis: 0}}>
+                            <img
+                                src='/images/logo.png'
+                                className="rounded-pill"
+                                alt="Accountr"
+                                width="175"
+                            />
+                        </div>
+                    </div>
+                </div>
             )
         }
     }
@@ -279,7 +298,7 @@ export default function NavBar() {
                 return (
                     <li className="nav-item">
                     {/* eslint-disable-next-line*/}
-                    <a className={usersNav} onClick={UsersNavigate} href="">Users</a>
+                    <a className={usersNav} onClick={UsersNavigate} href="" style={{fontSize: 20}}>Users</a>
                     </li>
                 )
             }
@@ -292,7 +311,7 @@ export default function NavBar() {
                 return (
                     <li className="nav-item">
                     {/* eslint-disable-next-line*/}
-                    <a className={eventLogNav} onClick={EventLogNavigate} href="">Event Log</a>
+                    <a className={eventLogNav} onClick={EventLogNavigate} href="" style={{fontSize: 20}}>Event Log</a>
                     </li>
                 )
             }
@@ -302,7 +321,7 @@ export default function NavBar() {
     return (
         <div>
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
-                <div className="container-fluid">
+                <div className="container-fluid justify-content-between">
                     {/* eslint-disable-next-line*/}
                     {RenderNav()}       
                 </div>  

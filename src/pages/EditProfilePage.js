@@ -8,6 +8,7 @@ import Collapse from '@mui/material/Collapse';
 import CloseIcon from '@mui/icons-material/Close'
 import { doc, updateDoc, getDoc, getFirestore } from "firebase/firestore";
 import { app, auth } from '../components/utils/firebase'
+import { useNavigate } from 'react-router-dom';
 
 export default function EditProfilePage() {
 
@@ -20,6 +21,12 @@ export default function EditProfilePage() {
     const addressInputRef = useRef();
     const dobInputRef = useRef();
     const [openAlert, setOpenAlert] = useState(false);
+    const navigate = useNavigate();
+
+    const ProfileNavigate = async (e)=>{
+      e.preventDefault();
+      navigate("/profile");
+  }
 
     function handleChange(e) {
         if (e.target.files[0]) {
@@ -47,13 +54,12 @@ export default function EditProfilePage() {
         }
         
         const uploadInformation = await updateDoc(docRef, {
-            firstName: fNameInputRef.current.value,
-            lastName: lNameInputRef.current.value,
+            firstname: fNameInputRef.current.value,
+            lastname: lNameInputRef.current.value,
             address: addressInputRef.current.value,
             dob: dobInputRef.current.value
         }).then(setCurrentUserInfo(userInfo))
         setOpenAlert(true);
-        
     }
 
     function RenderInformation() {
@@ -94,7 +100,12 @@ export default function EditProfilePage() {
                 </MDBRow>
                 <MDBRow className="row d-flex justify-content-center">
                     <MDBCol sm="4" className="col d-flex justify-content-center">
-                    <MDBBtn onClick={()=>{UpdateInformation()}} className="mt-2 mb-4">Confirm</MDBBtn>
+                    <MDBBtn onClick={()=>{UpdateInformation()}} className="mt-2 mb-2">Confirm</MDBBtn>
+                    </MDBCol>
+                </MDBRow>
+                <MDBRow className="row d-flex justify-content-center">
+                    <MDBCol sm="4" className="col d-flex justify-content-center">
+                    <MDBBtn onClick={(e)=>{ProfileNavigate(e)}} className="mt-2 mb-4">Return</MDBBtn>
                     </MDBCol>
                 </MDBRow>
             </div>

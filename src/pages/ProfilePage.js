@@ -1,11 +1,18 @@
 import { useAuth } from '../contexts/AuthContext';
 import Avatar from '@mui/material/Avatar';
-import { MDBCol, MDBRow, MDBCard, MDBCardBody, MDBCardText } from 'mdb-react-ui-kit';
+import { MDBCol, MDBRow, MDBCard, MDBCardBody, MDBCardText, MDBBtn } from 'mdb-react-ui-kit';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProfilePage() {
   
 
     const { currentUser, currentRole, passExpirationDays, currentUserInfo } = useAuth();
+    const navigate = useNavigate();
+
+    const EditProfileNavigate = async (e)=>{
+      e.preventDefault();
+      navigate("/edit-profile");
+  }
 
 
 
@@ -64,6 +71,9 @@ export default function ProfilePage() {
                   <MDBCardText className="text-end me-4 text-muted">Password expires in {currentUserInfo && passExpirationDays} days</MDBCardText>
                 </MDBCol>
               </MDBRow>
+              <MDBCardBody className="text-center mt-4">
+                <MDBBtn onClick={(e) => {EditProfileNavigate(e)}} className=''>Edit Profile</MDBBtn>
+              </MDBCardBody>
             </MDBCardBody>
           </MDBCard>
         </MDBCol>

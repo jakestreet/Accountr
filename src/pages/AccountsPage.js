@@ -21,19 +21,29 @@ import Modal from '@mui/material/Modal';
 import { MDBInput } from 'mdb-react-ui-kit';
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
-import { GTranslate } from '@mui/icons-material';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import CurrencyTextField from '../components/CurrencyTextField';
 
 export default function AccountsPage() {
     const db = getFirestore(app);
 
     const [rows, setRows] = useState([]);
 
-    const {currentUser, captureEvent, storeEvent} = useAuth();
+    const {currentUser, captureEvent, storeEvent, currentRole} = useAuth();
 
 
     const [openNewAccount, setOpenNewAccount] = useState(false);
     const handleOpenNewAccount = () => setOpenNewAccount(true);
-    const handleCloseNewAccount = () => setOpenNewAccount(false);
+    const handleCloseNewAccount = () => {
+        setOpenNewAccount(false);
+        setOpenAlert(false);
+        setChoiceNormal('');
+        setChoiceCategory('');
+        setValue();
+    }
 
     const [alert, setAlert] = useState("");
     const [openAlert, setOpenAlert] = useState(true);
@@ -51,12 +61,9 @@ export default function AccountsPage() {
     const handleCloseRemoveConfirmation = () => setRemoveConfirmation(false);
 
     // Input References
-    const categoryInputRef = useRef();
     const commentInputRef = useRef();
     const descriptionInputRef = useRef();
-    const initialBalInputRef = useRef();
     const nameInputRef = useRef();
-    const normalSideInputRef = useRef();
     const orderInputRef = useRef();
     const statementInputRef = useRef();
     const subCategoryInputRef = useRef();
@@ -71,6 +78,9 @@ export default function AccountsPage() {
     const editOrderInputRef = useRef();
     const editStatementInputRef = useRef();
     const editSubCategoryInputRef = useRef();
+    const [choiceCategory, setChoiceCategory] = useState('');
+    const [choiceNormal, setChoiceNormal] = useState('');
+    const [value, setValue] = useState();
 
     const style = {
         position: 'absolute',
@@ -83,6 +93,19 @@ export default function AccountsPage() {
         boxShadow: 24,
         p: 4,
     };
+
+    const optionsCategory = [
+        { value: "Assets", label: "Assets" },
+        { value: "Liabilities", label: "Liabilities" },
+        { value: "Equity", label: "Equity" },
+        { value: "Revenue", label: "Revenue" },
+        { value: "Expenses", label: "Expenses" },
+      ]
+
+      const optionsNormal = [
+        { value: "Debit", label: "Debit" },
+        { value: "Credit", label: "Credit" },
+      ]
     
     const DeleteAccount = async (e)=>{
         const accountNumber = selectedAcc.id;
@@ -90,10 +113,19 @@ export default function AccountsPage() {
         console.log(`Removing ${accountNumber}`);
 
         try{
+            setLoading(true);
+            const accountsRef = collection(db, "accounts");
+
             const accRef = doc(db, "accounts", selectedAcc.id)
 
             await deleteDoc(accRef);
-            GetRequests()
+            
+            const id = await storeEvent(currentUser.displayName);
+            // eslint-disable-next-line no-unused-vars
+            const beforeCapture = await captureEvent(id, "before");
+            // eslint-disable-next-line no-unused-vars
+            const refresh = await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 1000));
+            setLoading(false)
             setAlert("Account removed succesful!");
             setOpenAlert(true);
         }
@@ -105,12 +137,12 @@ export default function AccountsPage() {
 
     const NewAccountForm = async (e)=> {
         // e.preventDefault();
-        const category = categoryInputRef.current.value;
+        const category = choiceCategory;
         const comment = commentInputRef.current.value;
         const description = descriptionInputRef.current.value;
-        const initialBal = initialBalInputRef.current.value;
+        const initialBal = value;
         const accountName = nameInputRef.current.value;
-        const normalSide = normalSideInputRef.current.value;
+        const normalSide = choiceNormal;
         const order = orderInputRef.current.value;
         const statement = statementInputRef.current.value;
         const subCategory = subCategoryInputRef.current.value;
@@ -121,19 +153,19 @@ export default function AccountsPage() {
             const accountsRef = collection(db, "accounts");
         
             var lowerRange;
-            if(category === "assets") {
+            if(category === "Assets") {
                 lowerRange = 100;
             }
-            else if(category === "liabilities") {
+            else if(category === "Liabilities") {
                 lowerRange = 200;
             }
-            else if(category === "equity") {
+            else if(category === "Equity") {
                 lowerRange = 300;
             }
-            else if(category === "revenues") {
+            else if(category === "Revenue") {
                 lowerRange = 400;
             }
-            else if(category === "expenses") {
+            else if(category === "Expenses") {
                 lowerRange = 500;
             }
             const upperRange = lowerRange + 100;
@@ -217,7 +249,8 @@ export default function AccountsPage() {
                     order: doc.data().order,
                     statement: doc.data().statement,
                     subCategory: doc.data().subCategory,
-                    userID: doc.data().userID
+                    userID: doc.data().userID,
+                    accountNumber: doc.data().accountNumber,
                 })
             });
 
@@ -376,24 +409,8 @@ export default function AccountsPage() {
     
     const columns = [
         {
-            field: "category",
-            headerName: "Category",
-            flex: 1
-        },
-        {
-            field: "comment",
-            headerName: "Comment",
-            flex: 1
-        },
-        {
-            field: "dateAdded",
-            headerName: "Date Added",
-            flex: 1,
-            valueFormatter: params => params?.value.toLocaleDateString('en-US'),
-        },
-        {
-            field: "initialBal",
-            headerName: "Initial Balance",
+            field: "accountNumber",
+            headerName: "Account Number",
             flex: 1
         },
         {
@@ -402,18 +419,8 @@ export default function AccountsPage() {
             flex: 1
         },
         {
-            field: "normalSide",
-            headerName: "Normal Side",
-            flex: 1
-        },
-        {
-            field: "order",
-            headerName: "Order",
-            flex: 1
-        },
-        {
-            field: "statement",
-            headerName: "Statement",
+            field: "category",
+            headerName: "Category",
             flex: 1
         },
         {
@@ -422,20 +429,41 @@ export default function AccountsPage() {
             flex: 1
         },
         {
-            field: "userID",
-            headerName: "User ID",
-            flex: 1
+            field: "initialBal",
+            headerName: "Initial Balance",
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleString('en-us', {
+                style: 'currency',
+                currency: 'USD'
+            })
+        },
+        {
+            field: "dateAdded",
+            headerName: "Date Added",
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleDateString('en-US'),
         },
         {
             field: "Actions", flex: 1,
             renderCell: (cellValues) => {
                 return(
-                    <div>
+                    currentRole === "Admin" ? 
+                    <div className="d-flex gap-2">
+                        <MDBBtn onClick={() => {  }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                            View
+                        </MDBBtn>
                         <MDBBtn onClick={() => { (handleOpenEditAcc()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
                             Edit
                         </MDBBtn>
-                        <MDBBtn onClick={() => { (handleOpenRemoveConfirmation()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                        {cellValues.row.initialBal === 0 ? 
+                        <MDBBtn onClick={() => { (handleOpenRemoveConfirmation()) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(255,0,0,1)'}}>
                             Remove
+                        </MDBBtn> : null}
+                    </div>
+                    : 
+                    <div>
+                        <MDBBtn onClick={() => {  }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
+                            View
                         </MDBBtn>
                     </div>
                 )
@@ -451,10 +479,9 @@ export default function AccountsPage() {
         },[]);
     return(
         <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
-            <h1 className="text-center mt-3">Accounts</h1>
             <div className="d-md-flex m-auto mb-3 gap-2">
                 <MDBBtn onClick={() => {GetRequests()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
-                <MDBBtn onClick={() => {handleOpenNewAccount()}} style={{background: 'rgba(41,121,255,1)'}}>Create New Account</MDBBtn>
+                {currentRole === "Admin" ? <MDBBtn onClick={() => {handleOpenNewAccount()}} style={{background: 'rgba(41,121,255,1)'}}>Create New Account</MDBBtn> : null}
             </div>
             <Modal
                 open={openNewAccount}
@@ -464,15 +491,57 @@ export default function AccountsPage() {
             >
                 <Box sx={style}>
                     {SendAlert()}
-                    <MDBInput wrapperClass='mb-4' label='Category' id='regCategory' type='text' inputRef={categoryInputRef}/>
-                    <MDBInput wrapperClass='mb-4' label='Comment' id='regComment' type='text' inputRef={commentInputRef}/>
-                    <MDBInput wrapperClass='mb-4' label='Description' id='regDescription' type='text' inputRef={descriptionInputRef}/>
-                    <MDBInput wrapperClass='mb-4' label='Initial Balance' id='regInitialBal' type='text'  inputRef={initialBalInputRef}/>
                     <MDBInput wrapperClass='mb-4' label='Account Name' id='regAccountName' type='text' inputRef={nameInputRef}/>
-                    <MDBInput wrapperClass='mb-4' label='Normal Side' id='regNormalSide' type='text' inputRef={normalSideInputRef}/>
-                    <MDBInput wrapperClass='mb-4' label='Order' id='regOrder' type='text' inputRef={orderInputRef}/>
-                    <MDBInput wrapperClass='mb-4' label='Statement' id='regStatement' type='text' inputRef={statementInputRef}/>
+                    <FormControl fullWidth className="mb-4" size="small">
+                        <InputLabel id="category-select-label">Category</InputLabel>
+                        <Select
+                            labelId="category-select-label"
+                            id="category-select"
+                            value={choiceCategory}
+                            label="Category"
+                            onChange={(event) => {setChoiceCategory(event.target.value)}} 
+                        >
+                            <MenuItem value={"Assets"}>Assets</MenuItem>
+                            <MenuItem value={"Liabilities"}>Liabilities</MenuItem>
+                            <MenuItem value={"Equity"}>Equity</MenuItem>
+                            <MenuItem value={"Revenue"}>Revenue</MenuItem>
+                            <MenuItem value={"Expenses"}>Expenses</MenuItem>
+                        </Select>
+                    </FormControl>
                     <MDBInput wrapperClass='mb-4' label='Sub-Category' id='regSubCategory' type='text' inputRef={subCategoryInputRef}/>
+                    <MDBInput wrapperClass='mb-4' label='Description' id='regDescription' type='text' inputRef={descriptionInputRef}/>
+                    <MDBInput wrapperClass='mb-4' label='Comment' id='regComment' type='text' inputRef={commentInputRef}/>
+                    <CurrencyTextField
+                        label="Initial Balance"
+                        placeholder="0.00"
+                        variant="outlined"
+                        value={value}
+                        currencySymbol="$"
+                        fixedDecimalLength='2'
+                        outputFormat="number"
+                        decimalCharacter="."
+                        digitGroupSeparator=","
+                        onChange={(event, value)=> setValue(value)}
+                        className='mb-4'
+                        size="small"
+                        fullWidth
+                    />
+                    {/* <MDBInput wrapperClass='mb-4' label='Initial Balance' id='regInitialBal' type='text'  inputRef={initialBalInputRef}></MDBInput> */}
+                    <FormControl fullWidth className="mb-4" size="small">
+                        <InputLabel id="normal-select-label">Normal Side</InputLabel>
+                        <Select
+                            labelId="normal-select-label"
+                            id="normal-select"
+                            value={choiceNormal}
+                            label="Normal Side"
+                            onChange={(event) => {setChoiceNormal(event.target.value)}} 
+                        >
+                            <MenuItem value={"Debit"}>Debit</MenuItem>
+                            <MenuItem value={"Credit"}>Credit</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <MDBInput wrapperClass='mb-4' label='Order' id='regOrder' type='number' inputRef={orderInputRef}/>
+                    <MDBInput wrapperClass='mb-4' label='Statement' id='regStatement' type='text' inputRef={statementInputRef}/>
                     {loading ? <CircularProgress className='d-md-flex mb-2 m-auto'/> : <MDBBtn onClick={() => {NewAccountForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create Account</MDBBtn>}
                     <MDBBtn onClick={() => {handleCloseNewAccount()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
@@ -489,11 +558,11 @@ export default function AccountsPage() {
                 <Box sx={style}>
                     {SendAlert()}
                     {RemoveConfirmation()}
-                    <MDBBtn onClick={DeleteAccount} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Delete</MDBBtn>
+                    {loading ? <CircularProgress className='d-md-flex mb-2 m-auto'/> : <MDBBtn onClick={DeleteAccount} className="d-md-flex m-auto mt-4" style={{background: 'rgba(255,0,0,1)'}}>Delete</MDBBtn>}
                     <MDBBtn onClick={handleCloseRemoveConfirmation} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
             </Modal>
-            <div style={{ height: 1160, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}} id="capture">            
+            <div style={{ height: 1000, marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800}} id="capture">            
                 <DataGrid
                     sx={{ "& .MuiDataGrid-columnHeaders": {
                         backgroundColor: "rgba(41,121,255,1)",
@@ -503,7 +572,7 @@ export default function AccountsPage() {
                     '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
                         outline: 'none', }
                     }}
-                rowHeight={80}
+                rowHeight={100}
                 rows={rows}
                 columns={columns}
                 pageSize={10}
