@@ -16,6 +16,7 @@ import {
   MDBTabsPane,
   MDBBtn,
   MDBInput,
+  MDBTooltip
 }
 from 'mdb-react-ui-kit';
 import { Alert } from '@mui/material';
@@ -335,14 +336,20 @@ export default function LoginPage() {
         
               <MDBTabs pills justify className='mb-3 d-flex flex-row justify-content-between'>
                 <MDBTabsItem>
+                <MDBTooltip tag='a' placement="auto" title="Login to a previous account">
                   <MDBTabsLink onClick={() => handleJustifyClick('tab1')} active={justifyActive === 'tab1'}>
                     Login
                   </MDBTabsLink>
+                </MDBTooltip>
+                  
                 </MDBTabsItem>
                 <MDBTabsItem>
+                <MDBTooltip tag='a' placement="auto" title="Create an account">
                   <MDBTabsLink onClick={() => handleJustifyClick('tab2')} active={justifyActive === 'tab2'}>
                     Register
                   </MDBTabsLink>
+                </MDBTooltip>
+                  
                 </MDBTabsItem>
               </MDBTabs>
         
@@ -352,10 +359,15 @@ export default function LoginPage() {
         
                   <MDBInput wrapperClass='mb-4' label='Username' id='username' type='text' inputRef={usernameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Password' id='loginPassword' type='password' inputRef={loginPasswdInputRef}/>
-                  <a onClick={ResetNav} href="!#" >Forgot password?</a>
+                  <MDBTooltip tag='a' placement="auto" title="Follow link to reset password">
+                    <a onClick={ResetNav} href="!#" >Forgot password?</a>
+                  </MDBTooltip>
+                  
                   <div className="d-flex justify-content-between mx-4 mb-4"></div>
-        
-                  <MDBBtn onClick={LoginForm} className="mb-4 w-100">Sign in</MDBBtn>
+                  <MDBTooltip tag='a' placement="auto" title="Finish sign in process">
+                    <MDBBtn onClick={LoginForm} className="mb-4 w-100">Sign in</MDBBtn>
+                  </MDBTooltip>
+                  
                   
         
                 </MDBTabsPane>
@@ -398,8 +410,10 @@ export default function LoginPage() {
                   <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
                   <MDBInput wrapperClass='mb-4' label='Date of Birth' id='regDoB' type='date' inputRef={dobInputRef}/>
-        
-                  <MDBBtn onClick={SignUpForm} className="mb-4 w-100">Sign up</MDBBtn>
+                  <MDBTooltip tag='a' placement="auto" title="Finish sign up process">
+                    <MDBBtn onClick={SignUpForm} className="mb-4 w-100">Sign up</MDBBtn>
+                  </MDBTooltip>
+                  
         
                 </MDBTabsPane>
         

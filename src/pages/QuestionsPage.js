@@ -4,6 +4,7 @@ import {
     MDBInput,
     MDBBtn,
     MDBCardText,
+    MDBTooltip
   }
 from 'mdb-react-ui-kit';
 import { useAuth } from '../contexts/AuthContext';
@@ -89,8 +90,13 @@ export default function QuestionsPage() {
           <MDBInput wrapperClass='mb-2 w-50 m-auto mt-2' label='Question 1 Answer' id='resetEmail' type='text' inputRef={answerOneInputRef}/>
           <MDBCardText className='mt-4 m-auto'>{questionTwo}</MDBCardText>
           <MDBInput wrapperClass='mb-4 w-50 m-auto mt-2' label='Question 2 Answer' id='resetEmail' type='text' inputRef={answerTwoInputRef}/>
-          <MDBBtn onClick={CompareAnswers} className="mb-4 w-25 m-auto mt-2">Answer Questions</MDBBtn>
-          <MDBBtn className="mb-4 w-25 m-auto" href="/" color="link">Return to Log In</MDBBtn>
+          <MDBTooltip tag='a' placement="auto" title="Answer personal questions to reset email">
+            <MDBBtn onClick={CompareAnswers} className="mb-4 w-25 m-auto mt-2">Answer Questions</MDBBtn>
+          </MDBTooltip>
+          <MDBTooltip tag='a' placement="auto" title="Return to login screen">
+            <MDBBtn className="mb-4 w-25 m-auto" href="/" color="link">Return to Log In</MDBBtn>
+          </MDBTooltip>
+          
         </MDBContainer>
       </div>
         
