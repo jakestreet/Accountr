@@ -6,10 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { MDBDropdown, MDBDropdownMenu, MDBDropdownToggle, MDBDropdownItem } from 'mdb-react-ui-kit';
 import Avatar from '@mui/material/Avatar';
 import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
+import '../styling/Calendar.css'
 import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 export default function NavBar() {
 
@@ -204,6 +205,21 @@ export default function NavBar() {
                     <i className="fas fa-bars"></i>
                     </button>
                     <div className="collapse navbar-collapse" id="navbarText">
+                        <Button size="small" aria-describedby={id} variant="contained" style={{backgroundColor: 'rgba(41,121,255,1)'}} onClick={handleClick} className="me-2">
+                        <CalendarMonthIcon/>{new Date().toLocaleDateString()}
+                        </Button>
+                        <Popover
+                            id={id}
+                            open={open}
+                            anchorEl={anchorEl}
+                            onClose={handleClose}
+                            anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'left',
+                            }}
+                        >
+                            <Typography sx={{ p: 2 }}><Calendar/></Typography>
+                        </Popover>
                         <div className="gap-2 d-flex">
                             <MDBDropdown>
                                 <MDBDropdownToggle floating className='mx-auto' style={{background: 'rgba(255,255,255,1)'}}>
@@ -238,7 +254,7 @@ export default function NavBar() {
                         <img
                         src='/images/logo.png'
                         className="rounded-pill"
-                        alt="Townhouses and Skyscrapers"
+                        alt="Accountr"
                         width="175"
                         />
                     </div>
@@ -249,8 +265,8 @@ export default function NavBar() {
             return (
                 <img
                         src='/images/logo.png'
-                        className="rounded-pill"
-                        alt="Townhouses and Skyscrapers"
+                        className="rounded-pill m-auto"
+                        alt="Accountr"
                         width="175"
                         />
             )
@@ -286,28 +302,9 @@ export default function NavBar() {
     return (
         <div>
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
-               
-      <Button aria-describedby={id} variant="contained" onClick={handleClick}>
-        Calendar
-      </Button>
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-      >
-        <Typography sx={{ p: 2 }}><Calendar/></Typography>
-      </Popover>
-      <div className="container-fluid">
+                <div className="container-fluid">
                     {/* eslint-disable-next-line*/}
-                    {RenderNav()}
-                    <div>
-    </div>
-                    
+                    {RenderNav()}       
                 </div>  
             </nav> 
         </div>       
