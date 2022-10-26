@@ -149,7 +149,7 @@ export function AuthProvider({children}) {
         setQuestionOneAnswer,
         setQuestionTwoAnswer,
         captureEvent,
-        storeEvent
+        storeEvent,
     }
 
   return (
