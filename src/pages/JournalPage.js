@@ -434,6 +434,17 @@ export default function JournalPage() {
         }}
       >
         <DataGrid
+          sx={{
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "rgba(41,121,255,1)",
+              color: "rgba(255,255,255,1)",
+              fontSize: 16,
+            },
+            "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
+              {
+                outline: "none",
+              },
+          }}
           rows={rows}
           rowHeight={125}
           columns={columns}

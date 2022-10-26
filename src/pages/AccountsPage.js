@@ -33,6 +33,11 @@ import {
   useGridApiContext,
   useGridSelector,
   GridToolbar,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarExport,
+  GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
 import Pagination from "@mui/material/Pagination";
 import Box from "@mui/material/Box";
@@ -45,6 +50,9 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import CurrencyTextField from "../components/CurrencyTextField";
+import Button from "@mui/material/Button";
+import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 export default function AccountsPage() {
   const db = getFirestore(app);
@@ -134,6 +142,41 @@ export default function AccountsPage() {
     boxShadow: 24,
     p: 4,
   };
+
+  function CustomToolBar() {
+    return (
+      <GridToolbarContainer>
+        <MDBTooltip tag="a" placement="auto" title="Refresh user list">
+          <Button
+            color="primary"
+            onClick={() => {
+              GetRequests();
+            }}
+            startIcon={<RefreshIcon />}
+          >
+            Refresh
+          </Button>
+        </MDBTooltip>
+        {currentRole === "Admin" ? (
+          <MDBTooltip tag="a" placement="auto" title="Create a new user">
+            <Button
+              color="primary"
+              onClick={() => {
+                handleOpenNewAccount();
+              }}
+              startIcon={<AddIcon />}
+            >
+              Create New Account
+            </Button>
+          </MDBTooltip>
+        ) : null}
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarExport />
+        <GridToolbarQuickFilter className="ms-auto" />
+      </GridToolbarContainer>
+    );
+  }
 
   const optionsCategory = [
     { value: "Assets", label: "Assets" },
@@ -790,31 +833,6 @@ export default function AccountsPage() {
         padding: 25,
       }}
     >
-      <div className="d-md-flex m-auto mb-3 gap-2">
-        <MDBTooltip tag="a" placement="auto" title="Refresh to view new totals">
-          <MDBBtn
-            onClick={() => {
-              GetRequests();
-            }}
-            style={{ background: "rgba(41,121,255,1)" }}
-          >
-            Refresh
-          </MDBBtn>
-        </MDBTooltip>
-
-        {currentRole === "Admin" ? (
-          <MDBTooltip tag="a" placement="auto" title="Create a new account">
-            <MDBBtn
-              onClick={() => {
-                handleOpenNewAccount();
-              }}
-              style={{ background: "rgba(41,121,255,1)" }}
-            >
-              Create New Account
-            </MDBBtn>
-          </MDBTooltip>
-        ) : null}
-      </div>
       <Modal
         open={openNewAccount}
         onClose={handleCloseNewAccount}
@@ -1042,7 +1060,7 @@ export default function AccountsPage() {
             getRowId={(row) => row.id}
             components={{
               Pagination: CustomPagination,
-              Toolbar: GridToolbar,
+              Toolbar: CustomToolBar,
             }}
             hideFooterRowCount={true}
             hideFooterSelectedRowCount={true}

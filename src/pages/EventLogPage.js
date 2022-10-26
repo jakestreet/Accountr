@@ -12,9 +12,16 @@ import {
   GridToolbar,
   useGridApiContext,
   useGridSelector,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarExport,
+  GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
 import { getDownloadURL, ref } from "firebase/storage";
 import { CircularProgress, Grid } from "@mui/material";
+import Button from "@mui/material/Button";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 export default function EventLogPage() {
   const db = getFirestore(app);
@@ -46,6 +53,28 @@ export default function EventLogPage() {
     boxShadow: 24,
     p: 4,
   };
+
+  function CustomToolBar() {
+    return (
+      <GridToolbarContainer>
+        <MDBTooltip tag="a" placement="auto" title="Refresh Event Log">
+          <Button
+            color="primary"
+            onClick={() => {
+              GetEvents();
+            }}
+            startIcon={<RefreshIcon />}
+          >
+            Refresh
+          </Button>
+        </MDBTooltip>
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarExport />
+        <GridToolbarQuickFilter className="ms-auto" />
+      </GridToolbarContainer>
+    );
+  }
 
   const [rows, setRows] = useState([]);
 
@@ -162,22 +191,6 @@ export default function EventLogPage() {
         padding: 25,
       }}
     >
-      <div className="d-md-flex m-auto mb-3 gap-2">
-        <MDBTooltip
-          tag="a"
-          placement="auto"
-          title="Refresh to view new changes"
-        >
-          <MDBBtn
-            onClick={() => {
-              GetEvents();
-            }}
-            style={{ background: "rgba(41,121,255,1)" }}
-          >
-            Refresh
-          </MDBBtn>
-        </MDBTooltip>
-      </div>
       <Modal
         open={openImages}
         onClose={handleCloseImages}
@@ -242,7 +255,7 @@ export default function EventLogPage() {
             onCellClick={currentlySelected}
             components={{
               Pagination: CustomPagination,
-              Toolbar: GridToolbar,
+              Toolbar: CustomToolBar,
             }}
             hideFooterRowCount={true}
             hideFooterSelectedRowCount={true}

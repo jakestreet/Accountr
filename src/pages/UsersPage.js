@@ -32,6 +32,11 @@ import {
   useGridApiContext,
   useGridSelector,
   GridToolbar,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarExport,
+  GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
 import Pagination from "@mui/material/Pagination";
 import Box from "@mui/material/Box";
@@ -39,6 +44,10 @@ import Modal from "@mui/material/Modal";
 import { MDBInput } from "mdb-react-ui-kit";
 import PasswordChecklist from "react-password-checklist";
 import { minWidth } from "@mui/system";
+import Button from "@mui/material/Button";
+import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
+
 export default function RequestsPage() {
   const db = getFirestore(app);
   const navigate = useNavigate();
@@ -113,6 +122,40 @@ export default function RequestsPage() {
     boxShadow: 24,
     p: 4,
   };
+
+  function CustomToolBar() {
+    return (
+      <GridToolbarContainer>
+        <MDBTooltip tag="a" placement="auto" title="Refresh user list">
+          <Button
+            color="primary"
+            onClick={() => {
+              GetRequests();
+            }}
+            startIcon={<RefreshIcon />}
+          >
+            Refresh
+          </Button>
+        </MDBTooltip>
+        <MDBTooltip tag="a" placement="auto" title="Create a new user">
+          <Button
+            color="primary"
+            onClick={() => {
+              handleOpenNewUser();
+            }}
+            startIcon={<AddIcon />}
+          >
+            Create New User
+          </Button>
+        </MDBTooltip>
+
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarExport />
+        <GridToolbarQuickFilter className="ms-auto" />
+      </GridToolbarContainer>
+    );
+  }
 
   async function getRegisteredEmail() {
     try {
@@ -822,28 +865,6 @@ export default function RequestsPage() {
         padding: 25,
       }}
     >
-      <div className="d-md-flex m-auto mb-3 gap-2">
-        <MDBTooltip tag="a" placement="auto" title="Refresh user list">
-          <MDBBtn
-            onClick={() => {
-              GetRequests();
-            }}
-            style={{ background: "rgba(41,121,255,1)" }}
-          >
-            Refresh
-          </MDBBtn>
-        </MDBTooltip>
-        <MDBTooltip tag="a" placement="auto" title="Create a new user">
-          <MDBBtn
-            onClick={() => {
-              handleOpenNewUser();
-            }}
-            style={{ background: "rgba(41,121,255,1)" }}
-          >
-            Create New User
-          </MDBBtn>
-        </MDBTooltip>
-      </div>
       <Modal
         open={openNewUser}
         onClose={handleCloseNewUser}
@@ -1083,7 +1104,7 @@ export default function RequestsPage() {
             onCellClick={currentlySelected}
             components={{
               Pagination: CustomPagination,
-              Toolbar: GridToolbar,
+              Toolbar: CustomToolBar,
             }}
             hideFooterRowCount={true}
             hideFooterSelectedRowCount={true}
