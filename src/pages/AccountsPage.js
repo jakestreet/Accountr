@@ -178,19 +178,6 @@ export default function AccountsPage() {
     );
   }
 
-  const optionsCategory = [
-    { value: "Assets", label: "Assets" },
-    { value: "Liabilities", label: "Liabilities" },
-    { value: "Equity", label: "Equity" },
-    { value: "Revenue", label: "Revenue" },
-    { value: "Expenses", label: "Expenses" },
-  ];
-
-  const optionsNormal = [
-    { value: "Debit", label: "Debit" },
-    { value: "Credit", label: "Credit" },
-  ];
-
   const DeleteAccount = async (e) => {
     const accountNumber = selectedAcc.id;
 
@@ -749,8 +736,9 @@ export default function AccountsPage() {
     {
       field: "dateAdded",
       headerName: "Date Added",
+      type: "date",
       flex: 1,
-      valueFormatter: (params) => params?.value.toLocaleDateString("en-US"),
+      renderCell: (params) => params?.value.toLocaleDateString("en-US"),
     },
     {
       field: "Actions",

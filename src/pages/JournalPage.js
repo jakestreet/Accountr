@@ -1,10 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MDBBtn, MDBTooltip } from "mdb-react-ui-kit";
 import Modal from "@mui/material/Modal";
-import FullFeaturedCrudGrid from "../components/CRUDDatagrid.js";
 import * as React from "react";
 import PropTypes from "prop-types";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -18,15 +16,20 @@ import {
   GridActionsCellItem,
 } from "@mui/x-data-grid";
 import {
-  randomCreatedDate,
-  randomTraderName,
-  randomUpdatedDate,
   randomId,
 } from "@mui/x-data-grid-generator";
 import Chip from "@mui/material/Chip";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import CurrencyTextField from "../components/CurrencyTextField";
+import {
+  collection,
+  query,
+  getDocs,
+  getFirestore,
+  addDoc
+} from "firebase/firestore";
+import { app } from "../components/utils/firebase";
 
 export default function JournalPage() {
   const [openHelp, setOpenHelp] = useState(false);
@@ -36,26 +39,17 @@ export default function JournalPage() {
   const [choiceAccountTwo, setChoiceAccountTwo] = useState("");
   const [debit, setDebit] = useState();
   const [credit, setCredit] = useState();
+  const [accounts, setAccounts] = useState();
+  const [loading, setLoading] = useState(false);
+  const [sortModel, setSortModel] = React.useState([
+    {
+      field: 'dateCreated',
+      sort: 'asc',
+    },
+  ]);
+  const db = getFirestore(app);
 
-  const initialRows = [
-    {
-      id: randomId(),
-      name: { accountOne: "Expense", accountTwo: "Cash" },
-      dateCreated: randomCreatedDate(),
-      debit: { debitOne: 500, debitTwo: 0 },
-      credit: { creditOne: 0, creditTwo: 500 },
-      status: "Approved",
-    },
-    {
-      id: randomId(),
-      name: { accountOne: "Test", accountTwo: "Test" },
-      dateCreated: randomCreatedDate(),
-      debit: { debitOne: 1000, debitTwo: 0 },
-      credit: { creditOne: 0, creditTwo: 1000 },
-      status: "Approved",
-    },
-  ];
-  console.log(initialRows[0].name.accountOne);
+  const initialRows = [];
 
   function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
@@ -67,7 +61,7 @@ export default function JournalPage() {
         {
           id,
           name: { accountOne: "none", accountTwo: "none" },
-          dateCreated: randomCreatedDate(),
+          dateCreated: new Date(),
           debit: { debitOne: 0, debitTwo: 0 },
           credit: { creditOne: 0, creditTwo: 0 },
           status: "Pending",
@@ -129,7 +123,7 @@ export default function JournalPage() {
     }
   };
 
-  const processRowUpdate = (newRow) => {
+  const processRowUpdate = async (newRow) => {
     const updatedRow = { ...newRow, isNew: false };
     setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
     updatedRow.status = "Pending";
@@ -138,11 +132,15 @@ export default function JournalPage() {
     updatedRow.credit.creditTwo = credit;
     updatedRow.name.accountOne = choiceAccountOne;
     updatedRow.name.accountTwo = choiceAccountTwo;
+    const newRowID = await storeEntry(updatedRow.dateCreated, updatedRow.name.accountOne, updatedRow.name.accountTwo, updatedRow.debit.debitOne, updatedRow.credit.creditTwo)
+    updatedRow.id = newRowID;
     setChoiceAccountOne("");
     setChoiceAccountTwo("");
     setDebit();
     setCredit();
     console.log(updatedRow);
+    setRows(...rows, updatedRow);
+    const get = await GetEntries().then(setLoading(false));
     return updatedRow;
   };
 
@@ -163,7 +161,7 @@ export default function JournalPage() {
           return (
             <div className="mt-3" style={{ textAlign: "center" }}>
               <p>{params.row.dateCreated?.toDateString()}</p>
-              <hr width={250} />
+              <hr width={300} />
               <p>---</p>
             </div>
           );
@@ -171,7 +169,7 @@ export default function JournalPage() {
         return (
           <div className="mt-4" style={{ textAlign: "center" }}>
             <p>{params.row.dateCreated?.toDateString()}</p>
-            <hr width={250} />
+            <hr width={300} />
             <p>---</p>
           </div>
         );
@@ -196,29 +194,27 @@ export default function JournalPage() {
                   id="normal-select"
                   value={choiceAccountOne}
                   size="small"
-                  style={{ width: 150 }}
+                  style={{ width: 200 }}
                   onChange={(event) => {
                     setChoiceAccountOne(event.target.value);
                   }}
                 >
-                  <MenuItem value={"Cash"}>Cash</MenuItem>
-                  <MenuItem value={"Expenses"}>Expenses</MenuItem>
+                  {accounts}
                 </Select>
               </div>
-              <hr width={250} />
+              <hr width={300} />
               <Select
                 labelId="normal-select-label"
                 id="normal-select"
                 value={choiceAccountTwo}
                 size="small"
                 className="mb-2"
-                style={{ width: 150 }}
+                style={{ width: 200 }}
                 onChange={(event) => {
                   setChoiceAccountTwo(event.target.value);
                 }}
               >
-                <MenuItem value={"Cash"}>Cash</MenuItem>
-                <MenuItem value={"Expenses"}>Expenses</MenuItem>
+                {accounts}
               </Select>
             </div>
           );
@@ -226,7 +222,7 @@ export default function JournalPage() {
           return (
             <div className="mt-4" style={{ textAlign: "center" }}>
               <p>{params.row.name?.accountOne}</p>
-              <hr width={250} />
+              <hr width={300} />
               <p>{params.row.name?.accountTwo}</p>
             </div>
           );
@@ -257,9 +253,9 @@ export default function JournalPage() {
                 digitGroupSeparator=","
                 onChange={(event, value) => setDebit(value)}
                 size="small"
-                style={{ width: 100 }}
+                style={{ width: 150 }}
               />
-              <hr width={250} />
+              <hr width={300} />
               <p>---</p>
             </div>
           );
@@ -273,7 +269,7 @@ export default function JournalPage() {
                 currency: "USD",
               })}
             </p>
-            <hr width={250} />
+            <hr width={300} />
             <p>---</p>
           </div>
         );
@@ -294,7 +290,7 @@ export default function JournalPage() {
             <div className="mt-3" style={{ textAlign: "center" }}>
               <p>---</p>
               <hr
-                width={250}
+                width={300}
                 style={{ marginTop: "11px", marginBottom: "11px" }}
               />
               <CurrencyTextField
@@ -308,7 +304,7 @@ export default function JournalPage() {
                 digitGroupSeparator=","
                 onChange={(event, value) => setCredit(value)}
                 size="small"
-                style={{ width: 100 }}
+                style={{ width: 150 }}
               />
             </div>
           );
@@ -316,7 +312,7 @@ export default function JournalPage() {
         return (
           <div className="mt-4" style={{ textAlign: "center" }}>
             <p>---</p>
-            <hr width={250} />
+            <hr width={300} />
             <p>
               (
               {params.row.credit?.creditTwo.toLocaleString("en-us", {
@@ -417,22 +413,87 @@ export default function JournalPage() {
     },
   ];
 
+  async function GetAccounts() {
+    try {
+      const accountsRef = collection(db, "accounts");
+
+      const q = query(accountsRef);
+
+      const accountsArray = [];
+
+      console.log("got accounts");
+
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        accountsArray.push(<MenuItem key={doc.data().id} value={doc.data().name}>{doc.data().name}</MenuItem>);
+      });
+      
+
+      setAccounts(accountsArray);
+    } catch (error) {}
+  }
+
+  async function GetEntries() {
+    try {
+      setLoading(true);
+      const entriesRef = collection(db, "entries");
+
+      const q = query(entriesRef);
+
+      const rowArray = [];
+
+      console.log("got accounts");
+
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        rowArray.push({
+          id: doc.id,
+          name: { accountOne: doc.data().debitAccount, accountTwo: doc.data().creditAccount },
+          dateCreated: doc.data().timeStamp.toDate(),
+          debit: { debitOne: doc.data().debit, debitTwo: 0 },
+          credit: { creditOne: 0, creditTwo: doc.data().credit },
+          status: doc.data().status,
+        });
+      });
+      
+
+      setRows(rowArray);
+    } catch (error) {}
+  }
+
+  async function storeEntry(dateCreated, debitAccount, creditAccount, debit, credit) {
+    const newEntryAdded = await addDoc(collection(db, "entries"), {
+        timeStamp: dateCreated,
+        debitAccount: debitAccount,
+        creditAccount: creditAccount,
+        debit: debit,
+        credit: credit,
+        status: "Pending"
+    });
+    console.log("Added entry with ID: ", newEntryAdded.id);
+    return newEntryAdded.id;
+
+}
+
+  useEffect(() => {
+    GetAccounts();
+    GetEntries().then(setLoading(false));
+  }, [])
+  
+
   return (
-    <div>
-      <Box
-        sx={{
-          height: 750,
-          width: "85%",
-          padding: 5,
-          margin: "auto",
-          "& .actions": {
-            color: "text.secondary",
-          },
-          "& .textPrimary": {
-            color: "text.primary",
-          },
-        }}
-      >
+    <div style={{
+      height: "85vh",
+      marginLeft: "auto",
+      marginRight: "auto",
+      minWidth: 900,
+      maxWidth: 1800,
+      padding: 25,
+    }}>
+      <div style={{ display: "flex", height: "100%" }}>
+        <div id="capture" style={{ flexGrow: 1 }}>
         <DataGrid
           sx={{
             "& .MuiDataGrid-columnHeaders": {
@@ -449,11 +510,15 @@ export default function JournalPage() {
           rowHeight={125}
           columns={columns}
           editMode="row"
+          loading={loading}
+          sortModel={sortModel}
+          onSortModelChange={(newSortModel) => setSortModel(newSortModel)}
           rowModesModel={rowModesModel}
           onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
           onRowEditStart={handleRowEditStart}
           onRowEditStop={handleRowEditStop}
           processRowUpdate={processRowUpdate}
+          onProcessRowUpdateError={(error) => console.log(error)}
           components={{
             Toolbar: EditToolbar,
           }}
@@ -462,7 +527,8 @@ export default function JournalPage() {
           }}
           experimentalFeatures={{ newEditingApi: true }}
         />
-      </Box>
+        </div>
+      </div>
 
       <div class="fixed-bottom" style={{ padding: 10 }}>
         <MDBTooltip tag="a" placement="auto" title="Help">
