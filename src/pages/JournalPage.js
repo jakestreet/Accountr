@@ -40,6 +40,30 @@ export default function JournalPage() {
   const handleCloseHelp = () => setOpenHelp(false);
   const [choiceAccountOne, setChoiceAccountOne] = useState("");
   const [choiceAccountTwo, setChoiceAccountTwo] = useState("");
+  const [choiceAccounts, setChoiceAccounts] = useState([{ name: "" }, { name: "" }]);
+  const [debitField, setDebitField] = useState([{ amount: 0 }, { amount: 0 }]);
+  const handleAccountChange = (event, index) => {
+    let data = [...choiceAccounts];
+    data[index][event.target.name] = event.target.value;
+    setChoiceAccounts(data);
+  }
+  const handleDebitChange = (event, index) => {
+    let data = [...debitField];
+    data[index][event.target.name] = event.target.value;
+    setDebitField(data);
+  }
+  const addFields = () => {
+    let object = {
+      name: '',
+    }
+    setChoiceAccounts([...choiceAccounts, object])
+  }
+  const removeFields = () => {
+    let data = [...choiceAccounts];
+    data.splice(choiceAccounts.length - 1, 1)
+    setChoiceAccounts(data)
+  }
+
   const [debit, setDebit] = useState();
   const [credit, setCredit] = useState();
   const [accounts, setAccounts] = useState();
@@ -85,7 +109,7 @@ export default function JournalPage() {
       ]);
       setRowModesModel((oldModel) => ({
         ...oldModel,
-        [id]: { mode: GridRowModes.Edit, fieldToFocus: "name" },
+        [id]: { mode: GridRowModes.Edit},
       }));
     };
 
@@ -243,57 +267,91 @@ export default function JournalPage() {
             setVal(true);
           }
 
-          return (
-            <div style={{
-              display: 'flex',
-              flexDirection: "column",
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingTop: 5,
-            }}>
-              <Item height={64} >
-                {
-                  <div style={{ marginTop: 5 }}>
-                    {
-                      <Select
-                        labelId="normal-select-label"
-                        id="normal-select"
-                        value={choiceAccountOne}
-                        size="small"
-                        style={{ width: 200 }}
-                        onChange={(event) => {
-                          setChoiceAccountOne(event.target.value);
-                        }}
-                      >
-                        {accounts}
-                      </Select>
-                    }
+          return (<div style={{
+            display: 'flex',
+            flexDirection: "column",
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingTop: 5,
+          }}>
+            {
+              choiceAccounts.map((account, index) => {
+                return (
+                  <div key={index}>
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    <Item height={64} >
+                      <div style={{ marginTop: 5 }}>
+                        <Select
+                          name="name"
+                          labelId="normal-select-label"
+                          id="normal-select"
+                          value={account.name}
+                          size="small"
+                          style={{ width: 200 }}
+                          onChange={(event) => {
+                            handleAccountChange(event, index);
+                          }}
+                        >
+                          {accounts}
+                        </Select>
+                      </div>
+                    </Item>
                   </div>
-                }
-              </Item>
-              {RenderAddRows(
-                <div>
-                  <Divider flexItem variant='fullWidth' width={225} />
-                  <Item height={64}>
-                    {
-                      <Select
-                        labelId="normal-select-label"
-                        id="normal-select"
-                        value={choiceAccountOne}
-                        size="small"
-                        style={{ width: 200 }}
-                        onChange={(event) => {
-                          setChoiceAccountOne(event.target.value);
-                        }}
-                      >
-                        {accounts}
-                      </Select>
-                    }
-                  </Item>
-                </div>
-              )}
-            </div>
-          );
+                )
+              })
+            }
+          </div>)
+          // return (
+          //   <div style={{
+          //     display: 'flex',
+          //     flexDirection: "column",
+          //     alignItems: 'center',
+          //     justifyContent: 'center',
+          //     paddingTop: 5,
+          //   }}>
+          //     <Item height={64} >
+          //       {
+          //         <div style={{ marginTop: 5 }}>
+          //           {
+          //             <Select
+          //               labelId="normal-select-label"
+          //               id="normal-select"
+          //               value={choiceAccountOne}
+          //               size="small"
+          //               style={{ width: 200 }}
+          //               onChange={(event) => {
+          //                 setChoiceAccountOne(event.target.value);
+          //               }}
+          //             >
+          //               {accounts}
+          //             </Select>
+          //           }
+          //         </div>
+          //       }
+          //     </Item>
+          //     {RenderAddRows(
+          //       <div>
+          //         <Divider flexItem variant='fullWidth' width={225} />
+          //         <Item height={64}>
+          //           {
+          //             <Select
+          //               labelId="normal-select-label"
+          //               id="normal-select"
+          //               value={choiceAccountOne}
+          //               size="small"
+          //               style={{ width: 200 }}
+          //               onChange={(event) => {
+          //                 setChoiceAccountOne(event.target.value);
+          //               }}
+          //             >
+          //               {accounts}
+          //             </Select>
+          //           }
+          //         </Item>
+          //       </div>
+          //     )}
+          //   </div>
+          // );
         } else {
           return (
             <div className="mt-4" style={{ textAlign: "center" }}>
@@ -324,7 +382,37 @@ export default function JournalPage() {
               justifyContent: 'center',
               paddingTop: 5,
             }}>
-              <Item style={{ height: 64 }}>{
+              {debitField.map((debit, index) => {
+                return (
+                  <div key={index}>
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    <Item style={{ height: 64 }}>
+                      <CurrencyTextField
+                        placeholder="0.00"
+                        // defaultValue={
+                        //   params.row.debit.debitOne > 0
+                        //     ? params.row.debit.debitOne
+                        //     : null
+                        // }
+                        name="amount"
+                        variant="outlined"
+                        value={debit.amount}
+                        currencySymbol="$"
+                        fixedDecimalLength="2"
+                        outputFormat="number"
+                        decimalCharacter="."
+                        digitGroupSeparator=","
+                        onChange={(event) => {
+                          handleDebitChange(event, index);
+                        }}
+                        size="small"
+                        style={{ width: 150, marginTop: 5 }}
+                      />
+                    </Item>
+                  </div>
+                )
+              })}
+              {/* <Item style={{ height: 64 }}>{
                 <CurrencyTextField
                   placeholder="0.00"
                   defaultValue={
@@ -368,7 +456,7 @@ export default function JournalPage() {
                     />
                   }</Item>
                 </div>
-              )}
+              )} */}
             </div>
           );
         }
@@ -534,6 +622,7 @@ export default function JournalPage() {
               className="textPrimary"
               onClick={() => {
                 setNumberOfRows(numberOfRows + 1);
+                addFields();
               }}
               color="inherit"
             />,
@@ -543,6 +632,7 @@ export default function JournalPage() {
               className="textPrimary"
               onClick={() => {
                 setNumberOfRows(numberOfRows - 1);
+                removeFields();
               }}
               color="inherit"
             /> : <GridActionsCellItem
@@ -737,11 +827,11 @@ export default function JournalPage() {
             processRowUpdate={processRowUpdate}
             initialState={filterProvidedEntry}
             onProcessRowUpdateError={(error) => console.log(error)}
-            onSelectionModelChange={(newSelectionModel) => {
-              console.log(newSelectionModel);
-              setSelectionModel(newSelectionModel);
-            }}
-            selectionModel={selectionModel}
+            // onSelectionModelChange={(newSelectionModel) => {
+            //   console.log(newSelectionModel);
+            //   setSelectionModel(newSelectionModel);
+            // }}
+            // selectionModel={selectionModel}
             components={{
               Toolbar: EditToolbar,
             }}
@@ -749,6 +839,7 @@ export default function JournalPage() {
               toolbar: { setRows, setRowModesModel },
             }}
             experimentalFeatures={{ newEditingApi: true }}
+            
           />
         </div>
       </div>
