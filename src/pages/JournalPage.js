@@ -5,13 +5,7 @@ import Modal from "@mui/material/Modal";
 import * as React from "react";
 import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
-import SaveIcon from "@mui/icons-material/Save";
-import CancelIcon from "@mui/icons-material/Close";
-import CheckIcon from "@mui/icons-material/Check";
-import BlockIcon from "@mui/icons-material/Block";
+import { Add, Edit, Delete, Save, Cancel, Check, Block, Remove } from "@mui/icons-material"
 import {
   GridRowModes,
   DataGrid,
@@ -35,6 +29,9 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { app } from "../components/utils/firebase";
+import { Box } from "@mui/material";
+import { styled } from '@mui/material/styles';
+import { Divider } from '@mui/material';
 
 export default function JournalPage() {
   const { currentRole, filterProvidedEntry } = useAuth();
@@ -61,13 +58,13 @@ export default function JournalPage() {
   const initialRows = [];
 
   function RenderAddRows(props) {
-    return [...Array(numberOfRows)].map(() => (
-      <div>
-        <hr width={300} />
-        <p>---</p>
-      </div>
-    ));
+    return [...Array(numberOfRows)].map(() => (props));
   }
+
+  const Item = styled(Box)(({ theme }) => ({
+    padding: theme.spacing(1),
+    textAlign: 'center',
+  }));
 
   function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
@@ -94,7 +91,7 @@ export default function JournalPage() {
 
     return (
       <GridToolbarContainer>
-        <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
+        <Button color="primary" startIcon={<Add />} onClick={handleClick}>
           Add Journal Entry
         </Button>
         <GridToolbarFilterButton />
@@ -119,7 +116,6 @@ export default function JournalPage() {
     event.defaultMuiPrevented = true;
   };
 
-  const handleAddAdditionalRow = (id) => () => {};
 
   const handleEditClick = (id) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
@@ -141,6 +137,7 @@ export default function JournalPage() {
   };
 
   const handleCancelClick = (id) => () => {
+    setNumberOfRows(1);
     setRowModesModel({
       ...rowModesModel,
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
@@ -203,26 +200,28 @@ export default function JournalPage() {
         if (isInEditMode) {
           params.row.dateCreated = new Date();
           return (
-            <div className="mt-3" style={{ textAlign: "center" }}>
-              <p>{params.row.dateCreated?.toDateString()}</p>
-              <div>
-                <hr width={300} />
-                <p>&nbsp;&nbsp;</p>
-              </div>
-              {/* {RenderAddRows(
+            <div style={{
+              display: 'flex',
+              flexDirection: "column",
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: 5,
+            }}>
+              <Item style={{ height: 64 }}>{<div style={{ marginTop: 15 }}>{params.row?.dateCreated?.toDateString()}</div>}</Item>
+              {RenderAddRows(
                 <div>
-                  <hr width={300} />
-                  <p>&nbsp;&nbsp;</p>
+                  <Divider flexItem variant='fullWidth' width={225} />
+                  <Item style={{ height: 64 }}>&nbsp;&nbsp;</Item>
                 </div>
-              )} */}
+              )}
             </div>
           );
         }
         return (
           <div className="mt-4" style={{ textAlign: "center" }}>
             <p>{params.row.dateCreated?.toDateString()}</p>
-            <hr width={300} />
-            <p>&nbsp;&nbsp;</p>
+            <Divider flexItem variant='fullWidth' width={225} />
+            <p style={{ marginTop: 15 }}>&nbsp;&nbsp;</p>
           </div>
         );
       },
@@ -245,43 +244,62 @@ export default function JournalPage() {
           }
 
           return (
-            <div style={{ textAlign: "center" }}>
-              <div className="mt-2" style={{ textAlign: "center" }}>
-                <Select
-                  labelId="normal-select-label"
-                  id="normal-select"
-                  value={choiceAccountOne}
-                  size="small"
-                  style={{ width: 200 }}
-                  onChange={(event) => {
-                    setChoiceAccountOne(event.target.value);
-                  }}
-                >
-                  {accounts}
-                </Select>
-              </div>
-              <hr width={300} />
-              <Select
-                labelId="normal-select-label"
-                id="normal-select"
-                value={choiceAccountTwo}
-                size="small"
-                className="mb-2"
-                style={{ width: 200 }}
-                onChange={(event) => {
-                  setChoiceAccountTwo(event.target.value);
-                }}
-              >
-                {accounts}
-              </Select>
+            <div style={{
+              display: 'flex',
+              flexDirection: "column",
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: 5,
+            }}>
+              <Item height={64} >
+                {
+                  <div style={{ marginTop: 5 }}>
+                    {
+                      <Select
+                        labelId="normal-select-label"
+                        id="normal-select"
+                        value={choiceAccountOne}
+                        size="small"
+                        style={{ width: 200 }}
+                        onChange={(event) => {
+                          setChoiceAccountOne(event.target.value);
+                        }}
+                      >
+                        {accounts}
+                      </Select>
+                    }
+                  </div>
+                }
+              </Item>
+              {RenderAddRows(
+                <div>
+                  <Divider flexItem variant='fullWidth' width={225} />
+                  <Item height={64}>
+                    {
+                      <Select
+                        labelId="normal-select-label"
+                        id="normal-select"
+                        value={choiceAccountOne}
+                        size="small"
+                        style={{ width: 200 }}
+                        onChange={(event) => {
+                          setChoiceAccountOne(event.target.value);
+                        }}
+                      >
+                        {accounts}
+                      </Select>
+                    }
+                  </Item>
+                </div>
+              )}
             </div>
           );
         } else {
           return (
             <div className="mt-4" style={{ textAlign: "center" }}>
               <p>{params.row.name?.accountOne}</p>
-              <hr width={300} />
-              <p>{params.row.name?.accountTwo}</p>
+              <Divider flexItem variant='fullWidth' width={225} />
+              <p style={{ marginTop: 15 }}>{params.row.name?.accountTwo}</p>
             </div>
           );
         }
@@ -299,27 +317,58 @@ export default function JournalPage() {
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
         if (isInEditMode) {
           return (
-            <div className="mb-1" style={{ textAlign: "center" }}>
-              <CurrencyTextField
-                placeholder="0.00"
-                defaultValue={
-                  params.row.debit.debitOne > 0
-                    ? params.row.debit.debitOne
-                    : null
-                }
-                variant="outlined"
-                value={debit}
-                currencySymbol="$"
-                fixedDecimalLength="2"
-                outputFormat="number"
-                decimalCharacter="."
-                digitGroupSeparator=","
-                onChange={(event, value) => setDebit(value)}
-                size="small"
-                style={{ width: 150 }}
-              />
-              <hr width={300} />
-              <p>&nbsp;&nbsp;</p>
+            <div style={{
+              display: 'flex',
+              flexDirection: "column",
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: 5,
+            }}>
+              <Item style={{ height: 64 }}>{
+                <CurrencyTextField
+                  placeholder="0.00"
+                  defaultValue={
+                    params.row.debit.debitOne > 0
+                      ? params.row.debit.debitOne
+                      : null
+                  }
+                  variant="outlined"
+                  value={debit}
+                  currencySymbol="$"
+                  fixedDecimalLength="2"
+                  outputFormat="number"
+                  decimalCharacter="."
+                  digitGroupSeparator=","
+                  onChange={(event, value) => setDebit(value)}
+                  size="small"
+                  style={{ width: 150, marginTop: 5 }}
+                />
+              }</Item>
+              {RenderAddRows(
+                <div>
+                  <Divider flexItem variant='fullWidth' width={225} />
+                  <Item style={{ height: 64 }}>{
+                    <CurrencyTextField
+                      placeholder="0.00"
+                      defaultValue={
+                        params.row.debit.debitOne > 0
+                          ? params.row.debit.debitOne
+                          : null
+                      }
+                      variant="outlined"
+                      value={debit}
+                      currencySymbol="$"
+                      fixedDecimalLength="2"
+                      outputFormat="number"
+                      decimalCharacter="."
+                      digitGroupSeparator=","
+                      onChange={(event, value) => setDebit(value)}
+                      size="small"
+                      style={{ width: 150 }}
+                    />
+                  }</Item>
+                </div>
+              )}
             </div>
           );
         }
@@ -332,8 +381,8 @@ export default function JournalPage() {
                 currency: "USD",
               })}
             </p>
-            <hr width={300} />
-            <p>&nbsp;&nbsp;</p>
+            <Divider flexItem variant='fullWidth' width={225} />
+            <p style={{ marginTop: 15 }}>&nbsp;&nbsp;</p>
           </div>
         );
       },
@@ -350,38 +399,66 @@ export default function JournalPage() {
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
         if (isInEditMode) {
           return (
-            <div className="mt-3" style={{ textAlign: "center" }}>
-              <p>&nbsp;&nbsp;</p>
-              <hr
-                width={300}
-                style={{ marginTop: "11px", marginBottom: "11px" }}
-              />
-              <CurrencyTextField
-                placeholder="0.00"
-                defaultValue={
-                  params.row.credit.creditTwo > 0
-                    ? params.row.credit.creditTwo
-                    : null
-                }
-                variant="outlined"
-                value={credit}
-                currencySymbol="$"
-                fixedDecimalLength="2"
-                outputFormat="number"
-                decimalCharacter="."
-                digitGroupSeparator=","
-                onChange={(event, value) => setCredit(value)}
-                size="small"
-                style={{ width: 150 }}
-              />
+            <div style={{
+              display: 'flex',
+              flexDirection: "column",
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: 5,
+            }}>
+              <Item style={{ height: 64 }}>{
+                <CurrencyTextField
+                  placeholder="0.00"
+                  defaultValue={
+                    params.row.credit.creditTwo > 0
+                      ? params.row.credit.creditTwo
+                      : null
+                  }
+                  variant="outlined"
+                  value={credit}
+                  currencySymbol="$"
+                  fixedDecimalLength="2"
+                  outputFormat="number"
+                  decimalCharacter="."
+                  digitGroupSeparator=","
+                  onChange={(event, value) => setCredit(value)}
+                  size="small"
+                  style={{ width: 150, marginTop: 5 }}
+                />
+              }</Item>
+              {RenderAddRows(
+                <div>
+                  <Divider flexItem variant='fullWidth' width={225} />
+                  <Item style={{ height: 64 }}>{
+                    <CurrencyTextField
+                      placeholder="0.00"
+                      defaultValue={
+                        params.row.credit.creditTwo > 0
+                          ? params.row.credit.creditTwo
+                          : null
+                      }
+                      variant="outlined"
+                      value={credit}
+                      currencySymbol="$"
+                      fixedDecimalLength="2"
+                      outputFormat="number"
+                      decimalCharacter="."
+                      digitGroupSeparator=","
+                      onChange={(event, value) => setCredit(value)}
+                      size="small"
+                      style={{ width: 150 }}
+                    />
+                  }</Item>
+                </div>
+              )}
             </div>
           );
         }
         return (
           <div className="mt-4" style={{ textAlign: "center" }}>
             <p>&nbsp;&nbsp;</p>
-            <hr width={300} />
-            <p>
+            <Divider flexItem variant='fullWidth' width={225} />
+            <p style={{ marginTop: 15 }}>
               (
               {params.row.credit?.creditTwo.toLocaleString("en-us", {
                 style: "currency",
@@ -393,13 +470,6 @@ export default function JournalPage() {
         );
       },
     },
-    // {
-    //   field: "balance",
-    //   headerName: "Balance",
-    //   type: "number",
-    //   width: 100,
-    //   editable: true
-    // },
     {
       field: "status",
       type: "string",
@@ -459,7 +529,7 @@ export default function JournalPage() {
         if (isInEditMode) {
           return [
             <GridActionsCellItem
-              icon={<AddIcon />}
+              icon={<Add />}
               label="Add"
               className="textPrimary"
               onClick={() => {
@@ -467,13 +537,32 @@ export default function JournalPage() {
               }}
               color="inherit"
             />,
+            numberOfRows > 1 ? <GridActionsCellItem
+              icon={<Remove />}
+              label="Remove"
+              className="textPrimary"
+              onClick={() => {
+                setNumberOfRows(numberOfRows - 1);
+              }}
+              color="inherit"
+            /> : <GridActionsCellItem
+              icon={<Remove />}
+              label="Remove"
+              className="textPrimary"
+              disabled
+              onClick={() => {
+                setNumberOfRows(numberOfRows - 1);
+              }}
+              color="inherit"
+            />,
             <GridActionsCellItem
-              icon={<SaveIcon />}
+              icon={<Save />}
               label="Save"
+              color="inherit"
               onClick={handleSaveClick(id)}
             />,
             <GridActionsCellItem
-              icon={<CancelIcon />}
+              icon={<Cancel />}
               label="Cancel"
               className="textPrimary"
               onClick={handleCancelClick(id)}
@@ -484,14 +573,14 @@ export default function JournalPage() {
           return [
             <div style={{ textAlign: "center" }}>
               <GridActionsCellItem
-                icon={<CheckIcon />}
+                icon={<Check />}
                 label="Approve"
                 className="textPrimary"
                 onClick={handleApproveClick(id, "Approved")}
                 color="inherit"
               />
               <GridActionsCellItem
-                icon={<BlockIcon />}
+                icon={<Block />}
                 label="Reject"
                 onClick={handleApproveClick(id, "Rejected")}
                 color="inherit"
@@ -502,14 +591,14 @@ export default function JournalPage() {
         return [
           <div style={{ textAlign: "center" }}>
             <GridActionsCellItem
-              icon={<EditIcon />}
+              icon={<Edit />}
               label="Edit"
               className="textPrimary"
               onClick={handleEditClick(id)}
               color="inherit"
             />
             <GridActionsCellItem
-              icon={<DeleteIcon />}
+              icon={<Delete />}
               label="Delete"
               onClick={handleDeleteClick(id)}
               color="inherit"
@@ -541,7 +630,7 @@ export default function JournalPage() {
       });
 
       setAccounts(accountsArray);
-    } catch (error) {}
+    } catch (error) { }
   }
 
   async function GetEntries() {
@@ -572,7 +661,7 @@ export default function JournalPage() {
       });
 
       setRows(rowArray);
-    } catch (error) {}
+    } catch (error) { }
   }
 
   async function storeEntry(
@@ -615,8 +704,8 @@ export default function JournalPage() {
         height: "85vh",
         marginLeft: "auto",
         marginRight: "auto",
-        minWidth: 900,
-        maxWidth: 1800,
+        minWidth: 1400,
+        maxWidth: 1400,
         padding: 25,
       }}
     >
@@ -630,12 +719,12 @@ export default function JournalPage() {
                 fontSize: 16,
               },
               "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
-                {
-                  outline: "none",
-                },
+              {
+                outline: "none",
+              },
             }}
             rows={rows}
-            rowHeight={130}
+            getRowHeight={() => 'auto'}
             columns={columns}
             editMode="row"
             loading={loading}
