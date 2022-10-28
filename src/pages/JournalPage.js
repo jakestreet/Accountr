@@ -10,8 +10,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
-import CheckIcon from '@mui/icons-material/Check';
-import BlockIcon from '@mui/icons-material/Block';
+import CheckIcon from "@mui/icons-material/Check";
+import BlockIcon from "@mui/icons-material/Block";
 import {
   GridRowModes,
   DataGrid,
@@ -20,9 +20,7 @@ import {
   GridToolbarQuickFilter,
   GridToolbarFilterButton,
 } from "@mui/x-data-grid";
-import {
-  randomId,
-} from "@mui/x-data-grid-generator";
+import { randomId } from "@mui/x-data-grid-generator";
 import Chip from "@mui/material/Chip";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -34,7 +32,7 @@ import {
   getFirestore,
   addDoc,
   doc,
-  updateDoc
+  updateDoc,
 } from "firebase/firestore";
 import { app } from "../components/utils/firebase";
 
@@ -54,8 +52,8 @@ export default function JournalPage() {
   const [numberOfRows, setNumberOfRows] = useState(1);
   const [sortModel, setSortModel] = React.useState([
     {
-      field: 'dateCreated',
-      sort: 'asc',
+      field: "dateCreated",
+      sort: "asc",
     },
   ]);
   const db = getFirestore(app);
@@ -63,12 +61,12 @@ export default function JournalPage() {
   const initialRows = [];
 
   function RenderAddRows(props) {
-    return [...Array(numberOfRows)].map(() =>
-        <div>
-          <hr width={300} />
-          <p>---</p>
-        </div>
-    );
+    return [...Array(numberOfRows)].map(() => (
+      <div>
+        <hr width={300} />
+        <p>---</p>
+      </div>
+    ));
   }
 
   function EditToolbar(props) {
@@ -121,9 +119,7 @@ export default function JournalPage() {
     event.defaultMuiPrevented = true;
   };
 
-  const handleAddAdditionalRow = (id) => () => {
-
-  }
+  const handleAddAdditionalRow = (id) => () => {};
 
   const handleEditClick = (id) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
@@ -135,7 +131,9 @@ export default function JournalPage() {
   };
 
   const handleApproveClick = (id, status) => async () => {
-    const update = await updateStatus(id, status).then(GetEntries().then(setLoading(false)));
+    const update = await updateStatus(id, status).then(
+      GetEntries().then(setLoading(false))
+    );
   };
 
   const handleDeleteClick = (id) => () => {
@@ -164,7 +162,13 @@ export default function JournalPage() {
     updatedRow.credit.creditTwo = credit;
     updatedRow.name.accountOne = choiceAccountOne;
     updatedRow.name.accountTwo = choiceAccountTwo;
-    const newRowID = await storeEntry(updatedRow.dateCreated, updatedRow.name.accountOne, updatedRow.name.accountTwo, updatedRow.debit.debitOne, updatedRow.credit.creditTwo)
+    const newRowID = await storeEntry(
+      updatedRow.dateCreated,
+      updatedRow.name.accountOne,
+      updatedRow.name.accountTwo,
+      updatedRow.debit.debitOne,
+      updatedRow.credit.creditTwo
+    );
     updatedRow.id = newRowID;
     setChoiceAccountOne("");
     setChoiceAccountTwo("");
@@ -195,20 +199,22 @@ export default function JournalPage() {
       renderCell: (params) => {
         const isInEditMode =
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
-        
+
         if (isInEditMode) {
           params.row.dateCreated = new Date();
           return (
             <div className="mt-3" style={{ textAlign: "center" }}>
               <p>{params.row.dateCreated?.toDateString()}</p>
-              {/* <div>
+              <div>
                 <hr width={300} />
-                <p>---</p>
-              </div> */}
-              {RenderAddRows(<div>
-                <hr width={300} />
-                <p>---</p>
-              </div>)}
+                <p>&nbsp;&nbsp;</p>
+              </div>
+              {/* {RenderAddRows(
+                <div>
+                  <hr width={300} />
+                  <p>&nbsp;&nbsp;</p>
+                </div>
+              )} */}
             </div>
           );
         }
@@ -216,7 +222,7 @@ export default function JournalPage() {
           <div className="mt-4" style={{ textAlign: "center" }}>
             <p>{params.row.dateCreated?.toDateString()}</p>
             <hr width={300} />
-            <p>---</p>
+            <p>&nbsp;&nbsp;</p>
           </div>
         );
       },
@@ -232,12 +238,12 @@ export default function JournalPage() {
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
-          if(params.row.name.accountOne !== "" && val === false) {
+          if (params.row.name.accountOne !== "" && val === false) {
             setChoiceAccountOne(params.row.name.accountOne);
             setChoiceAccountTwo(params.row.name.accountTwo);
             setVal(true);
           }
-            
+
           return (
             <div style={{ textAlign: "center" }}>
               <div className="mt-2" style={{ textAlign: "center" }}>
@@ -296,7 +302,11 @@ export default function JournalPage() {
             <div className="mb-1" style={{ textAlign: "center" }}>
               <CurrencyTextField
                 placeholder="0.00"
-                defaultValue={params.row.debit.debitOne > 0 ? params.row.debit.debitOne : null}
+                defaultValue={
+                  params.row.debit.debitOne > 0
+                    ? params.row.debit.debitOne
+                    : null
+                }
                 variant="outlined"
                 value={debit}
                 currencySymbol="$"
@@ -309,7 +319,7 @@ export default function JournalPage() {
                 style={{ width: 150 }}
               />
               <hr width={300} />
-              <p>---</p>
+              <p>&nbsp;&nbsp;</p>
             </div>
           );
         }
@@ -323,7 +333,7 @@ export default function JournalPage() {
               })}
             </p>
             <hr width={300} />
-            <p>---</p>
+            <p>&nbsp;&nbsp;</p>
           </div>
         );
       },
@@ -341,14 +351,18 @@ export default function JournalPage() {
         if (isInEditMode) {
           return (
             <div className="mt-3" style={{ textAlign: "center" }}>
-              <p>---</p>
+              <p>&nbsp;&nbsp;</p>
               <hr
                 width={300}
                 style={{ marginTop: "11px", marginBottom: "11px" }}
               />
               <CurrencyTextField
                 placeholder="0.00"
-                defaultValue={params.row.credit.creditTwo > 0 ? params.row.credit.creditTwo : null}
+                defaultValue={
+                  params.row.credit.creditTwo > 0
+                    ? params.row.credit.creditTwo
+                    : null
+                }
                 variant="outlined"
                 value={credit}
                 currencySymbol="$"
@@ -365,7 +379,7 @@ export default function JournalPage() {
         }
         return (
           <div className="mt-4" style={{ textAlign: "center" }}>
-            <p>---</p>
+            <p>&nbsp;&nbsp;</p>
             <hr width={300} />
             <p>
               (
@@ -448,7 +462,9 @@ export default function JournalPage() {
               icon={<AddIcon />}
               label="Add"
               className="textPrimary"
-              onClick={()=>{setNumberOfRows(numberOfRows + 1)}}
+              onClick={() => {
+                setNumberOfRows(numberOfRows + 1);
+              }}
               color="inherit"
             />,
             <GridActionsCellItem
@@ -464,8 +480,7 @@ export default function JournalPage() {
               color="inherit"
             />,
           ];
-        }
-        else if (currentRole === "Manager" && status === "Pending") {
+        } else if (currentRole === "Manager" && status === "Pending") {
           return [
             <div style={{ textAlign: "center" }}>
               <GridActionsCellItem
@@ -518,12 +533,15 @@ export default function JournalPage() {
       const querySnapshot = await getDocs(q);
 
       querySnapshot.forEach(async (doc) => {
-        accountsArray.push(<MenuItem key={doc.data().id} value={doc.data().name}>{doc.data().name}</MenuItem>);
+        accountsArray.push(
+          <MenuItem key={doc.data().id} value={doc.data().name}>
+            {doc.data().name}
+          </MenuItem>
+        );
       });
 
-
       setAccounts(accountsArray);
-    } catch (error) { }
+    } catch (error) {}
   }
 
   async function GetEntries() {
@@ -542,7 +560,10 @@ export default function JournalPage() {
       querySnapshot.forEach(async (doc) => {
         rowArray.push({
           id: doc.id,
-          name: { accountOne: doc.data().debitAccount, accountTwo: doc.data().creditAccount },
+          name: {
+            accountOne: doc.data().debitAccount,
+            accountTwo: doc.data().creditAccount,
+          },
           dateCreated: doc.data().timeStamp.toDate(),
           debit: { debitOne: doc.data().debit, debitTwo: 0 },
           credit: { creditOne: 0, creditTwo: doc.data().credit },
@@ -550,28 +571,32 @@ export default function JournalPage() {
         });
       });
 
-
       setRows(rowArray);
-    } catch (error) { }
+    } catch (error) {}
   }
 
-  async function storeEntry(dateCreated, debitAccount, creditAccount, debit, credit) {
+  async function storeEntry(
+    dateCreated,
+    debitAccount,
+    creditAccount,
+    debit,
+    credit
+  ) {
     const newEntryAdded = await addDoc(collection(db, "entries"), {
       timeStamp: dateCreated,
       debitAccount: debitAccount,
       creditAccount: creditAccount,
       debit: debit,
       credit: credit,
-      status: "Pending"
+      status: "Pending",
     });
     console.log("Added entry with ID: ", newEntryAdded.id);
     return newEntryAdded.id;
-
   }
 
   async function updateStatus(id, status) {
-    console.log("status: " + status)
-    console.log("id: " + id)
+    console.log("status: " + status);
+    console.log("id: " + id);
     const entryRef = doc(db, "entries", id);
     const update = await updateDoc(entryRef, {
       status: status,
@@ -582,18 +607,19 @@ export default function JournalPage() {
   useEffect(() => {
     GetAccounts();
     GetEntries().then(setLoading(false));
-  }, [])
-
+  }, []);
 
   return (
-    <div style={{
-      height: "85vh",
-      marginLeft: "auto",
-      marginRight: "auto",
-      minWidth: 900,
-      maxWidth: 1800,
-      padding: 25,
-    }}>
+    <div
+      style={{
+        height: "85vh",
+        marginLeft: "auto",
+        marginRight: "auto",
+        minWidth: 900,
+        maxWidth: 1800,
+        padding: 25,
+      }}
+    >
       <div style={{ display: "flex", height: "100%" }}>
         <div id="capture" style={{ flexGrow: 1 }}>
           <DataGrid
@@ -604,9 +630,9 @@ export default function JournalPage() {
                 fontSize: 16,
               },
               "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
-              {
-                outline: "none",
-              },
+                {
+                  outline: "none",
+                },
             }}
             rows={rows}
             rowHeight={130}
