@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { MDBBtn, MDBTooltip } from "mdb-react-ui-kit";
 import Modal from "@mui/material/Modal";
 import * as React from "react";
@@ -9,11 +10,15 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
+import CheckIcon from '@mui/icons-material/Check';
+import BlockIcon from '@mui/icons-material/Block';
 import {
   GridRowModes,
   DataGrid,
   GridToolbarContainer,
   GridActionsCellItem,
+  GridToolbarQuickFilter,
+  GridToolbarFilterButton,
 } from "@mui/x-data-grid";
 import {
   randomId,
@@ -27,11 +32,14 @@ import {
   query,
   getDocs,
   getFirestore,
-  addDoc
+  addDoc,
+  doc,
+  updateDoc
 } from "firebase/firestore";
 import { app } from "../components/utils/firebase";
 
 export default function JournalPage() {
+  const { currentRole, filterProvidedEntry } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -41,6 +49,9 @@ export default function JournalPage() {
   const [credit, setCredit] = useState();
   const [accounts, setAccounts] = useState();
   const [loading, setLoading] = useState(false);
+  const [selectionModel, setSelectionModel] = useState([]);
+  const [val, setVal] = useState(false);
+  const [numberOfRows, setNumberOfRows] = useState(1);
   const [sortModel, setSortModel] = React.useState([
     {
       field: 'dateCreated',
@@ -50,6 +61,15 @@ export default function JournalPage() {
   const db = getFirestore(app);
 
   const initialRows = [];
+
+  function RenderAddRows(props) {
+    return [...Array(numberOfRows)].map(() =>
+        <div>
+          <hr width={300} />
+          <p>---</p>
+        </div>
+    );
+  }
 
   function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
@@ -79,6 +99,8 @@ export default function JournalPage() {
         <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
           Add Journal Entry
         </Button>
+        <GridToolbarFilterButton />
+        <GridToolbarQuickFilter className="ms-auto" />
       </GridToolbarContainer>
     );
   }
@@ -99,12 +121,21 @@ export default function JournalPage() {
     event.defaultMuiPrevented = true;
   };
 
+  const handleAddAdditionalRow = (id) => () => {
+
+  }
+
   const handleEditClick = (id) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
   };
 
   const handleSaveClick = (id) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+    setVal(false);
+  };
+
+  const handleApproveClick = (id, status) => async () => {
+    const update = await updateStatus(id, status).then(GetEntries().then(setLoading(false)));
   };
 
   const handleDeleteClick = (id) => () => {
@@ -118,6 +149,7 @@ export default function JournalPage() {
     });
 
     const editedRow = rows.find((row) => row.id === id);
+    setVal(false);
     if (editedRow.isNew) {
       setRows(rows.filter((row) => row.id !== id));
     }
@@ -146,6 +178,13 @@ export default function JournalPage() {
 
   const columns = [
     {
+      field: "id",
+      headerName: "ID",
+      flex: 1,
+      align: "center",
+      hide: true,
+    },
+    {
       field: "dateCreated",
       headerName: "Date Created",
       type: "date",
@@ -156,13 +195,20 @@ export default function JournalPage() {
       renderCell: (params) => {
         const isInEditMode =
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
+        
         if (isInEditMode) {
           params.row.dateCreated = new Date();
           return (
             <div className="mt-3" style={{ textAlign: "center" }}>
               <p>{params.row.dateCreated?.toDateString()}</p>
-              <hr width={300} />
-              <p>---</p>
+              {/* <div>
+                <hr width={300} />
+                <p>---</p>
+              </div> */}
+              {RenderAddRows(<div>
+                <hr width={300} />
+                <p>---</p>
+              </div>)}
             </div>
           );
         }
@@ -186,6 +232,12 @@ export default function JournalPage() {
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
+          if(params.row.name.accountOne !== "" && val === false) {
+            setChoiceAccountOne(params.row.name.accountOne);
+            setChoiceAccountTwo(params.row.name.accountTwo);
+            setVal(true);
+          }
+            
           return (
             <div style={{ textAlign: "center" }}>
               <div className="mt-2" style={{ textAlign: "center" }}>
@@ -244,6 +296,7 @@ export default function JournalPage() {
             <div className="mb-1" style={{ textAlign: "center" }}>
               <CurrencyTextField
                 placeholder="0.00"
+                defaultValue={params.row.debit.debitOne > 0 ? params.row.debit.debitOne : null}
                 variant="outlined"
                 value={debit}
                 currencySymbol="$"
@@ -295,6 +348,7 @@ export default function JournalPage() {
               />
               <CurrencyTextField
                 placeholder="0.00"
+                defaultValue={params.row.credit.creditTwo > 0 ? params.row.credit.creditTwo : null}
                 variant="outlined"
                 value={credit}
                 currencySymbol="$"
@@ -336,7 +390,7 @@ export default function JournalPage() {
       field: "status",
       type: "string",
       headerName: "Status",
-      width: 220,
+      width: 100,
       editable: false,
       align: "center",
       flex: 1,
@@ -359,6 +413,17 @@ export default function JournalPage() {
                 />
               </div>
             );
+          else if (params.row.status === "Rejected")
+            return (
+              <div style={{ textAlign: "center" }}>
+                <Chip
+                  size="small"
+                  disabled
+                  label={params.row.status}
+                  color="error"
+                />
+              </div>
+            );
           else
             return <Chip disabled label={params.row.status} color="warning" />;
         }
@@ -368,15 +433,24 @@ export default function JournalPage() {
       field: "actions",
       type: "actions",
       headerName: "Actions",
-      width: 200,
+      width: 100,
       cellClassName: "actions",
       align: "center",
       flex: 1,
-      getActions: ({ id }) => {
+      getActions: (params) => {
+        const id = params.row.id;
+        const status = params.row.status;
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
           return [
+            <GridActionsCellItem
+              icon={<AddIcon />}
+              label="Add"
+              className="textPrimary"
+              onClick={()=>{setNumberOfRows(numberOfRows + 1)}}
+              color="inherit"
+            />,
             <GridActionsCellItem
               icon={<SaveIcon />}
               label="Save"
@@ -391,7 +465,25 @@ export default function JournalPage() {
             />,
           ];
         }
-
+        else if (currentRole === "Manager" && status === "Pending") {
+          return [
+            <div style={{ textAlign: "center" }}>
+              <GridActionsCellItem
+                icon={<CheckIcon />}
+                label="Approve"
+                className="textPrimary"
+                onClick={handleApproveClick(id, "Approved")}
+                color="inherit"
+              />
+              <GridActionsCellItem
+                icon={<BlockIcon />}
+                label="Reject"
+                onClick={handleApproveClick(id, "Rejected")}
+                color="inherit"
+              />
+            </div>,
+          ];
+        }
         return [
           <div style={{ textAlign: "center" }}>
             <GridActionsCellItem
@@ -428,10 +520,10 @@ export default function JournalPage() {
       querySnapshot.forEach(async (doc) => {
         accountsArray.push(<MenuItem key={doc.data().id} value={doc.data().name}>{doc.data().name}</MenuItem>);
       });
-      
+
 
       setAccounts(accountsArray);
-    } catch (error) {}
+    } catch (error) { }
   }
 
   async function GetEntries() {
@@ -457,31 +549,41 @@ export default function JournalPage() {
           status: doc.data().status,
         });
       });
-      
+
 
       setRows(rowArray);
-    } catch (error) {}
+    } catch (error) { }
   }
 
   async function storeEntry(dateCreated, debitAccount, creditAccount, debit, credit) {
     const newEntryAdded = await addDoc(collection(db, "entries"), {
-        timeStamp: dateCreated,
-        debitAccount: debitAccount,
-        creditAccount: creditAccount,
-        debit: debit,
-        credit: credit,
-        status: "Pending"
+      timeStamp: dateCreated,
+      debitAccount: debitAccount,
+      creditAccount: creditAccount,
+      debit: debit,
+      credit: credit,
+      status: "Pending"
     });
     console.log("Added entry with ID: ", newEntryAdded.id);
     return newEntryAdded.id;
 
-}
+  }
+
+  async function updateStatus(id, status) {
+    console.log("status: " + status)
+    console.log("id: " + id)
+    const entryRef = doc(db, "entries", id);
+    const update = await updateDoc(entryRef, {
+      status: status,
+    });
+    console.log("Added status of entry with ID: ", id);
+  }
 
   useEffect(() => {
     GetAccounts();
     GetEntries().then(setLoading(false));
   }, [])
-  
+
 
   return (
     <div style={{
@@ -494,39 +596,45 @@ export default function JournalPage() {
     }}>
       <div style={{ display: "flex", height: "100%" }}>
         <div id="capture" style={{ flexGrow: 1 }}>
-        <DataGrid
-          sx={{
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "rgba(41,121,255,1)",
-              color: "rgba(255,255,255,1)",
-              fontSize: 16,
-            },
-            "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
+          <DataGrid
+            sx={{
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "rgba(41,121,255,1)",
+                color: "rgba(255,255,255,1)",
+                fontSize: 16,
+              },
+              "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
               {
                 outline: "none",
               },
-          }}
-          rows={rows}
-          rowHeight={125}
-          columns={columns}
-          editMode="row"
-          loading={loading}
-          sortModel={sortModel}
-          onSortModelChange={(newSortModel) => setSortModel(newSortModel)}
-          rowModesModel={rowModesModel}
-          onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
-          onRowEditStart={handleRowEditStart}
-          onRowEditStop={handleRowEditStop}
-          processRowUpdate={processRowUpdate}
-          onProcessRowUpdateError={(error) => console.log(error)}
-          components={{
-            Toolbar: EditToolbar,
-          }}
-          componentsProps={{
-            toolbar: { setRows, setRowModesModel },
-          }}
-          experimentalFeatures={{ newEditingApi: true }}
-        />
+            }}
+            rows={rows}
+            rowHeight={130}
+            columns={columns}
+            editMode="row"
+            loading={loading}
+            sortModel={sortModel}
+            onSortModelChange={(newSortModel) => setSortModel(newSortModel)}
+            rowModesModel={rowModesModel}
+            onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
+            onRowEditStart={handleRowEditStart}
+            onRowEditStop={handleRowEditStop}
+            processRowUpdate={processRowUpdate}
+            initialState={filterProvidedEntry}
+            onProcessRowUpdateError={(error) => console.log(error)}
+            onSelectionModelChange={(newSelectionModel) => {
+              console.log(newSelectionModel);
+              setSelectionModel(newSelectionModel);
+            }}
+            selectionModel={selectionModel}
+            components={{
+              Toolbar: EditToolbar,
+            }}
+            componentsProps={{
+              toolbar: { setRows, setRowModesModel },
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
+          />
         </div>
       </div>
 

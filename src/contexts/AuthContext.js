@@ -13,7 +13,7 @@ export function useAuth() {
     return useContext(AuthContext)
 }
 
-export function AuthProvider({children}) {
+export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState();
     const [currentUserInfo, setCurrentUserInfo] = useState();
     const [currentRole, setCurrentRole] = useState();
@@ -26,9 +26,10 @@ export function AuthProvider({children}) {
     const [questionTwo, setQuestionTwo] = useState("");
     const [questionOneAnswer, setQuestionOneAnswer] = useState("");
     const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
+    const [filterProvidedEntry, setFilterProvidedEntry] = useState();
     const db = getFirestore(app);
     const serverStamp = firebase.firestore.Timestamp
-    
+
 
     function signup(email, password) {
         return createUserWithEmailAndPassword(auth, email, password)
@@ -61,34 +62,36 @@ export function AuthProvider({children}) {
     async function upload(file, currentUser, setLoading) {
         // eslint-disable-next-line
         const fileRef = ref(storage, currentUser.displayName + '/' + 'ProfilePicture.png');
-      
+
         setLoading(true);
-        
+
         await uploadBytes(fileRef, file);
         const photoURL = await getDownloadURL(fileRef);
-      
-        updateProfile(currentUser, {photoURL});
-        
+
+        updateProfile(currentUser, { photoURL });
+
         setLoading(false);
         alert("Uploaded file!");
-      }
-    
-    function sendEmail(emailTo, subject, body) { 
+    }
+
+    function sendEmail(emailTo, subject, body) {
         return window.Email.send({
-            SecureToken : "ce629ac7-e05d-45c6-b41e-943099ad36ef",
-            To : emailTo,
-            From : "teamjest4713@gmail.com",
-            Subject : subject,
-            Body : body
+            SecureToken: "ce629ac7-e05d-45c6-b41e-943099ad36ef",
+            To: emailTo,
+            From: "teamjest4713@gmail.com",
+            Subject: subject,
+            Body: body
         }).then(
-            message => {if(message === "OK") {
-                setEmailMessage("Email Sent!")
+            message => {
+                if (message === "OK") {
+                    setEmailMessage("Email Sent!")
+                }
+                else {
+                    setEmailMessage(message);
+                }
             }
-        else{
-            setEmailMessage(message);
-        }}
         );
-      
+
     }
 
     async function storeEvent(username) {
@@ -109,6 +112,15 @@ export function AuthProvider({children}) {
         });
     }
 
+    function setEntryFilter(id) {
+        setFilterProvidedEntry({
+            filter: {
+                filterModel: {
+                    items: [{ columnField: 'id', operatorValue: 'equals', value: id }],
+                },
+            },
+        })
+    }
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(user => {
             setCurrentUser(user)
@@ -130,6 +142,7 @@ export function AuthProvider({children}) {
         questionTwo,
         questionOneAnswer,
         questionTwoAnswer,
+        filterProvidedEntry,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -150,11 +163,12 @@ export function AuthProvider({children}) {
         setQuestionTwoAnswer,
         captureEvent,
         storeEvent,
+        setEntryFilter,
     }
 
-  return (
-    <AuthContext.Provider value={value}>
-        {!loading && children}
-    </AuthContext.Provider>
-  )
+    return (
+        <AuthContext.Provider value={value}>
+            {!loading && children}
+        </AuthContext.Provider>
+    )
 }
