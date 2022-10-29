@@ -460,6 +460,7 @@ export default function JournalPage() {
                         placeholder="0.00"
                         name="amount"
                         variant="outlined"
+                        disabled={index !== 0 ? false : true}
                         value={credit.amount !== 0 ? credit.amount : undefined}
                         currencySymbol="$"
                         fixedDecimalLength="2"
