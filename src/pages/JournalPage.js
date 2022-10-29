@@ -38,57 +38,86 @@ export default function JournalPage() {
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
-  const [choiceAccountOne, setChoiceAccountOne] = useState("");
-  const [choiceAccountTwo, setChoiceAccountTwo] = useState("");
-  const [choiceAccounts, setChoiceAccounts] = useState([{ name: "" }, { name: "" }]);
-  const [debitField, setDebitField] = useState([{ amount: 0 }, { amount: 0 }]);
-  const handleAccountChange = (event, index) => {
-    let data = [...choiceAccounts];
-    data[index][event.target.name] = event.target.value;
-    setChoiceAccounts(data);
-  }
-  const handleDebitChange = (event, index) => {
-    let data = [...debitField];
-    data[index][event.target.name] = event.target.value;
-    setDebitField(data);
-  }
-  const addFields = () => {
-    let object = {
-      name: '',
-    }
-    setChoiceAccounts([...choiceAccounts, object])
-  }
-  const removeFields = () => {
-    let data = [...choiceAccounts];
-    data.splice(choiceAccounts.length - 1, 1)
-    setChoiceAccounts(data)
-  }
-
-  const [debit, setDebit] = useState();
-  const [credit, setCredit] = useState();
+  const [rows, setRows] = useState([]);
+  const [rowModesModel, setRowModesModel] = useState({});
   const [accounts, setAccounts] = useState();
   const [loading, setLoading] = useState(false);
-  const [selectionModel, setSelectionModel] = useState([]);
-  const [val, setVal] = useState(false);
   const [numberOfRows, setNumberOfRows] = useState(1);
-  const [sortModel, setSortModel] = React.useState([
+  const [choiceAccounts, setChoiceAccounts] = useState([{ name: "" }, { name: "" }]);
+  const [debitField, setDebitField] = useState([{ amount: 0 }, { amount: 0 }]);
+  const [debitFocused, setDebitFocused] = useState(false);
+  const onFocusDebit = () => setDebitFocused(true)
+  const onBlurDebit = () => setDebitFocused(false)
+  const [creditField, setCreditField] = useState([{ amount: 0 }, { amount: 0 }]);
+  const [creditFocused, setCreditFocused] = useState(false);
+  const onFocusCredit = () => setCreditFocused(true)
+  const onBlurCredit = () => setCreditFocused(false)
+  const db = getFirestore(app);
+  const [sortModel, setSortModel] = useState([
     {
       field: "dateCreated",
       sort: "asc",
     },
   ]);
-  const db = getFirestore(app);
-
-  const initialRows = [];
-
-  function RenderAddRows(props) {
-    return [...Array(numberOfRows)].map(() => (props));
-  }
 
   const Item = styled(Box)(({ theme }) => ({
     padding: theme.spacing(1),
     textAlign: 'center',
   }));
+
+  const handleAccountChange = (event, index) => {
+    let data = [...choiceAccounts];
+    data[index][event.target.name] = event.target.value;
+    setChoiceAccounts(data);
+  }
+
+  const handleDebitChange = (event, index) => {
+    let data = [...debitField];
+    data[index][event.target.name] = event.target.value;
+    if (!debitFocused) {
+      setDebitField(data);
+    }
+  }
+
+  const handleCreditChange = (event, index) => {
+    let data = [...creditField];
+    data[index][event.target.name] = event.target.value;
+
+    if (!creditFocused) {
+      setCreditField(data);
+    }
+  }
+
+  const addFields = () => {
+    let accountObject = {
+      name: '',
+    }
+    let debitObject = {
+      amount: 0,
+    }
+    let creditObject = {
+      amount: 0,
+    }
+    setChoiceAccounts([...choiceAccounts, accountObject])
+    setDebitField([...debitField, debitObject])
+    setCreditField([...creditField, creditObject])
+  }
+
+  const removeFields = () => {
+    let dataAccount = [...choiceAccounts];
+    dataAccount.splice(choiceAccounts.length - 1, 1)
+    let dataDebit = [...debitField];
+    dataDebit.splice(debitField.length - 1, 1)
+    let dataCredit = [...creditField];
+    dataCredit.splice(creditField.length - 1, 1)
+    setChoiceAccounts(dataAccount)
+    setDebitField(dataDebit)
+    setCreditField(dataCredit)
+  }
+
+  function RenderAddRows(number, props) {
+    return [...Array(number)].map(() => (props));
+  }
 
   function EditToolbar(props) {
     const { setRows, setRowModesModel } = props;
@@ -99,17 +128,17 @@ export default function JournalPage() {
         ...oldRows,
         {
           id,
-          name: { accountOne: "none", accountTwo: "none" },
+          name: [{ name: "" }],
           dateCreated: new Date(),
-          debit: { debitOne: 0, debitTwo: 0 },
-          credit: { creditOne: 0, creditTwo: 0 },
+          debit: [{ amount: 0 }],
+          credit: [{ amount: 0 }],
           status: "Pending",
           isNew: true,
         },
       ]);
       setRowModesModel((oldModel) => ({
         ...oldModel,
-        [id]: { mode: GridRowModes.Edit},
+        [id]: { mode: GridRowModes.Edit },
       }));
     };
 
@@ -129,9 +158,6 @@ export default function JournalPage() {
     setRows: PropTypes.func.isRequired,
   };
 
-  const [rows, setRows] = React.useState(initialRows);
-  const [rowModesModel, setRowModesModel] = React.useState({});
-
   const handleRowEditStart = (params, event) => {
     event.defaultMuiPrevented = true;
   };
@@ -147,10 +173,10 @@ export default function JournalPage() {
 
   const handleSaveClick = (id) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-    setVal(false);
   };
 
   const handleApproveClick = (id, status) => async () => {
+    // eslint-disable-next-line no-unused-vars
     const update = await updateStatus(id, status).then(
       GetEntries().then(setLoading(false))
     );
@@ -162,13 +188,15 @@ export default function JournalPage() {
 
   const handleCancelClick = (id) => () => {
     setNumberOfRows(1);
+    setChoiceAccounts([{ name: "" }, { name: "" }]);
+    setDebitField([{ amount: 0 }, { amount: 0 }]);
+    setCreditField([{ amount: 0 }, { amount: 0 }]);
     setRowModesModel({
       ...rowModesModel,
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
 
     const editedRow = rows.find((row) => row.id === id);
-    setVal(false);
     if (editedRow.isNew) {
       setRows(rows.filter((row) => row.id !== id));
     }
@@ -177,26 +205,26 @@ export default function JournalPage() {
   const processRowUpdate = async (newRow) => {
     const updatedRow = { ...newRow, isNew: false };
     setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+    debitField.forEach(function (item, i) { if (item === '') debitField[i] = 0 });
+    creditField.forEach(function (item, i) { if (item === '') creditField[i] = 0 })
     updatedRow.status = "Pending";
     updatedRow.dateCreated = new Date();
-    updatedRow.debit.debitOne = debit;
-    updatedRow.credit.creditTwo = credit;
-    updatedRow.name.accountOne = choiceAccountOne;
-    updatedRow.name.accountTwo = choiceAccountTwo;
+    updatedRow.name = choiceAccounts;
+    updatedRow.debit = debitField;
+    updatedRow.credit = creditField;
     const newRowID = await storeEntry(
       updatedRow.dateCreated,
-      updatedRow.name.accountOne,
-      updatedRow.name.accountTwo,
-      updatedRow.debit.debitOne,
-      updatedRow.credit.creditTwo
+      choiceAccounts,
+      debitField,
+      creditField,
     );
     updatedRow.id = newRowID;
-    setChoiceAccountOne("");
-    setChoiceAccountTwo("");
-    setDebit();
-    setCredit();
-    console.log(updatedRow);
+    setChoiceAccounts([{ name: "" }, { name: "" }]);
+    setDebitField([{ amount: 0 }, { amount: 0 }]);
+    setCreditField([{ amount: 0 }, { amount: 0 }]);
+    setNumberOfRows(1);
     setRows(...rows, updatedRow);
+    // eslint-disable-next-line no-unused-vars
     const get = await GetEntries().then(setLoading(false));
     return updatedRow;
   };
@@ -232,7 +260,7 @@ export default function JournalPage() {
               paddingTop: 5,
             }}>
               <Item style={{ height: 64 }}>{<div style={{ marginTop: 15 }}>{params.row?.dateCreated?.toDateString()}</div>}</Item>
-              {RenderAddRows(
+              {RenderAddRows(numberOfRows,
                 <div>
                   <Divider flexItem variant='fullWidth' width={225} />
                   <Item style={{ height: 64 }}>&nbsp;&nbsp;</Item>
@@ -241,13 +269,26 @@ export default function JournalPage() {
             </div>
           );
         }
-        return (
-          <div className="mt-4" style={{ textAlign: "center" }}>
-            <p>{params.row.dateCreated?.toDateString()}</p>
-            <Divider flexItem variant='fullWidth' width={225} />
-            <p style={{ marginTop: 15 }}>&nbsp;&nbsp;</p>
-          </div>
-        );
+        return (<div style={{
+          display: 'flex',
+          flexDirection: "column",
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingTop: 5,
+        }}>
+          {
+            params.row.name.map((debit, index) => {
+              return (
+                <div key={index}>
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  <div className="mt-4" style={{ textAlign: "center" }}>
+                    {index === 0 ? <p>{params.row.dateCreated.toDateString()}</p> : <p>&nbsp;&nbsp;</p>}
+                  </div>
+                </div>
+              )
+            })
+          }
+        </div>)
       },
     },
     {
@@ -261,11 +302,6 @@ export default function JournalPage() {
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
-          if (params.row.name.accountOne !== "" && val === false) {
-            setChoiceAccountOne(params.row.name.accountOne);
-            setChoiceAccountTwo(params.row.name.accountTwo);
-            setVal(true);
-          }
 
           return (<div style={{
             display: 'flex',
@@ -301,65 +337,28 @@ export default function JournalPage() {
               })
             }
           </div>)
-          // return (
-          //   <div style={{
-          //     display: 'flex',
-          //     flexDirection: "column",
-          //     alignItems: 'center',
-          //     justifyContent: 'center',
-          //     paddingTop: 5,
-          //   }}>
-          //     <Item height={64} >
-          //       {
-          //         <div style={{ marginTop: 5 }}>
-          //           {
-          //             <Select
-          //               labelId="normal-select-label"
-          //               id="normal-select"
-          //               value={choiceAccountOne}
-          //               size="small"
-          //               style={{ width: 200 }}
-          //               onChange={(event) => {
-          //                 setChoiceAccountOne(event.target.value);
-          //               }}
-          //             >
-          //               {accounts}
-          //             </Select>
-          //           }
-          //         </div>
-          //       }
-          //     </Item>
-          //     {RenderAddRows(
-          //       <div>
-          //         <Divider flexItem variant='fullWidth' width={225} />
-          //         <Item height={64}>
-          //           {
-          //             <Select
-          //               labelId="normal-select-label"
-          //               id="normal-select"
-          //               value={choiceAccountOne}
-          //               size="small"
-          //               style={{ width: 200 }}
-          //               onChange={(event) => {
-          //                 setChoiceAccountOne(event.target.value);
-          //               }}
-          //             >
-          //               {accounts}
-          //             </Select>
-          //           }
-          //         </Item>
-          //       </div>
-          //     )}
-          //   </div>
-          // );
         } else {
-          return (
-            <div className="mt-4" style={{ textAlign: "center" }}>
-              <p>{params.row.name?.accountOne}</p>
-              <Divider flexItem variant='fullWidth' width={225} />
-              <p style={{ marginTop: 15 }}>{params.row.name?.accountTwo}</p>
-            </div>
-          );
+          return (<div style={{
+            display: 'flex',
+            flexDirection: "column",
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingTop: 5,
+          }}>
+            {
+              params.row.name.map((account, index) => {
+                return (
+                  <div key={index}>
+                    {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                    <div className="mt-4" style={{ textAlign: "center" }}>
+                      <p>{account.name}</p>
+                      {/* <p style={{ marginTop: 15 }}>{params.row.name?.accountTwo}</p> */}
+                    </div>
+                  </div>
+                )
+              })
+            }
+          </div>)
         }
       },
     },
@@ -389,19 +388,16 @@ export default function JournalPage() {
                     <Item style={{ height: 64 }}>
                       <CurrencyTextField
                         placeholder="0.00"
-                        // defaultValue={
-                        //   params.row.debit.debitOne > 0
-                        //     ? params.row.debit.debitOne
-                        //     : null
-                        // }
                         name="amount"
                         variant="outlined"
-                        value={debit.amount}
+                        value={debit.amount !== 0 ? debit.amount : undefined}
                         currencySymbol="$"
                         fixedDecimalLength="2"
                         outputFormat="number"
                         decimalCharacter="."
                         digitGroupSeparator=","
+                        onFocus={onFocusDebit}
+                        onBlur={onBlurDebit}
                         onChange={(event) => {
                           handleDebitChange(event, index);
                         }}
@@ -412,67 +408,32 @@ export default function JournalPage() {
                   </div>
                 )
               })}
-              {/* <Item style={{ height: 64 }}>{
-                <CurrencyTextField
-                  placeholder="0.00"
-                  defaultValue={
-                    params.row.debit.debitOne > 0
-                      ? params.row.debit.debitOne
-                      : null
-                  }
-                  variant="outlined"
-                  value={debit}
-                  currencySymbol="$"
-                  fixedDecimalLength="2"
-                  outputFormat="number"
-                  decimalCharacter="."
-                  digitGroupSeparator=","
-                  onChange={(event, value) => setDebit(value)}
-                  size="small"
-                  style={{ width: 150, marginTop: 5 }}
-                />
-              }</Item>
-              {RenderAddRows(
-                <div>
-                  <Divider flexItem variant='fullWidth' width={225} />
-                  <Item style={{ height: 64 }}>{
-                    <CurrencyTextField
-                      placeholder="0.00"
-                      defaultValue={
-                        params.row.debit.debitOne > 0
-                          ? params.row.debit.debitOne
-                          : null
-                      }
-                      variant="outlined"
-                      value={debit}
-                      currencySymbol="$"
-                      fixedDecimalLength="2"
-                      outputFormat="number"
-                      decimalCharacter="."
-                      digitGroupSeparator=","
-                      onChange={(event, value) => setDebit(value)}
-                      size="small"
-                      style={{ width: 150 }}
-                    />
-                  }</Item>
-                </div>
-              )} */}
             </div>
           );
         }
-
-        return (
-          <div className="mt-4" style={{ textAlign: "center" }}>
-            <p>
-              {params.row.debit?.debitOne.toLocaleString("en-us", {
-                style: "currency",
-                currency: "USD",
-              })}
-            </p>
-            <Divider flexItem variant='fullWidth' width={225} />
-            <p style={{ marginTop: 15 }}>&nbsp;&nbsp;</p>
-          </div>
-        );
+        return (<div style={{
+          display: 'flex',
+          flexDirection: "column",
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingTop: 5,
+        }}>
+          {
+            params.row.debit.map((debit, index) => {
+              return (
+                <div key={index}>
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  <div className="mt-4" style={{ textAlign: "center" }}>
+                    {debit.amount !== 0 ? <p>{parseFloat(debit.amount).toLocaleString("en-us", {
+                      style: "currency",
+                      currency: "USD",
+                    })}</p> : <p>&nbsp;&nbsp;</p>}
+                  </div>
+                </div>
+              )
+            })
+          }
+        </div>)
       },
     },
     {
@@ -494,68 +455,59 @@ export default function JournalPage() {
               justifyContent: 'center',
               paddingTop: 5,
             }}>
-              <Item style={{ height: 64 }}>{
-                <CurrencyTextField
-                  placeholder="0.00"
-                  defaultValue={
-                    params.row.credit.creditTwo > 0
-                      ? params.row.credit.creditTwo
-                      : null
-                  }
-                  variant="outlined"
-                  value={credit}
-                  currencySymbol="$"
-                  fixedDecimalLength="2"
-                  outputFormat="number"
-                  decimalCharacter="."
-                  digitGroupSeparator=","
-                  onChange={(event, value) => setCredit(value)}
-                  size="small"
-                  style={{ width: 150, marginTop: 5 }}
-                />
-              }</Item>
-              {RenderAddRows(
-                <div>
-                  <Divider flexItem variant='fullWidth' width={225} />
-                  <Item style={{ height: 64 }}>{
-                    <CurrencyTextField
-                      placeholder="0.00"
-                      defaultValue={
-                        params.row.credit.creditTwo > 0
-                          ? params.row.credit.creditTwo
-                          : null
-                      }
-                      variant="outlined"
-                      value={credit}
-                      currencySymbol="$"
-                      fixedDecimalLength="2"
-                      outputFormat="number"
-                      decimalCharacter="."
-                      digitGroupSeparator=","
-                      onChange={(event, value) => setCredit(value)}
-                      size="small"
-                      style={{ width: 150 }}
-                    />
-                  }</Item>
-                </div>
-              )}
+              {creditField.map((credit, index) => {
+                return (
+                  <div key={index}>
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    <Item style={{ height: 64 }}>
+                      <CurrencyTextField
+                        placeholder="0.00"
+                        name="amount"
+                        variant="outlined"
+                        value={credit.amount !== 0 ? credit.amount : undefined}
+                        currencySymbol="$"
+                        fixedDecimalLength="2"
+                        outputFormat="number"
+                        decimalCharacter="."
+                        digitGroupSeparator=","
+                        onFocus={onFocusCredit}
+                        onBlur={onBlurCredit}
+                        onChange={(event) => {
+                          handleCreditChange(event, index);
+                        }}
+                        size="small"
+                        style={{ width: 150, marginTop: 5 }}
+                      />
+                    </Item>
+                  </div>
+                )
+              })}
             </div>
           );
         }
-        return (
-          <div className="mt-4" style={{ textAlign: "center" }}>
-            <p>&nbsp;&nbsp;</p>
-            <Divider flexItem variant='fullWidth' width={225} />
-            <p style={{ marginTop: 15 }}>
-              (
-              {params.row.credit?.creditTwo.toLocaleString("en-us", {
-                style: "currency",
-                currency: "USD",
-              })}
+        return (<div style={{
+          display: 'flex',
+          flexDirection: "column",
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingTop: 5,
+        }}>
+          {
+            params.row.credit.map((credit, index) => {
+              return (
+                <div key={index}>
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  <div className="mt-4" style={{ textAlign: "center" }}>
+                    {credit.amount !== 0 ? <p>({parseFloat(credit.amount).toLocaleString("en-us", {
+                      style: "currency",
+                      currency: "USD",
+                    })})</p> : <p>&nbsp;&nbsp;</p>}
+                  </div>
+                </div>
               )
-            </p>
-          </div>
-        );
+            })
+          }
+        </div>)
       },
     },
     {
@@ -569,7 +521,6 @@ export default function JournalPage() {
       renderCell: (params) => {
         const isInEditMode =
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
-        //console.log(params);
         if (params.row.balance > 0) {
         } else {
           if (isInEditMode)
@@ -667,13 +618,14 @@ export default function JournalPage() {
                 label="Approve"
                 className="textPrimary"
                 onClick={handleApproveClick(id, "Approved")}
-                color="inherit"
+                color="success"
               />
               <GridActionsCellItem
                 icon={<Block />}
                 label="Reject"
+                className="textPrimary"
                 onClick={handleApproveClick(id, "Rejected")}
-                color="inherit"
+                color="error"
               />
             </div>,
           ];
@@ -685,13 +637,14 @@ export default function JournalPage() {
               label="Edit"
               className="textPrimary"
               onClick={handleEditClick(id)}
-              color="inherit"
+              color="primary"
             />
             <GridActionsCellItem
               icon={<Delete />}
               label="Delete"
+              className="textPrimary"
               onClick={handleDeleteClick(id)}
-              color="inherit"
+              color="error"
             />
           </div>,
         ];
@@ -739,13 +692,10 @@ export default function JournalPage() {
       querySnapshot.forEach(async (doc) => {
         rowArray.push({
           id: doc.id,
-          name: {
-            accountOne: doc.data().debitAccount,
-            accountTwo: doc.data().creditAccount,
-          },
+          name: doc.data().account,
           dateCreated: doc.data().timeStamp.toDate(),
-          debit: { debitOne: doc.data().debit, debitTwo: 0 },
-          credit: { creditOne: 0, creditTwo: doc.data().credit },
+          debit: doc.data().debit,
+          credit: doc.data().credit,
           status: doc.data().status,
         });
       });
@@ -756,17 +706,15 @@ export default function JournalPage() {
 
   async function storeEntry(
     dateCreated,
-    debitAccount,
-    creditAccount,
-    debit,
-    credit
+    choiceAccounts,
+    debitField,
+    creditField
   ) {
     const newEntryAdded = await addDoc(collection(db, "entries"), {
       timeStamp: dateCreated,
-      debitAccount: debitAccount,
-      creditAccount: creditAccount,
-      debit: debit,
-      credit: credit,
+      account: choiceAccounts,
+      debit: debitField,
+      credit: creditField,
       status: "Pending",
     });
     console.log("Added entry with ID: ", newEntryAdded.id);
@@ -777,6 +725,7 @@ export default function JournalPage() {
     console.log("status: " + status);
     console.log("id: " + id);
     const entryRef = doc(db, "entries", id);
+    // eslint-disable-next-line no-unused-vars
     const update = await updateDoc(entryRef, {
       status: status,
     });
@@ -786,7 +735,7 @@ export default function JournalPage() {
   useEffect(() => {
     GetAccounts();
     GetEntries().then(setLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -827,11 +776,6 @@ export default function JournalPage() {
             processRowUpdate={processRowUpdate}
             initialState={filterProvidedEntry}
             onProcessRowUpdateError={(error) => console.log(error)}
-            // onSelectionModelChange={(newSelectionModel) => {
-            //   console.log(newSelectionModel);
-            //   setSelectionModel(newSelectionModel);
-            // }}
-            // selectionModel={selectionModel}
             components={{
               Toolbar: EditToolbar,
             }}
@@ -839,7 +783,7 @@ export default function JournalPage() {
               toolbar: { setRows, setRowModesModel },
             }}
             experimentalFeatures={{ newEditingApi: true }}
-            
+
           />
         </div>
       </div>
