@@ -45,13 +45,7 @@ export default function JournalPage() {
   const [numberOfRows, setNumberOfRows] = useState(1);
   const [choiceAccounts, setChoiceAccounts] = useState([{ name: "" }, { name: "" }]);
   const [debitField, setDebitField] = useState([{ amount: 0 }, { amount: 0 }]);
-  const [debitFocused, setDebitFocused] = useState(false);
-  const onFocusDebit = () => setDebitFocused(true)
-  const onBlurDebit = () => setDebitFocused(false)
   const [creditField, setCreditField] = useState([{ amount: 0 }, { amount: 0 }]);
-  const [creditFocused, setCreditFocused] = useState(false);
-  const onFocusCredit = () => setCreditFocused(true)
-  const onBlurCredit = () => setCreditFocused(false)
   const db = getFirestore(app);
   const [sortModel, setSortModel] = useState([
     {
@@ -74,18 +68,11 @@ export default function JournalPage() {
   const handleDebitChange = (event, index) => {
     let data = [...debitField];
     data[index][event.target.name] = event.target.value;
-    if (!debitFocused) {
-      setDebitField(data);
-    }
   }
 
   const handleCreditChange = (event, index) => {
     let data = [...creditField];
     data[index][event.target.name] = event.target.value;
-
-    if (!creditFocused) {
-      setCreditField(data);
-    }
   }
 
   const addFields = () => {
@@ -297,6 +284,10 @@ export default function JournalPage() {
       editable: false,
       flex: 1,
       align: "center",
+      valueGetter: (params) => {
+        const accountNames = params.row.name;
+        return accountNames?.map((elem) => elem.name).join(",")
+      },
       renderCell: (params) => {
         const isInEditMode =
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
@@ -346,13 +337,12 @@ export default function JournalPage() {
             paddingTop: 5,
           }}>
             {
-              params.row.name.map((account, index) => {
+              params?.value.split(",").map((account, index) => {
                 return (
                   <div key={index}>
                     {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
                     <div className="mt-4" style={{ textAlign: "center" }}>
-                      <p>{account.name}</p>
-                      {/* <p style={{ marginTop: 15 }}>{params.row.name?.accountTwo}</p> */}
+                      <p>{account}</p>
                     </div>
                   </div>
                 )
@@ -369,6 +359,10 @@ export default function JournalPage() {
       editable: false,
       align: "center",
       flex: 1,
+      valueGetter: (params) => {
+        const debitAmounts = params.row.debit;
+        return debitAmounts?.map((elem) => elem.amount).join(",")
+      },
       renderCell: (params) => {
         const isInEditMode =
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
@@ -396,8 +390,6 @@ export default function JournalPage() {
                         outputFormat="number"
                         decimalCharacter="."
                         digitGroupSeparator=","
-                        onFocus={onFocusDebit}
-                        onBlur={onBlurDebit}
                         onChange={(event) => {
                           handleDebitChange(event, index);
                         }}
@@ -419,12 +411,12 @@ export default function JournalPage() {
           paddingTop: 5,
         }}>
           {
-            params.row.debit.map((debit, index) => {
+            params?.value.split(",").map((debit, index) => {
               return (
                 <div key={index}>
                   {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
-                    {debit.amount !== 0 ? <p>{parseFloat(debit.amount).toLocaleString("en-us", {
+                    {parseFloat(debit) !== 0 ? <p>{parseFloat(debit).toLocaleString("en-us", {
                       style: "currency",
                       currency: "USD",
                     })}</p> : <p>&nbsp;&nbsp;</p>}
@@ -443,6 +435,10 @@ export default function JournalPage() {
       editable: false,
       align: "center",
       flex: 1,
+      valueGetter: (params) => {
+        const creditAmounts = params.row.credit;
+        return creditAmounts?.map((elem) => elem.amount).join(",")
+      },
       renderCell: (params) => {
         const isInEditMode =
           rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
@@ -470,8 +466,6 @@ export default function JournalPage() {
                         outputFormat="number"
                         decimalCharacter="."
                         digitGroupSeparator=","
-                        onFocus={onFocusCredit}
-                        onBlur={onBlurCredit}
                         onChange={(event) => {
                           handleCreditChange(event, index);
                         }}
@@ -493,12 +487,12 @@ export default function JournalPage() {
           paddingTop: 5,
         }}>
           {
-            params.row.credit.map((credit, index) => {
+            params?.value.split(",").map((credit, index) => {
               return (
                 <div key={index}>
                   {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
-                    {credit.amount !== 0 ? <p>({parseFloat(credit.amount).toLocaleString("en-us", {
+                    {parseFloat(credit) !== 0 ? <p>({parseFloat(credit).toLocaleString("en-us", {
                       style: "currency",
                       currency: "USD",
                     })})</p> : <p>&nbsp;&nbsp;</p>}
@@ -763,6 +757,8 @@ export default function JournalPage() {
               },
             }}
             rows={rows}
+            pagination
+            autoPageSize
             getRowHeight={() => 'auto'}
             columns={columns}
             editMode="row"
@@ -775,7 +771,7 @@ export default function JournalPage() {
             onRowEditStop={handleRowEditStop}
             processRowUpdate={processRowUpdate}
             initialState={filterProvidedEntry}
-            onProcessRowUpdateError={(error) => console.log(error)}
+            // onProcessRowUpdateError={(error) => console.log(error)}
             components={{
               Toolbar: EditToolbar,
             }}
@@ -787,7 +783,6 @@ export default function JournalPage() {
           />
         </div>
       </div>
-
       <div class="fixed-bottom" style={{ padding: 10 }}>
         <MDBTooltip tag="a" placement="auto" title="Help">
           <button
