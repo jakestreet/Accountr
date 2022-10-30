@@ -74,6 +74,21 @@ export function AuthProvider({ children }) {
         alert("Uploaded file!");
     }
 
+    async function uploadEntryDoc(file, id, filename, setLoading) {
+        // eslint-disable-next-line
+        const fileRef = ref(storage, "entry docs/" + "journal-entry-" + id + '/' + filename);
+
+        setLoading(true);
+
+        // eslint-disable-next-line
+        const uploadResult = await uploadBytes(fileRef, file);
+
+        setLoading(false);
+        alert("Uploaded File!");
+
+        return fileRef;
+    }
+
     function sendEmail(emailTo, subject, body) {
         return window.Email.send({
             SecureToken: "ce629ac7-e05d-45c6-b41e-943099ad36ef",
@@ -108,6 +123,7 @@ export function AuthProvider({ children }) {
         html2canvas(document.getElementById('capture')).then(async (canvas) => {
             var base64URL = canvas.toDataURL('image/jpeg').replace('image/jpeg', 'image/octet-stream');
             const imageRef = ref(storage, `/events/${id}/${when}.jpg`)
+            // eslint-disable-next-line
             const uploading = await uploadString(imageRef, base64URL, 'data_url');
         });
     }
@@ -164,6 +180,7 @@ export function AuthProvider({ children }) {
         captureEvent,
         storeEvent,
         setEntryFilter,
+        uploadEntryDoc,
     }
 
     return (

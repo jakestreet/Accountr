@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { MDBBtn, MDBTooltip } from "mdb-react-ui-kit";
+import { storage } from '../components/utils/firebase'
+import { MDBBtn, MDBCardText, MDBCol, MDBInput, MDBRow, MDBTextArea, MDBTooltip } from "mdb-react-ui-kit";
 import Modal from "@mui/material/Modal";
 import * as React from "react";
 import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
-import { Add, Edit, Delete, Save, Cancel, Check, Block, Remove } from "@mui/icons-material"
+import { Add, Save, Cancel, Check, Block, Remove, Download } from "@mui/icons-material"
 import {
   GridRowModes,
   DataGrid,
@@ -28,13 +29,14 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
+import { getDownloadURL, ref } from "firebase/storage";
 import { app } from "../components/utils/firebase";
-import { Box } from "@mui/material";
+import { Box, IconButton, Typography } from "@mui/material";
 import { styled } from '@mui/material/styles';
 import { Divider } from '@mui/material';
 
 export default function JournalPage() {
-  const { currentRole, filterProvidedEntry } = useAuth();
+  const { currentRole, filterProvidedEntry, uploadEntryDoc } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -46,6 +48,55 @@ export default function JournalPage() {
   const [choiceAccounts, setChoiceAccounts] = useState([{ name: "" }, { name: "" }]);
   const [debitField, setDebitField] = useState([{ amount: 0 }, { amount: 0 }]);
   const [creditField, setCreditField] = useState([{ amount: 0 }, { amount: 0 }]);
+  const [viewData, setViewData] = useState();
+  const [comment, setComment] = useState("");
+  const [open, setOpen] = useState(false);
+  const [openView, setOpenView] = useState(false);
+  const [openReject, setOpenReject] = useState(false);
+  const [loadingUpload, setLoadingUpload] = useState(false);
+  const [docFile, setDocFile] = useState(null);
+  async function handleUpload(id) {
+    // eslint-disable-next-line
+    const upload = await uploadEntryDoc(docFile, id, docFile.name, setLoadingUpload)
+    // eslint-disable-next-line
+    const update = await updateJournalDocName(id, docFile.name).then(await GetEntries().then(setLoading(false)));
+  }
+  function handleUploadChange(e) {
+    if (e.target.files[0]) {
+      setDocFile(e.target.files[0])
+    }
+  }
+
+  const handleOpenView = (rowData) => {
+    setViewData(rowData)
+    setOpenView(true);
+  }
+  const handleOpenReject = (rowData) => {
+    setViewData(rowData)
+    setOpenReject(true);
+  }
+  const handleClose = async () => {
+    console.log("ran close")
+    await GetEntries().then(setLoading(false))
+    setOpen(false)
+  }
+  const handleCloseView = () => setOpenView(false);
+  const handleCloseReject = () => {
+    setOpenReject(false);
+    console.log("closed")
+    setComment("");
+  }
+
+  const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 600,
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 4,
+  };
   const db = getFirestore(app);
   const [sortModel, setSortModel] = useState([
     {
@@ -153,24 +204,17 @@ export default function JournalPage() {
     event.defaultMuiPrevented = true;
   };
 
-
-  const handleEditClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-  };
-
   const handleSaveClick = (id) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
-  const handleApproveClick = (id, status) => async () => {
+  const handleApproveClick = (id, status, comment) => async () => {
     // eslint-disable-next-line no-unused-vars
-    const update = await updateStatus(id, status).then(
+    const update = await updateStatus(id, status, comment).then(
       GetEntries().then(setLoading(false))
     );
-  };
-
-  const handleDeleteClick = (id) => () => {
-    setRows(rows.filter((row) => row.id !== id));
+    setOpenReject(false);
+    setComment("");
   };
 
   const handleCancelClick = (id) => () => {
@@ -190,6 +234,7 @@ export default function JournalPage() {
   };
 
   const processRowUpdate = async (newRow) => {
+    setLoading(true);
     const updatedRow = { ...newRow, isNew: false };
     setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
     debitField.forEach(function (item, i) { if (item === '') debitField[i] = 0 });
@@ -211,8 +256,8 @@ export default function JournalPage() {
     setCreditField([{ amount: 0 }, { amount: 0 }]);
     setNumberOfRows(1);
     setRows(...rows, updatedRow);
-    // eslint-disable-next-line no-unused-vars
-    const get = await GetEntries().then(setLoading(false));
+    setViewData(updatedRow);
+    setOpen(true);
     return updatedRow;
   };
 
@@ -612,14 +657,14 @@ export default function JournalPage() {
                 icon={<Check />}
                 label="Approve"
                 className="textPrimary"
-                onClick={handleApproveClick(id, "Approved")}
+                onClick={handleApproveClick(id, "Approved", "")}
                 color="success"
               />
               <GridActionsCellItem
                 icon={<Block />}
                 label="Reject"
                 className="textPrimary"
-                onClick={handleApproveClick(id, "Rejected")}
+                onClick={() => { handleOpenReject(params.row) }}
                 color="error"
               />
             </div>,
@@ -627,7 +672,8 @@ export default function JournalPage() {
         }
         return [
           <div style={{ textAlign: "center" }}>
-            <GridActionsCellItem
+            <MDBBtn onClick={() => { handleOpenView(params.row) }}>View</MDBBtn>
+            {/* <GridActionsCellItem
               icon={<Edit />}
               label="Edit"
               className="textPrimary"
@@ -640,7 +686,7 @@ export default function JournalPage() {
               className="textPrimary"
               onClick={handleDeleteClick(id)}
               color="error"
-            />
+            /> */}
           </div>,
         ];
       },
@@ -692,6 +738,9 @@ export default function JournalPage() {
           debit: doc.data().debit,
           credit: doc.data().credit,
           status: doc.data().status,
+          comment: doc.data()?.comment,
+          documentName: doc.data()?.documentName,
+          documentUrl: doc.data()?.documentUrl
         });
       });
 
@@ -711,20 +760,38 @@ export default function JournalPage() {
       debit: debitField,
       credit: creditField,
       status: "Pending",
+      comment: "",
     });
     console.log("Added entry with ID: ", newEntryAdded.id);
     return newEntryAdded.id;
   }
 
-  async function updateStatus(id, status) {
+  async function updateStatus(id, status, comment) {
     console.log("status: " + status);
     console.log("id: " + id);
     const entryRef = doc(db, "entries", id);
     // eslint-disable-next-line no-unused-vars
     const update = await updateDoc(entryRef, {
       status: status,
+      comment: comment,
     });
     console.log("Added status of entry with ID: ", id);
+  }
+
+  async function updateJournalDocName(id, name) {
+    // eslint-disable-next-line
+    const fileRef = ref(storage, "entry docs/" + "journal-entry-" + id + '/' + name);
+
+    getDownloadURL(fileRef).then(async (url) => {
+      const entryRef = doc(db, "entries", id);
+      // eslint-disable-next-line no-unused-vars
+      const update = await updateDoc(entryRef, {
+        documentName: name,
+        documentUrl: url,
+      });
+    })
+
+    console.log("Added document name to entry with ID: ", id);
   }
 
   useEffect(() => {
@@ -784,6 +851,89 @@ export default function JournalPage() {
           />
         </div>
       </div>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            Attached File:
+          </Typography>
+          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+            <MDBInput type="file" onChange={handleUploadChange} />
+            <MDBBtn disabled={loadingUpload || !docFile} onClick={() => { handleUpload(viewData?.id) }}>Upload</MDBBtn>
+          </MDBCol>
+          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+            <MDBBtn className="mt-3" onClick={() => { { handleClose() } }}>Close</MDBBtn>
+          </MDBCol>
+        </Box>
+      </Modal>
+      <Modal
+        open={openReject}
+        onClose={handleCloseReject}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <MDBTextArea style={{ resize: "none" }} rows={5} value={comment} onChange={(e) => { setComment(e.target.value) }} label="Comment" />
+          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+            <MDBBtn className="mt-3" onClick={handleApproveClick(viewData?.id, "Rejected", comment)}>Submit</MDBBtn>
+          </MDBCol>
+          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+            <MDBBtn className="mt-3" onClick={() => { handleCloseReject() }}>Close</MDBBtn>
+          </MDBCol>
+        </Box>
+      </Modal>
+      <Modal
+        open={openView}
+        onClose={handleCloseView}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <MDBRow>
+            <MDBCol sm="4">
+              <MDBCardText className='ms-auto mt-1'>Attached File:</MDBCardText>
+            </MDBCol>
+            <MDBCol sm="8">
+              {
+                viewData?.documentName === undefined ? <MDBCardText className="text-end text-muted mt-1">None</MDBCardText>
+                  :
+                  <MDBCardText className="text-end text-muted">
+                    {viewData?.documentName}
+                    {
+                      <a href={viewData?.documentUrl}>
+                        <IconButton color="primary">
+                          <Download />
+                        </IconButton>
+                      </a>
+                    }
+                  </MDBCardText>
+              }
+            </MDBCol>
+          </MDBRow>
+          {
+            viewData?.status === "Rejected" ?
+              <div>
+                <hr />
+                <MDBRow>
+                  <MDBCol sm="4">
+                    <MDBCardText className='mt-2'>Comment:</MDBCardText>
+                  </MDBCol>
+                  <MDBCol sm="8">
+                    <MDBCardText className="text-end text-muted mt-2">{viewData?.comment}</MDBCardText>
+                  </MDBCol>
+                </MDBRow>
+              </div>
+              : null
+          }
+          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+            <MDBBtn className="mt-3" onClick={() => { setOpenView(false) }}>Close</MDBBtn>
+          </MDBCol>
+        </Box>
+      </Modal>
       <div class="fixed-bottom" style={{ padding: 10 }}>
         <MDBTooltip tag="a" placement="auto" title="Help">
           <button
