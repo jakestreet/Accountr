@@ -6,7 +6,7 @@ import Modal from "@mui/material/Modal";
 import * as React from "react";
 import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
-import { Add, Save, Cancel, Check, Block, Remove, Download } from "@mui/icons-material"
+import { Add, Save, Cancel, Check, Block, Remove, Download, Refresh } from "@mui/icons-material"
 import {
   GridRowModes,
   DataGrid,
@@ -118,7 +118,7 @@ export default function JournalPage() {
 
   const handleDebitChange = (event, index) => {
     let data = [...debitField];
-    if(event.target.value !== "")
+    if (event.target.value !== "")
       data[index][event.target.name] = event.target.value;
     else
       data[index][event.target.name] = 0
@@ -126,7 +126,7 @@ export default function JournalPage() {
 
   const handleCreditChange = (event, index) => {
     let data = [...creditField];
-    if(event.target.value !== "")
+    if (event.target.value !== "")
       data[index][event.target.name] = event.target.value;
     else
       data[index][event.target.name] = 0
@@ -188,6 +188,13 @@ export default function JournalPage() {
 
     return (
       <GridToolbarContainer>
+        <Button color="primary" startIcon={<Refresh />} onClick={() => {
+          setLoading(true);
+          GetAccounts();
+          GetEntries().then(setLoading(false));
+        }}>
+          Refresh
+        </Button>
         <Button color="primary" startIcon={<Add />} onClick={handleClick}>
           Add Journal Entry
         </Button>
