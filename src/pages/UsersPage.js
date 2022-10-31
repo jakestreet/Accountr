@@ -554,7 +554,7 @@ export default function RequestsPage() {
     e.preventDefault();
     const subject = subjectInputRef.current.value;
     const body = bodyInputRef.current.value;
-    sendEmail(emailTo, subject, body);
+    sendEmail(emailTo, subject, body, currentUser.displayName);
     //handleCloseSendEmail();
     setOpenEmailAlert(true);
   };
@@ -644,7 +644,7 @@ export default function RequestsPage() {
                   "Accountr Request Approved",
                   "Your request for an account with Accountr has been approved. You may now login with the username " +
                     username +
-                    " at https://accountr.netlify.app/"
+                    " at https://accountr.netlify.app/", currentUser.displayName
                 );
               }}
               className="d-md-flex gap-2 mb-2 btn-sm"

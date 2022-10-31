@@ -89,11 +89,11 @@ export function AuthProvider({ children }) {
         return fileRef;
     }
 
-    function sendEmail(emailTo, subject, body) {
+    function sendEmail(emailTo, subject, body, fromName) {
         return window.Email.send({
             SecureToken: "ce629ac7-e05d-45c6-b41e-943099ad36ef",
             To: emailTo,
-            From: "teamjest4713@gmail.com",
+            From:  `${fromName} <teamjest4713@gmail.com>`,
             Subject: subject,
             Body: body
         }).then(

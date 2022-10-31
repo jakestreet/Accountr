@@ -21,6 +21,7 @@ import {
   MDBRow,
   MDBCol,
   MDBTooltip,
+  MDBTextArea,
 } from "mdb-react-ui-kit";
 import { Alert, CircularProgress } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
@@ -53,13 +54,53 @@ import CurrencyTextField from "../components/CurrencyTextField";
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import EmailIcon from '@mui/icons-material/Email';
 
 export default function AccountsPage() {
   const db = getFirestore(app);
 
   const [rows, setRows] = useState([]);
 
-  const { currentUser, captureEvent, storeEvent, currentRole } = useAuth();
+  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail } = useAuth();
+
+  const [emailTo, setEmailTo] = useState("");
+  const subjectInputRef = useRef();
+  const bodyInputRef = useRef();
+  const handleOpenSendEmail = () => setOpenSendEmail(true);
+  const [openEmailAlert, setOpenEmailAlert] = useState(false);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const [emails, setEmails] = useState();
+  const handleCloseSendEmail = () => {
+    setOpenSendEmail(false);
+    setOpenEmailAlert(false);
+  };
+  const handleEmailChange = (event) => {
+    setEmailTo(event.target.value);
+  };
+  const SendEmailAlert = (e) => {
+    return (
+      <Collapse in={openEmailAlert}>
+        <Alert
+          severity="success"
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={() => {
+                setOpenEmailAlert(false);
+              }}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+          sx={{ mb: 2 }}
+        >
+          {emailMessage}
+        </Alert>
+      </Collapse>
+    );
+  };
 
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
@@ -131,6 +172,18 @@ export default function AccountsPage() {
     p: 4,
   };
 
+  const styleEmail = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 600,
+    bgcolor: "background.paper",
+    border: "5px solid rgba(255,255,255,1)",
+    boxShadow: 24,
+    p: 4,
+  };
+
   const styleView = {
     position: "absolute",
     top: "50%",
@@ -142,6 +195,56 @@ export default function AccountsPage() {
     boxShadow: 24,
     p: 4,
   };
+
+  const SendEmailOnClick = (e) => {
+    e.preventDefault();
+    const subject = subjectInputRef.current.value;
+    const body = bodyInputRef.current.value;
+    sendEmail(emailTo, subject, body, currentUser.displayName);
+    //handleCloseSendEmail();
+    setOpenEmailAlert(true);
+  };
+
+  async function EmailOnClick() {
+    const getEmails = await GetEmails();
+    handleOpenSendEmail();
+  }
+
+  async function GetEmails() {
+    try {
+      const usersRef = collection(db, "users");
+
+      var q;
+      if (currentRole === "Admin")
+        q = query(usersRef, where("role", "!=", "Admin"));
+      else if(currentRole === "User")
+        q = query(usersRef, where("role", "!=", "User"));
+      else
+        q = query(usersRef)
+
+      const emailsArray = [];
+
+      console.log("got accounts");
+
+      const querySnapshot = await getDocs(q);
+
+      var gotFirst = false;
+
+      querySnapshot.forEach(async (doc) => {
+        if (gotFirst === false) {
+          setEmailTo(doc.data().email);
+          gotFirst = true;
+        }
+        emailsArray.push(
+          <MenuItem key={doc.data().username} value={doc.data().email}>
+            {doc.data().email + " - " + doc.data().role}
+          </MenuItem>
+        );
+      });
+
+      setEmails(emailsArray);
+    } catch (error) { }
+  }
 
   function CustomToolBar() {
     return (
@@ -170,6 +273,9 @@ export default function AccountsPage() {
             </Button>
           </MDBTooltip>
         ) : null}
+        <Button onClick={() => {
+          EmailOnClick();
+        }} color="primary" startIcon={<EmailIcon />}>Email</Button>
         <GridToolbarColumnsButton />
         <GridToolbarFilterButton />
         <GridToolbarExport />
@@ -177,7 +283,6 @@ export default function AccountsPage() {
       </GridToolbarContainer>
     );
   }
-
   const DeleteAccount = async (e) => {
     const accountNumber = selectedAcc.id;
 
@@ -344,7 +449,7 @@ export default function AccountsPage() {
       });
 
       setRows(rowsArray);
-    } catch (error) {}
+    } catch (error) { }
   }
 
   function CustomPagination() {
@@ -633,7 +738,7 @@ export default function AccountsPage() {
     );
   };
 
-  useEffect(() => {}, [selectedAcc]);
+  useEffect(() => { }, [selectedAcc]);
 
   function currentlySelected(GridCellParams) {
     const currentAccount = GridCellParams.row;
@@ -821,6 +926,57 @@ export default function AccountsPage() {
         padding: 25,
       }}
     >
+      <Modal
+        open={openSendEmail}
+        onClose={handleCloseSendEmail}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={styleEmail}>
+          {SendEmailAlert()}
+          <label>To:</label>
+          <Select className="ms-2 mb-2" size="small" autoWidth value={emailTo} onChange={handleEmailChange}>
+            {emails}
+          </Select>
+          <MDBCol>
+            <label>From: {currentUser.email}</label>
+          </MDBCol>
+          <MDBInput
+            wrapperClass="mb-4 mt-2"
+            label="Subject"
+            id="subject"
+            type="text"
+            inputRef={subjectInputRef}
+          />
+          <MDBTextArea
+            label="Body"
+            id="body"
+            type="text"
+            rows={10}
+            inputRef={bodyInputRef}
+          ></MDBTextArea>
+          <MDBTooltip tag="a" placement="auto" title="Finish sending email">
+            <MDBBtn
+              onClick={SendEmailOnClick}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Send Email
+            </MDBBtn>
+          </MDBTooltip>
+          <MDBTooltip tag="a" placement="auto" title="Cancel sending email">
+            <MDBBtn
+              onClick={() => {
+                handleCloseSendEmail();
+              }}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Close
+            </MDBBtn>
+          </MDBTooltip>
+        </Box>
+      </Modal>
       <Modal
         open={openNewAccount}
         onClose={handleCloseNewAccount}
@@ -1034,9 +1190,9 @@ export default function AccountsPage() {
                 fontSize: 16,
               },
               "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
-                {
-                  outline: "none",
-                },
+              {
+                outline: "none",
+              },
             }}
             rowHeight={100}
             rows={rows}

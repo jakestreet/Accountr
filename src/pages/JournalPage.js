@@ -118,12 +118,18 @@ export default function JournalPage() {
 
   const handleDebitChange = (event, index) => {
     let data = [...debitField];
-    data[index][event.target.name] = event.target.value;
+    if(event.target.value !== "")
+      data[index][event.target.name] = event.target.value;
+    else
+      data[index][event.target.name] = 0
   }
 
   const handleCreditChange = (event, index) => {
     let data = [...creditField];
-    data[index][event.target.name] = event.target.value;
+    if(event.target.value !== "")
+      data[index][event.target.name] = event.target.value;
+    else
+      data[index][event.target.name] = 0
   }
 
   const addFields = () => {
@@ -866,7 +872,7 @@ export default function JournalPage() {
             <MDBBtn disabled={loadingUpload || !docFile} onClick={() => { handleUpload(viewData?.id) }}>Upload</MDBBtn>
           </MDBCol>
           <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBBtn className="mt-3" onClick={() => { { handleClose() } }}>Close</MDBBtn>
+            <MDBBtn disabled={loadingUpload} className="mt-3" onClick={() => { { handleClose() } }}>Close</MDBBtn>
           </MDBCol>
         </Box>
       </Modal>
@@ -934,7 +940,7 @@ export default function JournalPage() {
           </MDBCol>
         </Box>
       </Modal>
-      <div class="fixed-bottom" style={{ padding: 10 }}>
+      <div className="fixed-bottom" style={{ padding: 10 }}>
         <MDBTooltip tag="a" placement="auto" title="Help">
           <button
             type="button"
@@ -953,10 +959,10 @@ export default function JournalPage() {
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
-          <div class="card">
-            <div class="card-body">
-              <dl class="row">
-                <dd class="col-sm-9">No Content</dd>
+          <div className="card">
+            <div className="card-body">
+              <dl className="row">
+                <dd className="col-sm-9">No Content</dd>
               </dl>
             </div>
             <MDBBtn
