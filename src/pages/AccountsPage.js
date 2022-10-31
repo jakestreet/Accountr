@@ -391,15 +391,16 @@ export default function AccountsPage() {
           accountNumber: accountNumber,
         });
 
-        const id = await storeEvent(currentUser.displayName);
-        // eslint-disable-next-line no-unused-vars
-        const beforeCapture = await captureEvent(id, "before");
-        // eslint-disable-next-line no-unused-vars
-        const refresh = await GetRequests().then(
-          setTimeout(() => {
-            captureEvent(id, "after");
-          }, 1000)
-        );
+        // const id = await storeEvent(currentUser.displayName);
+        // // eslint-disable-next-line no-unused-vars
+        // const beforeCapture = await captureEvent(id, "before");
+        // // eslint-disable-next-line no-unused-vars
+        // const refresh = await GetRequests().then(
+        //   setTimeout(() => {
+        //     captureEvent(id, "after");
+        //   }, 1000)
+        // );
+        const refresh = await GetRequests();
         setLoading(false);
         setAlert("Account succesfully created!");
         setOpenAlert(true);
@@ -471,11 +472,11 @@ export default function AccountsPage() {
     if (alert !== "") {
       var alertSeverity = "warning";
 
-      if (alert === "Account succesfully created!") {
+      if (alert === "Account successfully created!") {
         alertSeverity = "success";
-      } else if (alert === "Edit Account Succesful!") {
+      } else if (alert === "Account successfully edited!") {
         alertSeverity = "success";
-      } else if (alert === "Account removed succesful!") {
+      } else if (alert === "Account removed successfully!") {
         alertSeverity = "success";
       }
 
@@ -752,6 +753,7 @@ export default function AccountsPage() {
     const description = editDescriptionInputRef.current.value;
     const initialBal = value;
     const accountName = editNameInputRef.current.value;
+    console.log(accountName);
     const normalSide = choiceNormal;
     const order = editOrderInputRef.current.value;
     const statement = editStatementInputRef.current.value;
@@ -778,7 +780,7 @@ export default function AccountsPage() {
           comment: comment,
           description: description,
           initialBal: initialBal,
-          accountName: accountName,
+          name: accountName,
           normalSide: normalSide,
           order: order,
           statement: statement,
@@ -795,13 +797,14 @@ export default function AccountsPage() {
           }, 1000)
         );
         setLoading(false);
-        setAlert("Account succesfully created!");
+        setAlert("Account succesfully updated!");
         setOpenAlert(true);
       } else {
         setAlert("Account name already exists!");
         setOpenAlert(true);
       }
     } catch (error) {
+      console.log(error)
       setAlert("Something went wrong");
       setOpenAlert(true);
     }
