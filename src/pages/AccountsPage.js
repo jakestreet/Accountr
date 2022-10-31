@@ -26,6 +26,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import CurrencyTextField from '../components/CurrencyTextField';
+import { Print, SystemSecurityUpdate } from '@mui/icons-material';
 
 export default function AccountsPage() {
     const db = getFirestore(app);
@@ -530,6 +531,11 @@ export default function AccountsPage() {
         setSelectedAcc(currentAccount);
     }
 
+
+    function getLedger() {
+            return <DataGrid columns={columns} rows={rows} />;
+    }
+
     const updateAccount = async(e) => {
         e.preventDefault();
         const category = choiceCategory
@@ -751,8 +757,11 @@ export default function AccountsPage() {
             <Modal open={openViewAcc} onClose={handleCloseViewAcc} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
                 <Box sx={styleView}>
                     {getViewAccRow()}
-                    <MDBBtn className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>View Ledger</MDBBtn>
+                    
+                    <MDBBtn onClick={() => {getLedger()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>View Ledger</MDBBtn>
+                    
                     <MDBBtn onClick={handleCloseViewAcc} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
+                  
                 </Box>
             </Modal>
             <Modal open={openEditAcc} onClose={handleCloseEditAcc} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
