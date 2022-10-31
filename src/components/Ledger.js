@@ -62,6 +62,15 @@ export default function Ledger() {
             })
         },
         {
+            field: "balance",
+            headerName: "Balance",
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleString('en-us', {
+                style: 'currency',
+                currency: 'USD'
+            })
+        },
+        {
             field: "description",
             headerName: "Description",
             flex: 1
