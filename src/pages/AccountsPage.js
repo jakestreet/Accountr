@@ -26,7 +26,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import CurrencyTextField from '../components/CurrencyTextField';
-import { Print, SystemSecurityUpdate } from '@mui/icons-material';
+import Ledger from '../components/Ledger';
 
 export default function AccountsPage() {
     const db = getFirestore(app);
@@ -55,6 +55,7 @@ export default function AccountsPage() {
     // Edit Account
     const [openEditAcc, setEditAcc] = useState(false);
     const [openViewAcc, setViewAcc] = useState(false);
+    const [openViewLedger, setViewLedger] = useState(false);
     const handleOpenEditAcc = () => {
         setChoiceCategory(selectedAcc.category);
         setChoiceNormal(selectedAcc.normalSide);
@@ -64,6 +65,7 @@ export default function AccountsPage() {
     const handleOpenViewAcc = () => setViewAcc(true);
     const handleCloseEditAcc = () => setEditAcc(false);
     const handleCloseViewAcc = () => setViewAcc(false);
+    const handleCloseViewLedger = () => setViewLedger(false);
     const [selectedAcc, setSelectedAcc] = useState({});
 
     // Remove Account
@@ -115,6 +117,19 @@ export default function AccountsPage() {
         border: '5px solid rgba(255,255,255,1)',
         boxShadow: 24,
         p: 4,
+    };
+
+    const styleViewLedger = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 1200,
+        bgcolor: 'background.paper',
+        border: '5px solid rgba(255,255,255,1)',
+        boxShadow: 24,
+        p: 4,
+        height: 800,
     };
 
     const optionsCategory = [
@@ -531,11 +546,6 @@ export default function AccountsPage() {
         setSelectedAcc(currentAccount);
     }
 
-
-    function getLedger() {
-            return <DataGrid columns={columns} rows={rows} />;
-    }
-
     const updateAccount = async(e) => {
         e.preventDefault();
         const category = choiceCategory
@@ -757,11 +767,14 @@ export default function AccountsPage() {
             <Modal open={openViewAcc} onClose={handleCloseViewAcc} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
                 <Box sx={styleView}>
                     {getViewAccRow()}
-                    
-                    <MDBBtn onClick={() => {getLedger()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>View Ledger</MDBBtn>
-                    
+                    <MDBBtn onClick={()=> { setViewLedger(true); handleCloseViewAcc(); }} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>View Ledger</MDBBtn>
                     <MDBBtn onClick={handleCloseViewAcc} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
-                  
+                </Box>
+            </Modal>
+            <Modal open={openViewLedger} onClose={handleCloseViewLedger} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+                <Box sx={styleViewLedger}>
+                    <Ledger/>
+                    <MDBBtn onClick={handleCloseViewLedger} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
                 </Box>
             </Modal>
             <Modal open={openEditAcc} onClose={handleCloseEditAcc} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
