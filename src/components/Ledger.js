@@ -39,7 +39,7 @@ export default function Ledger() {
         },
         {
             field: "date",
-            headerName: "Date",
+            headerName: "Journal Entry Date",
             flex: 1,
             valueFormatter: params => params?.value.toLocaleDateString('en-US'),
         },
