@@ -1128,12 +1128,7 @@ export default function AccountsPage() {
       >
         <Box sx={styleView}>
           {getViewAccRow()}
-          <MDBBtn
-            className="d-md-flex m-auto mt-4"
-            style={{ background: "rgba(41,121,255,1)" }}
-          >
-            View Ledger
-          </MDBBtn>
+          <MDBBtn onClick={() => { setViewLedger(true); handleCloseViewAcc(); }} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>View Ledger</MDBBtn>
           <MDBBtn
             onClick={handleCloseViewAcc}
             className="d-md-flex m-auto mt-4"
@@ -1141,6 +1136,12 @@ export default function AccountsPage() {
           >
             Close
           </MDBBtn>
+        </Box>
+      </Modal>
+      <Modal open={openViewLedger} onClose={handleCloseViewLedger} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={styleViewLedger}>
+          <Ledger />
+          <MDBBtn onClick={handleCloseViewLedger} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>Close</MDBBtn>
         </Box>
       </Modal>
       <Modal
