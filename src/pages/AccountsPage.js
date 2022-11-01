@@ -217,7 +217,7 @@ export default function AccountsPage() {
       var q;
       if (currentRole === "Admin")
         q = query(usersRef, where("role", "!=", "Admin"));
-      else if(currentRole === "User")
+      else if (currentRole === "User")
         q = query(usersRef, where("role", "!=", "User"));
       else
         q = query(usersRef)

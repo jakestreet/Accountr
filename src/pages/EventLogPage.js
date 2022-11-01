@@ -107,7 +107,7 @@ export default function EventLogPage() {
       });
 
       setRows(rowsArray);
-    } catch (error) {}
+    } catch (error) { }
   }
 
   function currentlySelected(GridCellParams) {
@@ -243,9 +243,9 @@ export default function EventLogPage() {
                 fontSize: 16,
               },
               "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
-                {
-                  outline: "none",
-                },
+              {
+                outline: "none",
+              },
             }}
             rowHeight={80}
             rows={rows}

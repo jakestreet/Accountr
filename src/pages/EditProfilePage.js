@@ -12,160 +12,160 @@ import { useNavigate } from 'react-router-dom';
 
 export default function EditProfilePage() {
 
-    const db = getFirestore(app);
-    const { currentUser, upload, currentUserInfo, setCurrentUserInfo } = useAuth();
-    const [photo, setPhoto] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const fNameInputRef = useRef();
-    const lNameInputRef = useRef();
-    const addressInputRef = useRef();
-    const dobInputRef = useRef();
-    const [openAlert, setOpenAlert] = useState(false);
-    const navigate = useNavigate();
+  const db = getFirestore(app);
+  const { currentUser, upload, currentUserInfo, setCurrentUserInfo } = useAuth();
+  const [photo, setPhoto] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const fNameInputRef = useRef();
+  const lNameInputRef = useRef();
+  const addressInputRef = useRef();
+  const dobInputRef = useRef();
+  const [openAlert, setOpenAlert] = useState(false);
+  const navigate = useNavigate();
 
-    const ProfileNavigate = async (e)=>{
-      e.preventDefault();
-      navigate("/profile");
+  const ProfileNavigate = async (e) => {
+    e.preventDefault();
+    navigate("/profile");
   }
 
-    function handleChange(e) {
-        if (e.target.files[0]) {
-          setPhoto(e.target.files[0])
-        }
-      }
-    
-      function handleClick() {
-        upload(photo, currentUser, setLoading);
-      }
+  function handleChange(e) {
+    if (e.target.files[0]) {
+      setPhoto(e.target.files[0])
+    }
+  }
 
-    async function UpdateInformation() {
-        const firstName = fNameInputRef.current.value
-        const lastName = lNameInputRef.current.value
-        const address = addressInputRef.current.value
-        const dob = dobInputRef.current.value
+  function handleClick() {
+    upload(photo, currentUser, setLoading);
+  }
 
-        const docRef = doc(db, "users", auth.currentUser.displayName);
-        const docSnap = await getDoc(docRef);
-        const userInfo = {
-            firstName: firstName,
-            lastName: lastName,
-            address: address,
-            dob: dob
-        }
-        
-        const uploadInformation = await updateDoc(docRef, {
-            firstname: fNameInputRef.current.value,
-            lastname: lNameInputRef.current.value,
-            address: addressInputRef.current.value,
-            dob: dobInputRef.current.value
-        }).then(setCurrentUserInfo(userInfo))
-        setOpenAlert(true);
+  async function UpdateInformation() {
+    const firstName = fNameInputRef.current.value
+    const lastName = lNameInputRef.current.value
+    const address = addressInputRef.current.value
+    const dob = dobInputRef.current.value
+
+    const docRef = doc(db, "users", auth.currentUser.displayName);
+    const docSnap = await getDoc(docRef);
+    const userInfo = {
+      firstName: firstName,
+      lastName: lastName,
+      address: address,
+      dob: dob
     }
 
-    function RenderInformation() {
-        return(
-            <div>
-                <hr className='mt-4'/>
-                <MDBRow className="row d-flex justify-content-center">
-                    <MDBCol sm="4">
-                    <MDBCardText className="mt-2">First Name:</MDBCardText>
-                    </MDBCol>
-                    <MDBCol sm="4">
-                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.firstName} id='upFirst' type='text' inputRef={fNameInputRef}/>
-                    </MDBCol>
-                </MDBRow>
-                <MDBRow className="row d-flex justify-content-center">
-                    <MDBCol sm="4">
-                    <MDBCardText className="mt-2">Last Name:</MDBCardText>
-                    </MDBCol>
-                    <MDBCol sm="4">
-                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.lastName} id='upLast' type='text' inputRef={lNameInputRef}/>
-                    </MDBCol>
-                </MDBRow>
-                <MDBRow className="row d-flex justify-content-center">
-                    <MDBCol sm="4">
-                    <MDBCardText className="mt-2">Address:</MDBCardText>
-                    </MDBCol>
-                    <MDBCol sm="4">
-                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.address} id='upAddress' type='text' inputRef={addressInputRef}/>
-                    </MDBCol>
-                </MDBRow>
-                <MDBRow className="row d-flex justify-content-center">
-                    <MDBCol sm="4">
-                    <MDBCardText className="mt-2">Date of Birth:</MDBCardText>
-                    </MDBCol>
-                    <MDBCol sm="4">
-                    <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.dob} id='upDOB' type='date' inputRef={dobInputRef}/>
-                    </MDBCol>
-                </MDBRow>
-                <MDBRow className="row d-flex justify-content-center">
-                    <MDBCol sm="4" className="col d-flex justify-content-center">
-                    <MDBTooltip tag='a' placement="auto" title="Finish editing profile">
-                      <MDBBtn onClick={()=>{UpdateInformation()}} className="mt-2 mb-2">Confirm</MDBBtn>
-                    </MDBTooltip>
-                    
-                    </MDBCol>
-                </MDBRow>
-                <MDBRow className="row d-flex justify-content-center">
-                    <MDBCol sm="4" className="col d-flex justify-content-center">
-                    <MDBTooltip tag='a' placement="auto" title="Cancel editing profile">
-                      <MDBBtn onClick={(e)=>{ProfileNavigate(e)}} className="mt-2 mb-4">Return</MDBBtn>
-                    </MDBTooltip>
-                    
-                    </MDBCol>
-                </MDBRow>
-            </div>
-        )
-    }
+    const uploadInformation = await updateDoc(docRef, {
+      firstname: fNameInputRef.current.value,
+      lastname: lNameInputRef.current.value,
+      address: addressInputRef.current.value,
+      dob: dobInputRef.current.value
+    }).then(setCurrentUserInfo(userInfo))
+    setOpenAlert(true);
+  }
 
-    const SendAlert = (e)=>{
-          return (
-            <Collapse in={openAlert}>
-              <Alert severity="success"
-                action={
-                  <IconButton
-                    aria-label="close"
-                    color="inherit"
-                    size="small"
-                    onClick={() => {
-                      setOpenAlert(false);
-                    }}
-                  >
-                    <CloseIcon fontSize="inherit" />
-                  </IconButton>
-                }
-                sx={{ mb: 2 }}
-              >
-                Information updated successfully!
-              </Alert>
-            </Collapse>
-          )
-    }
-    
-
+  function RenderInformation() {
     return (
-        <div>
-            {SendAlert()}
-            <MDBRow className='mt-5'>
-                <MDBCol lg="5" className='m-auto'>
-                    <MDBCard className="mb-4">
-                        <h1 className="text-center mt-3">Edit Profile</h1>
-                        <div>
-                            <Avatar className = "m-auto" src={currentUser.photoURL} sx={{ width: 250, height: 250}} />
-                            <MDBRow >
-                                <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-                                    <MDBInput type="file" onChange={handleChange} />
-                                    <MDBTooltip tag='a' placement="auto" title="Upload new profile picture">
-                                      <MDBBtn disabled={loading || !photo} onClick={handleClick}>Upload</MDBBtn>
-                                    </MDBTooltip>
-                                    
-                                </MDBCol>
-                            </MDBRow>
-                            {RenderInformation()}
-                        </div>
-                    </MDBCard> 
+      <div>
+        <hr className='mt-4' />
+        <MDBRow className="row d-flex justify-content-center">
+          <MDBCol sm="4">
+            <MDBCardText className="mt-2">First Name:</MDBCardText>
+          </MDBCol>
+          <MDBCol sm="4">
+            <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.firstName} id='upFirst' type='text' inputRef={fNameInputRef} />
+          </MDBCol>
+        </MDBRow>
+        <MDBRow className="row d-flex justify-content-center">
+          <MDBCol sm="4">
+            <MDBCardText className="mt-2">Last Name:</MDBCardText>
+          </MDBCol>
+          <MDBCol sm="4">
+            <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.lastName} id='upLast' type='text' inputRef={lNameInputRef} />
+          </MDBCol>
+        </MDBRow>
+        <MDBRow className="row d-flex justify-content-center">
+          <MDBCol sm="4">
+            <MDBCardText className="mt-2">Address:</MDBCardText>
+          </MDBCol>
+          <MDBCol sm="4">
+            <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.address} id='upAddress' type='text' inputRef={addressInputRef} />
+          </MDBCol>
+        </MDBRow>
+        <MDBRow className="row d-flex justify-content-center">
+          <MDBCol sm="4">
+            <MDBCardText className="mt-2">Date of Birth:</MDBCardText>
+          </MDBCol>
+          <MDBCol sm="4">
+            <MDBInput wrapperClass='mb-4 mt-2' defaultValue={currentUserInfo && currentUserInfo.dob} id='upDOB' type='date' inputRef={dobInputRef} />
+          </MDBCol>
+        </MDBRow>
+        <MDBRow className="row d-flex justify-content-center">
+          <MDBCol sm="4" className="col d-flex justify-content-center">
+            <MDBTooltip tag='a' placement="auto" title="Finish editing profile">
+              <MDBBtn onClick={() => { UpdateInformation() }} className="mt-2 mb-2">Confirm</MDBBtn>
+            </MDBTooltip>
+
+          </MDBCol>
+        </MDBRow>
+        <MDBRow className="row d-flex justify-content-center">
+          <MDBCol sm="4" className="col d-flex justify-content-center">
+            <MDBTooltip tag='a' placement="auto" title="Cancel editing profile">
+              <MDBBtn onClick={(e) => { ProfileNavigate(e) }} className="mt-2 mb-4">Return</MDBBtn>
+            </MDBTooltip>
+
+          </MDBCol>
+        </MDBRow>
+      </div>
+    )
+  }
+
+  const SendAlert = (e) => {
+    return (
+      <Collapse in={openAlert}>
+        <Alert severity="success"
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={() => {
+                setOpenAlert(false);
+              }}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+          sx={{ mb: 2 }}
+        >
+          Information updated successfully!
+        </Alert>
+      </Collapse>
+    )
+  }
+
+
+  return (
+    <div>
+      {SendAlert()}
+      <MDBRow className='mt-5'>
+        <MDBCol lg="5" className='m-auto'>
+          <MDBCard className="mb-4">
+            <h1 className="text-center mt-3">Edit Profile</h1>
+            <div>
+              <Avatar className="m-auto" src={currentUser.photoURL} sx={{ width: 250, height: 250 }} />
+              <MDBRow >
+                <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+                  <MDBInput type="file" onChange={handleChange} />
+                  <MDBTooltip tag='a' placement="auto" title="Upload new profile picture">
+                    <MDBBtn disabled={loading || !photo} onClick={handleClick}>Upload</MDBBtn>
+                  </MDBTooltip>
+
                 </MDBCol>
-            </MDBRow>
-        </div>
-    )   
+              </MDBRow>
+              {RenderInformation()}
+            </div>
+          </MDBCard>
+        </MDBCol>
+      </MDBRow>
+    </div>
+  )
 }

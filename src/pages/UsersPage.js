@@ -230,8 +230,8 @@ export default function RequestsPage() {
             email,
             "Accountr Request Approved",
             "Your request for an account with Accountr has been approved. You may now login with the username " +
-              username +
-              " at https://accountr.netlify.app/"
+            username +
+            " at https://accountr.netlify.app/"
           );
           await signupAdmin(email, password).then((userCredential) => {
             logoutAdmin();
@@ -331,7 +331,7 @@ export default function RequestsPage() {
           }, 500)
         );
       }
-    } catch (error) {}
+    } catch (error) { }
   }
 
   async function SuspendUser(username) {
@@ -377,7 +377,7 @@ export default function RequestsPage() {
         passwordExpiration: "EXPIRED",
         status: "Expired",
       });
-    } catch (error) {}
+    } catch (error) { }
   }
 
   const SendAlert = (e) => {
@@ -542,7 +542,7 @@ export default function RequestsPage() {
       });
 
       setRows(rowsArray);
-    } catch (error) {}
+    } catch (error) { }
   }
 
   function EmailOnClick(email) {
@@ -599,7 +599,7 @@ export default function RequestsPage() {
   };
 
   // Janky solution (?)
-  useEffect(() => {}, [selectedUser]);
+  useEffect(() => { }, [selectedUser]);
 
   function currentlySelected(GridCellParams) {
     const currentUser = GridCellParams.row;
@@ -643,8 +643,8 @@ export default function RequestsPage() {
                   email,
                   "Accountr Request Approved",
                   "Your request for an account with Accountr has been approved. You may now login with the username " +
-                    username +
-                    " at https://accountr.netlify.app/", currentUser.displayName
+                  username +
+                  " at https://accountr.netlify.app/", currentUser.displayName
                 );
               }}
               className="d-md-flex gap-2 mb-2 btn-sm"
@@ -1091,9 +1091,9 @@ export default function RequestsPage() {
                 fontSize: 16,
               },
               "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
-                {
-                  outline: "none",
-                },
+              {
+                outline: "none",
+              },
             }}
             rowHeight={160}
             rows={rows}
