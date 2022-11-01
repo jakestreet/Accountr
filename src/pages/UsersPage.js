@@ -1,817 +1,1133 @@
-import { useState, useEffect, useRef, createRef } from 'react'
-import { app } from '../components/utils/firebase'
-import { collection, query, where, getDocs, getFirestore, doc, updateDoc, getDoc, setDoc } from "firebase/firestore";
-import bcrypt from 'bcryptjs'
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { MDBBadge, MDBBtn, MDBTextArea, MDBCardText, MDBTooltip } from 'mdb-react-ui-kit';
-import { Alert } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
-import Collapse from '@mui/material/Collapse';
-import CloseIcon from '@mui/icons-material/Close'
+import { useState, useEffect, useRef, createRef } from "react";
+import { app } from "../components/utils/firebase";
 import {
-    DataGrid,
-    gridPageCountSelector,
-    gridPageSelector,
-    useGridApiContext,
-    useGridSelector,
-    GridToolbar
-  } from '@mui/x-data-grid';
-import Pagination from '@mui/material/Pagination';
-import Box from '@mui/material/Box';
-import Modal from '@mui/material/Modal';
-import { MDBInput } from 'mdb-react-ui-kit';
+  collection,
+  query,
+  where,
+  getDocs,
+  getFirestore,
+  doc,
+  updateDoc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
+import bcrypt from "bcryptjs";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  MDBBadge,
+  MDBBtn,
+  MDBTextArea,
+  MDBCardText,
+  MDBTooltip,
+} from "mdb-react-ui-kit";
+import { Alert } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Collapse from "@mui/material/Collapse";
+import CloseIcon from "@mui/icons-material/Close";
+import {
+  DataGrid,
+  gridPageCountSelector,
+  gridPageSelector,
+  useGridApiContext,
+  useGridSelector,
+  GridToolbar,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarExport,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
+import Pagination from "@mui/material/Pagination";
+import Box from "@mui/material/Box";
+import Modal from "@mui/material/Modal";
+import { MDBInput } from "mdb-react-ui-kit";
 import PasswordChecklist from "react-password-checklist";
-import { minWidth } from '@mui/system';
+import { minWidth } from "@mui/system";
+import Button from "@mui/material/Button";
+import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
+
 export default function RequestsPage() {
-    
-    const db = getFirestore(app);
-    const navigate = useNavigate();
-    const { currentRole, signupAdmin, logoutAdmin, sendEmail, currentUser, emailMessage, captureEvent, storeEvent } = useAuth();
+  const db = getFirestore(app);
+  const navigate = useNavigate();
+  const {
+    currentRole,
+    signupAdmin,
+    logoutAdmin,
+    sendEmail,
+    currentUser,
+    emailMessage,
+    captureEvent,
+    storeEvent,
+  } = useAuth();
 
-    const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState([]);
 
-    const [openNewUser, setOpenNewUser] = useState(false);
-    const handleOpenNewUser = () => setOpenNewUser(true);
-    const handleCloseNewUser = () => setOpenNewUser(false);
-    const [openHelp, setOpenHelp] = useState(false);
-    const handleOpenHelp = () => setOpenHelp(true);
-    const handleCloseHelp = () => setOpenHelp(false);
-    const [openSendEmail, setOpenSendEmail] = useState(false);
-    const [openAlert, setOpenAlert] = useState(true);
-    const [openEmailAlert, setOpenEmailAlert] = useState(false);
-    const handleOpenSendEmail = () => setOpenSendEmail(true);
-    const handleCloseSendEmail = () => {
-      setOpenSendEmail(false)
-      setOpenEmailAlert(false)
-    }
-    const [openSuspension, setOpenSuspension] = useState(false);
-    const handleOpenSuspension = () => setOpenSuspension(true);
-    const handleCloseSuspension = () => setOpenSuspension(false);
-    const [openEditInfo, setEditInfo] = useState(false);
-    const handleOpenEditInfo = () => setEditInfo(true);
-    const handleCloseEditInfo = () => setEditInfo(false);
-    const [openEditAlert, setOpenEditAlert] = useState(true);
-    const [editStatus, setEditStatus] = useState("");
-    const [selectedUser, setSelectedUser] = useState({});
-    
+  const [openNewUser, setOpenNewUser] = useState(false);
+  const handleOpenNewUser = () => setOpenNewUser(true);
+  const handleCloseNewUser = () => setOpenNewUser(false);
+  const [openHelp, setOpenHelp] = useState(false);
+  const handleOpenHelp = () => setOpenHelp(true);
+  const handleCloseHelp = () => setOpenHelp(false);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const [openAlert, setOpenAlert] = useState(true);
+  const [openEmailAlert, setOpenEmailAlert] = useState(false);
+  const handleOpenSendEmail = () => setOpenSendEmail(true);
+  const handleCloseSendEmail = () => {
+    setOpenSendEmail(false);
+    setOpenEmailAlert(false);
+  };
+  const [openSuspension, setOpenSuspension] = useState(false);
+  const handleOpenSuspension = () => setOpenSuspension(true);
+  const handleCloseSuspension = () => setOpenSuspension(false);
+  const [openEditInfo, setEditInfo] = useState(false);
+  const handleOpenEditInfo = () => setEditInfo(true);
+  const handleCloseEditInfo = () => setEditInfo(false);
+  const [openEditAlert, setOpenEditAlert] = useState(true);
+  const [editStatus, setEditStatus] = useState("");
+  const [selectedUser, setSelectedUser] = useState({});
 
-    const emailInputRef = useRef();
-    const roleInputRef = useRef()
-    const passwdInputRef = useRef();
-    const conPasswdInputRef = useRef();
-    const fNameInputRef = useRef();
-    const lNameInputRef = useRef();
-    const addressInputRef = useRef();
-    const dobInputRef = useRef();
-    const subjectInputRef = useRef();
-    const bodyInputRef = useRef();
-    const suspensionStartDateInputRef = useRef();
-    const suspensionEndDateInputRef = useRef();
-    const editFirstNInputRef = useRef();
-    const editLastNInputRef = useRef();
-    const editAddressInputRef = useRef();
-    const editDOBInputRef =useRef();
-    const [loginStatus, setLoginStatus] = useState("");
-    const [emailTo, setEmailTo] = useState("");
-    const [password, setPassword] = useState("")
-    const [passwordAgain, setPasswordAgain] = useState("")
-    const [validPass, setValidPass] = useState("invalid")
-    const [userToSuspend, setUserToSuspend] = useState("");
+  const emailInputRef = useRef();
+  const roleInputRef = useRef();
+  const passwdInputRef = useRef();
+  const conPasswdInputRef = useRef();
+  const fNameInputRef = useRef();
+  const lNameInputRef = useRef();
+  const addressInputRef = useRef();
+  const dobInputRef = useRef();
+  const subjectInputRef = useRef();
+  const bodyInputRef = useRef();
+  const suspensionStartDateInputRef = useRef();
+  const suspensionEndDateInputRef = useRef();
+  const editFirstNInputRef = useRef();
+  const editLastNInputRef = useRef();
+  const editAddressInputRef = useRef();
+  const editDOBInputRef = useRef();
+  const [loginStatus, setLoginStatus] = useState("");
+  const [emailTo, setEmailTo] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordAgain, setPasswordAgain] = useState("");
+  const [validPass, setValidPass] = useState("invalid");
+  const [userToSuspend, setUserToSuspend] = useState("");
 
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 400,
-        bgcolor: 'background.paper',
-        border: '5px solid rgba(255,255,255,1)',
-        boxShadow: 24,
-        p: 4,
-      };
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 400,
+    bgcolor: "background.paper",
+    border: "5px solid rgba(255,255,255,1)",
+    boxShadow: 24,
+    p: 4,
+  };
 
-
-      async function getRegisteredEmail() {
-        try{
-          const usersRef = collection(db, "users");
-          
-          const q = query(usersRef, where("email", "==", emailInputRef.current.value));
-        
-          const querySnapshot = await getDocs(q);
-  
-          if(querySnapshot.docs[0]) {
-            return querySnapshot.docs[0].data().email;
-          }
-          else {
-            return "none"
-          }
-        }
-        catch (error) {
-          console.log(error)
-        }
-      }
-
-      const SignUpForm = async (e)=>{
-        //e.preventDefault();
-        const email = emailInputRef.current.value;
-        const password = passwdInputRef.current.value;
-        const firstName = fNameInputRef.current.value;
-        const lastName = lNameInputRef.current.value;
-        const address = addressInputRef.current.value;
-        const dob = dobInputRef.current.value;
-        const role = roleInputRef.current.value;
-
-        try {
-          const MyDate = new Date();
-          const currentYear = String(MyDate.getFullYear());
-          const expirationYear = String(MyDate.getFullYear() + 1);
-          const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
-          const currentDay = ('0' + (MyDate.getDate())).slice(-2);
-          const username = firstName.toLowerCase().substring(0,1) + lastName.toLowerCase() + currentMonth + currentYear.slice(-2)
-          const passwordExpiration = expirationYear + "-" + currentMonth + "-" + currentDay;
-
-          const docRef = doc(db, "users", username);
-          const docSnap = await getDoc(docRef);
-          const registeredEmail = await getRegisteredEmail();
-
-          if(validPass === true) {
-            if (!docSnap.exists() && registeredEmail === "none") {
-              const hashedPass = await bcrypt.hash(password, 10);
-              setDoc(docRef, {
-                username: username,
-                email: email,
-                password: hashedPass,
-                firstname: firstName,
-                lastname: lastName,
-                address: address,
-                dob: dob,
-                role: role,
-                status: "Approved",
-                passwordExpiration: passwordExpiration,
-                passwordAttempts: 1
-              });
-              setLoginStatus("Account succesfully created! An email with the username has been sent to the new account.")
-              setOpenAlert(true);
-              sendEmail(email, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + username + " at https://accountr.netlify.app/");
-              await signupAdmin(email, password)
-              .then((userCredential) => {
-                logoutAdmin();
-              })
-            }
-            else {
-              setLoginStatus("Email already in use!")
-              setOpenAlert(true);
-            }
-          }
-          else {
-            setLoginStatus("Check Password Requirements!")
-            setOpenAlert(true);
-          }
-       
-        } 
-        catch (error) {
-          setLoginStatus(error.message);
-          setOpenAlert(true);
-        }
-
-
-    }
-
-    function CustomPagination() {
-        const apiRef = useGridApiContext();
-        const page = useGridSelector(apiRef, gridPageSelector);
-        const pageCount = useGridSelector(apiRef, gridPageCountSelector);
-        
-        return (
-            <Pagination
+  function CustomToolBar() {
+    return (
+      <GridToolbarContainer>
+        <MDBTooltip tag="a" placement="auto" title="Refresh user list">
+          <Button
             color="primary"
-            count={pageCount}
-            page={page + 1}
-            onChange={(event, value) => apiRef.current.setPage(value - 1)}
-            />
-        );
-    }
+            onClick={() => {
+              GetRequests();
+            }}
+            startIcon={<RefreshIcon />}
+          >
+            Refresh
+          </Button>
+        </MDBTooltip>
+        <MDBTooltip tag="a" placement="auto" title="Create a new user">
+          <Button
+            color="primary"
+            onClick={() => {
+              handleOpenNewUser();
+            }}
+            startIcon={<AddIcon />}
+          >
+            Create New User
+          </Button>
+        </MDBTooltip>
 
-    function UpdateStatusPill(status) {
-        if(status === 'Approved')
-        {
-            return "success"
-        }
-        else if(status === 'Requested') {
-            return "info"
-        }
-        else if(status === 'Disabled') {
-            return "warning"
-        }
-        else if(status === 'Suspended') {
-            return "secondary"
-        }
-        else if(status === 'Rejected') {
-            return "danger"
-        }
-    }
-
-    async function UpdateStatus(username, status) {
-        try{
-            const userRef = doc(db, "users", username)
-
-            if(status === "Suspended") {
-              setUserToSuspend(username);
-              handleOpenSuspension();
-            }
-            else if(status === "Remove Suspension") {
-              const id = await storeEvent(currentUser.displayName)
-              const beforeCapture = await captureEvent(id, "before").then(async () => {
-                await updateDoc(userRef, {
-                  status: "Approved",
-                  suspensionStartDate: "none",
-                  suspensionEndDate: "none"
-                });
-              })
-              await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 500))
-            }
-            else if(status === "Add Suspension") {
-              const id = await storeEvent(currentUser.displayName)
-              const beforeCapture = await captureEvent(id, "before").then(async () => {
-                await updateDoc(userRef, {
-                  status: "Suspended"
-                });
-              })
-              await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 500))
-            }
-            else {
-              const id = await storeEvent(currentUser.displayName)
-              const beforeCapture = await captureEvent(id, "before").then(async () => {
-                await updateDoc(userRef, {
-                status: status
-                });
-              })
-              await GetRequests().then(setTimeout(() => {captureEvent(id, "after")}, 500))
-            }
-        }
-        catch (error) {
-        }
-    }
-
-    async function SuspendUser(username) {
-      try{
-        const userRef = doc(db, "users", username)
-        const suspensionStartDate = suspensionStartDateInputRef.current.value;
-        const suspensionEndDate = suspensionEndDateInputRef.current.value;
-
-        const MyDate = new Date();
-        const currentYear = String(MyDate.getFullYear());
-        const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
-        const currentDay = ('0' + (MyDate.getDate())).slice(-2);
-        const currentDate = new Date(currentYear + "-" + currentMonth + "-" + currentDay);
-
-        if(currentDate >= suspensionStartDate) {
-          await updateDoc(userRef, {
-            status: "Suspended",
-            suspensionStartDate: suspensionStartDate,
-            suspensionEndDate: suspensionEndDate
-          });
-          handleCloseSuspension();
-          await GetRequests();
-        }
-        else {
-          await updateDoc(userRef, {
-            suspensionStartDate: suspensionStartDate,
-            suspensionEndDate: suspensionEndDate
-          });
-          handleCloseSuspension();
-          await GetRequests();
-        }
-        
-      }
-      catch (error) {
-        console.log(error)
-      }
-    }
-
-    async function UpdateExpiration(username) {
-      try{
-          const userRef = doc(db, "users", username)
-
-          await updateDoc(userRef, {
-              passwordExpiration: "EXPIRED",
-              status: "Expired",
-          });
-      }
-      catch (error) {
-      }
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarExport />
+        <GridToolbarQuickFilter className="ms-auto" />
+      </GridToolbarContainer>
+    );
   }
 
-    const SendAlert = (e)=>{
-        if(loginStatus !== "") {
-          
-          var alertSeverity = "warning";
-          
-          if(loginStatus === "Account succesfully created! An email with the username has been sent to the new account."){
-            alertSeverity = "success";
-          }
-          
-          return (
-            <Collapse in={openAlert}>
-              <Alert severity={alertSeverity}
-                action={
-                  <IconButton
-                    aria-label="close"
-                    color="inherit"
-                    size="small"
-                    onClick={() => {
-                      setOpenAlert(false);
-                    }}
-                  >
-                    <CloseIcon fontSize="inherit" />
-                  </IconButton>
-                }
-                sx={{ mb: 2 }}
-              >
-                {loginStatus}
-              </Alert>
-            </Collapse>
-          )
-        } 
-    }
+  async function getRegisteredEmail() {
+    try {
+      const usersRef = collection(db, "users");
 
-    const SendEmailAlert = (e)=>{
-        return (
-          <Collapse in={openEmailAlert}>
-            <Alert severity="success"
-              action={
-                <IconButton
-                  aria-label="close"
-                  color="inherit"
-                  size="small"
-                  onClick={() => {
-                    setOpenEmailAlert(false);
-                  }}
-                >
-                  <CloseIcon fontSize="inherit" />
-                </IconButton>
-              }
-              sx={{ mb: 2 }}
-            >
-              {emailMessage}
-            </Alert>
-          </Collapse>
-        )
-    }
+      const q = query(
+        usersRef,
+        where("email", "==", emailInputRef.current.value)
+      );
 
-    const SendAlertEdit = (e)=>{
-      if(editStatus !== "") {
-        
-        var alertSeverity = "warning";
-        
-        if(editStatus === "Edit Info Successful!"){
-          alertSeverity = "success";
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.docs[0]) {
+        return querySnapshot.docs[0].data().email;
+      } else {
+        return "none";
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const SignUpForm = async (e) => {
+    //e.preventDefault();
+    const email = emailInputRef.current.value;
+    const password = passwdInputRef.current.value;
+    const firstName = fNameInputRef.current.value;
+    const lastName = lNameInputRef.current.value;
+    const address = addressInputRef.current.value;
+    const dob = dobInputRef.current.value;
+    const role = roleInputRef.current.value;
+
+    try {
+      const MyDate = new Date();
+      const currentYear = String(MyDate.getFullYear());
+      const expirationYear = String(MyDate.getFullYear() + 1);
+      const currentMonth = ("0" + (MyDate.getMonth() + 1)).slice(-2);
+      const currentDay = ("0" + MyDate.getDate()).slice(-2);
+      const username =
+        firstName.toLowerCase().substring(0, 1) +
+        lastName.toLowerCase() +
+        currentMonth +
+        currentYear.slice(-2);
+      const passwordExpiration =
+        expirationYear + "-" + currentMonth + "-" + currentDay;
+
+      const docRef = doc(db, "users", username);
+      const docSnap = await getDoc(docRef);
+      const registeredEmail = await getRegisteredEmail();
+
+      if (validPass === true) {
+        if (!docSnap.exists() && registeredEmail === "none") {
+          const hashedPass = await bcrypt.hash(password, 10);
+          setDoc(docRef, {
+            username: username,
+            email: email,
+            password: hashedPass,
+            firstname: firstName,
+            lastname: lastName,
+            address: address,
+            dob: dob,
+            role: role,
+            status: "Approved",
+            passwordExpiration: passwordExpiration,
+            passwordAttempts: 1,
+          });
+          setLoginStatus(
+            "Account succesfully created! An email with the username has been sent to the new account."
+          );
+          setOpenAlert(true);
+          sendEmail(
+            email,
+            "Accountr Request Approved",
+            "Your request for an account with Accountr has been approved. You may now login with the username " +
+            username +
+            " at https://accountr.netlify.app/"
+          );
+          await signupAdmin(email, password).then((userCredential) => {
+            logoutAdmin();
+          });
+        } else {
+          setLoginStatus("Email already in use!");
+          setOpenAlert(true);
         }
-        
-        return (
-          <Collapse in={openEditAlert}>
-            <Alert severity={alertSeverity}
-              action={
-                <IconButton
-                  aria-label="close"
-                  color="inherit"
-                  size="small"
-                  onClick={() => {
-                    setOpenEditAlert(false);
-                  }}
-                >
-                  <CloseIcon fontSize="inherit" />
-                </IconButton>
-              }
-              sx={{ mb: 2 }}
-            >
-              {editStatus}
-            </Alert>
-          </Collapse>
-        )
-      } 
+      } else {
+        setLoginStatus("Check Password Requirements!");
+        setOpenAlert(true);
+      }
+    } catch (error) {
+      setLoginStatus(error.message);
+      setOpenAlert(true);
     }
+  };
 
-    async function GetRequests() {
-        try {
-            const usersRef = collection(db, "users");
+  function CustomPagination() {
+    const apiRef = useGridApiContext();
+    const page = useGridSelector(apiRef, gridPageSelector);
+    const pageCount = useGridSelector(apiRef, gridPageCountSelector);
 
-            const q = query(usersRef, where("role", "!=", "Admin"));
-          
-            const querySnapshotExpiration = await getDocs(q);
+    return (
+      <Pagination
+        color="primary"
+        count={pageCount}
+        page={page + 1}
+        onChange={(event, value) => apiRef.current.setPage(value - 1)}
+      />
+    );
+  }
 
-            console.log("got users")
-            const MyDate = new Date();
-            const currentYear = String(MyDate.getFullYear());
-            const currentMonth = ('0' + (MyDate.getMonth()+1)).slice(-2);
-            const currentDay = ('0' + (MyDate.getDate())).slice(-2);
-            const currentDate = new Date(currentYear + "-" + currentMonth + "-" + currentDay);
+  function UpdateStatusPill(status) {
+    if (status === "Approved") {
+      return "success";
+    } else if (status === "Requested") {
+      return "info";
+    } else if (status === "Disabled") {
+      return "warning";
+    } else if (status === "Suspended") {
+      return "secondary";
+    } else if (status === "Rejected") {
+      return "danger";
+    }
+  }
 
-            querySnapshotExpiration.forEach(async (doc) => {
-              if(doc.data().passwordExpiration !== "EXPIRED") {
-                const passwordExpirationDate = new Date(doc.data().passwordExpiration);  
-                if(currentDate >= passwordExpirationDate) {
-                  await UpdateExpiration(doc.data().username)
-                  await GetRequests()
-                }
-              }
-              if(doc.data().suspensionStartDate !== "none") {
-                const suspensionStartDate = new Date(doc.data().suspensionStartDate)
-                const suspensionEndDate = new Date(doc.data().suspensionEndDate)
-                if(doc.data().status === "Suspended") {
-                  console.log("ran")
-                  if(currentDate >= suspensionEndDate) {
-                    await UpdateStatus(doc.data().username, "Remove Suspension")
-                  }
-                }
-                else {
-                  if(currentDate >= suspensionStartDate) {
-                    await UpdateStatus(doc.data().username, "Add Suspension")
-                  }
-                }
-              }
+  async function UpdateStatus(username, status) {
+    try {
+      const userRef = doc(db, "users", username);
+
+      if (status === "Suspended") {
+        setUserToSuspend(username);
+        handleOpenSuspension();
+      } else if (status === "Remove Suspension") {
+        const id = await storeEvent(currentUser.displayName);
+        const beforeCapture = await captureEvent(id, "before").then(
+          async () => {
+            await updateDoc(userRef, {
+              status: "Approved",
+              suspensionStartDate: "none",
+              suspensionEndDate: "none",
             });
-
-            const querySnapshot = await getDocs(q);
-
-            const rowsArray = [];
-
-            querySnapshot.forEach(async (doc) => {
-                rowsArray.push({
-                    id: doc.data().email,
-                    username: doc.data().username,
-                    firstName: doc.data().firstname,
-                    lastName: doc.data().lastname,
-                    email: doc.data().email,
-                    role: doc.data().role,
-                    dob: doc.data().dob,
-                    address: doc.data().address,
-                    statusText: doc.data().status,
-                    statusPill: UpdateStatusPill(doc.data().status),
-                    passwordExpiration: doc.data().passwordExpiration,
-                    suspensionDate: doc.data().suspensionStartDate + " to " + doc.data().suspensionEndDate,
-                })
+          }
+        );
+        await GetRequests().then(
+          setTimeout(() => {
+            captureEvent(id, "after");
+          }, 500)
+        );
+      } else if (status === "Add Suspension") {
+        const id = await storeEvent(currentUser.displayName);
+        const beforeCapture = await captureEvent(id, "before").then(
+          async () => {
+            await updateDoc(userRef, {
+              status: "Suspended",
             });
+          }
+        );
+        await GetRequests().then(
+          setTimeout(() => {
+            captureEvent(id, "after");
+          }, 500)
+        );
+      } else {
+        const id = await storeEvent(currentUser.displayName);
+        const beforeCapture = await captureEvent(id, "before").then(
+          async () => {
+            await updateDoc(userRef, {
+              status: status,
+            });
+          }
+        );
+        await GetRequests().then(
+          setTimeout(() => {
+            captureEvent(id, "after");
+          }, 500)
+        );
+      }
+    } catch (error) { }
+  }
 
-            
+  async function SuspendUser(username) {
+    try {
+      const userRef = doc(db, "users", username);
+      const suspensionStartDate = suspensionStartDateInputRef.current.value;
+      const suspensionEndDate = suspensionEndDateInputRef.current.value;
 
-            setRows(rowsArray);
-            } catch (error) {
+      const MyDate = new Date();
+      const currentYear = String(MyDate.getFullYear());
+      const currentMonth = ("0" + (MyDate.getMonth() + 1)).slice(-2);
+      const currentDay = ("0" + MyDate.getDate()).slice(-2);
+      const currentDate = new Date(
+        currentYear + "-" + currentMonth + "-" + currentDay
+      );
+
+      if (currentDate >= suspensionStartDate) {
+        await updateDoc(userRef, {
+          status: "Suspended",
+          suspensionStartDate: suspensionStartDate,
+          suspensionEndDate: suspensionEndDate,
+        });
+        handleCloseSuspension();
+        await GetRequests();
+      } else {
+        await updateDoc(userRef, {
+          suspensionStartDate: suspensionStartDate,
+          suspensionEndDate: suspensionEndDate,
+        });
+        handleCloseSuspension();
+        await GetRequests();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function UpdateExpiration(username) {
+    try {
+      const userRef = doc(db, "users", username);
+
+      await updateDoc(userRef, {
+        passwordExpiration: "EXPIRED",
+        status: "Expired",
+      });
+    } catch (error) { }
+  }
+
+  const SendAlert = (e) => {
+    if (loginStatus !== "") {
+      var alertSeverity = "warning";
+
+      if (
+        loginStatus ===
+        "Account succesfully created! An email with the username has been sent to the new account."
+      ) {
+        alertSeverity = "success";
+      }
+
+      return (
+        <Collapse in={openAlert}>
+          <Alert
+            severity={alertSeverity}
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  setOpenAlert(false);
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
             }
+            sx={{ mb: 2 }}
+          >
+            {loginStatus}
+          </Alert>
+        </Collapse>
+      );
     }
+  };
 
-    function EmailOnClick(email) {
-      setEmailTo(email);
-      handleOpenSendEmail();
-    }
-    
-    const SendEmailOnClick = (e)=>{
-        e.preventDefault();
-        const subject = subjectInputRef.current.value;
-        const body = bodyInputRef.current.value;
-        sendEmail(emailTo, subject, body);
-        //handleCloseSendEmail();
-        setOpenEmailAlert(true);
-    }
+  const SendEmailAlert = (e) => {
+    return (
+      <Collapse in={openEmailAlert}>
+        <Alert
+          severity="success"
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={() => {
+                setOpenEmailAlert(false);
+              }}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+          sx={{ mb: 2 }}
+        >
+          {emailMessage}
+        </Alert>
+      </Collapse>
+    );
+  };
 
-    function editInfoOnClick(){
-      handleOpenEditInfo();
-    }
+  const SendAlertEdit = (e) => {
+    if (editStatus !== "") {
+      var alertSeverity = "warning";
 
-    const getUserRow = () => {
-      return(
+      if (editStatus === "Edit Info Successful!") {
+        alertSeverity = "success";
+      }
+
+      return (
+        <Collapse in={openEditAlert}>
+          <Alert
+            severity={alertSeverity}
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  setOpenEditAlert(false);
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+            sx={{ mb: 2 }}
+          >
+            {editStatus}
+          </Alert>
+        </Collapse>
+      );
+    }
+  };
+
+  async function GetRequests() {
+    try {
+      const usersRef = collection(db, "users");
+
+      const q = query(usersRef, where("role", "!=", "Admin"));
+
+      const querySnapshotExpiration = await getDocs(q);
+
+      console.log("got users");
+      const MyDate = new Date();
+      const currentYear = String(MyDate.getFullYear());
+      const currentMonth = ("0" + (MyDate.getMonth() + 1)).slice(-2);
+      const currentDay = ("0" + MyDate.getDate()).slice(-2);
+      const currentDate = new Date(
+        currentYear + "-" + currentMonth + "-" + currentDay
+      );
+
+      querySnapshotExpiration.forEach(async (doc) => {
+        if (doc.data().passwordExpiration !== "EXPIRED") {
+          const passwordExpirationDate = new Date(
+            doc.data().passwordExpiration
+          );
+          if (currentDate >= passwordExpirationDate) {
+            await UpdateExpiration(doc.data().username);
+            await GetRequests();
+          }
+        }
+        if (doc.data().suspensionStartDate !== "none") {
+          const suspensionStartDate = new Date(doc.data().suspensionStartDate);
+          const suspensionEndDate = new Date(doc.data().suspensionEndDate);
+          if (doc.data().status === "Suspended") {
+            console.log("ran");
+            if (currentDate >= suspensionEndDate) {
+              await UpdateStatus(doc.data().username, "Remove Suspension");
+            }
+          } else {
+            if (currentDate >= suspensionStartDate) {
+              await UpdateStatus(doc.data().username, "Add Suspension");
+            }
+          }
+        }
+      });
+
+      const querySnapshot = await getDocs(q);
+
+      const rowsArray = [];
+
+      querySnapshot.forEach(async (doc) => {
+        rowsArray.push({
+          id: doc.data().email,
+          username: doc.data().username,
+          firstName: doc.data().firstname,
+          lastName: doc.data().lastname,
+          email: doc.data().email,
+          role: doc.data().role,
+          dob: doc.data().dob,
+          address: doc.data().address,
+          statusText: doc.data().status,
+          statusPill: UpdateStatusPill(doc.data().status),
+          passwordExpiration: doc.data().passwordExpiration,
+          suspensionDate:
+            doc.data().suspensionStartDate +
+            " to " +
+            doc.data().suspensionEndDate,
+        });
+      });
+
+      setRows(rowsArray);
+    } catch (error) { }
+  }
+
+  function EmailOnClick(email) {
+    setEmailTo(email);
+    handleOpenSendEmail();
+  }
+
+  const SendEmailOnClick = (e) => {
+    e.preventDefault();
+    const subject = subjectInputRef.current.value;
+    const body = bodyInputRef.current.value;
+    sendEmail(emailTo, subject, body, currentUser.displayName);
+    //handleCloseSendEmail();
+    setOpenEmailAlert(true);
+  };
+
+  function editInfoOnClick() {
+    handleOpenEditInfo();
+  }
+
+  const getUserRow = () => {
+    return (
+      <div>
+        <MDBCardText className="mb-0">First Name</MDBCardText>
+        <MDBInput
+          defaultValue={selectedUser.firstName}
+          id="regFirst"
+          type="text"
+          inputRef={editFirstNInputRef}
+        />
+        <MDBCardText className="mb-0">Last Name</MDBCardText>
+        <MDBInput
+          defaultValue={selectedUser.lastName}
+          id="regLast"
+          type="text"
+          inputRef={editLastNInputRef}
+        />
+        <MDBCardText className="mb-0">Address</MDBCardText>
+        <MDBInput
+          defaultValue={selectedUser.address}
+          id="regRole"
+          type="text"
+          inputRef={editAddressInputRef}
+        />
+        <MDBCardText className="mb-0">Date of Birth</MDBCardText>
+        <MDBInput
+          defaultValue={selectedUser.dob}
+          id="regRole"
+          type="date"
+          inputRef={editDOBInputRef}
+        />
+      </div>
+    );
+  };
+
+  // Janky solution (?)
+  useEffect(() => { }, [selectedUser]);
+
+  function currentlySelected(GridCellParams) {
+    const currentUser = GridCellParams.row;
+    setSelectedUser(currentUser);
+  }
+
+  const updateUser = async (e) => {
+    e.preventDefault();
+    const firstName = editFirstNInputRef.current.value;
+    const lastName = editLastNInputRef.current.value;
+    const address = editAddressInputRef.current.value;
+    const dob = editDOBInputRef.current.value;
+
+    try {
+      const userRef = doc(db, "users", selectedUser.username);
+
+      await updateDoc(userRef, {
+        firstname: firstName,
+        lastname: lastName,
+        address: address,
+        dob: dob,
+      });
+
+      setEditStatus("Edit Info Successful!");
+      setOpenEditAlert(true);
+    } catch (error) {
+      setEditStatus("Something went wrong");
+      setOpenEditAlert(true);
+    }
+  };
+
+  function RenderActions(username, statusText, email) {
+    if (statusText === "Requested") {
+      return (
         <div>
-          <MDBCardText className='mb-0'>First Name</MDBCardText>
-          <MDBInput defaultValue={selectedUser.firstName} id='regFirst' type='text' inputRef={editFirstNInputRef}/>
-          <MDBCardText className='mb-0'>Last Name</MDBCardText>
-          <MDBInput defaultValue={selectedUser.lastName} id='regLast' type='text' inputRef={editLastNInputRef}/>
-          <MDBCardText className='mb-0'>Address</MDBCardText>
-          <MDBInput defaultValue={selectedUser.address} id='regRole' type='text' inputRef={editAddressInputRef}/>
-          <MDBCardText className='mb-0'>Date of Birth</MDBCardText>
-          <MDBInput defaultValue={selectedUser.dob} id='regRole' type='date' inputRef={editDOBInputRef}/>
+          <MDBTooltip tag="a" placement="auto" title="approve this user">
+            <MDBBtn
+              onClick={() => {
+                UpdateStatus(username, "Approved");
+                sendEmail(
+                  email,
+                  "Accountr Request Approved",
+                  "Your request for an account with Accountr has been approved. You may now login with the username " +
+                  username +
+                  " at https://accountr.netlify.app/", currentUser.displayName
+                );
+              }}
+              className="d-md-flex gap-2 mb-2 btn-sm"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Approve
+            </MDBBtn>
+          </MDBTooltip>
+          <MDBTooltip tag="a" placement="auto" title="Reject this user">
+            <MDBBtn
+              onClick={() => {
+                UpdateStatus(username, "Rejected");
+              }}
+              className="d-md-flex gap-2 mt-2 btn-sm"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Reject
+            </MDBBtn>
+          </MDBTooltip>
+        </div>
+      );
+    } else if (statusText === "Approved") {
+      return (
+        <div>
+          <MDBTooltip tag="a" placement="auto" title="Suspend this user">
+            <MDBBtn
+              onClick={() => {
+                UpdateStatus(username, "Suspended");
+              }}
+              className="d-md-flex gap-2 mb-2 btn-sm"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Suspend
+            </MDBBtn>
+          </MDBTooltip>
+
+          <MDBTooltip tag="a" placement="auto" title="Disable this user">
+            <MDBBtn
+              onClick={() => {
+                UpdateStatus(username, "Disabled");
+              }}
+              className="d-md-flex gap-2 mt-2 btn-sm"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Disable
+            </MDBBtn>
+          </MDBTooltip>
+        </div>
+      );
+    } else if (statusText === "Suspended") {
+      return (
+        <div>
+          <MDBTooltip
+            tag="a"
+            placement="auto"
+            title="Resume this user activity"
+          >
+            <MDBBtn
+              onClick={() => {
+                UpdateStatus(username, "Remove Suspension");
+              }}
+              className="d-md-flex gap-2 mb-2 btn-sm"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Resume
+            </MDBBtn>
+          </MDBTooltip>
+          <MDBTooltip tag="a" placement="auto" title="Disable this user">
+            <MDBBtn
+              onClick={() => {
+                UpdateStatus(username, "Disabled");
+              }}
+              className="d-md-flex gap-2 mt-2 btn-sm"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Disable
+            </MDBBtn>
+          </MDBTooltip>
+        </div>
+      );
+    } else if (statusText === "Disabled" || statusText === "Rejected") {
+      return (
+        <div>
+          <MDBTooltip
+            tag="a"
+            placement="auto"
+            title="Resume this user activity"
+          >
+            <MDBBtn
+              onClick={() => {
+                UpdateStatus(username, "Approved");
+              }}
+              className="d-md-flex gap-2 mb-2 btn-sm"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Resume
+            </MDBBtn>
+          </MDBTooltip>
         </div>
       );
     }
+  }
 
-    // Janky solution (?)
-    useEffect(() => {
-    }, [selectedUser]);
+  useEffect(() => {
+    let ignore = false;
 
-    function currentlySelected(GridCellParams){
-      const currentUser = GridCellParams.row
-      setSelectedUser(currentUser)
+    if (!ignore) GetRequests();
+    return () => {
+      ignore = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  //disable access for users role
+  useEffect(() => {
+    if (currentRole === "User") {
+      navigate("/home");
     }
+  });
 
-    const updateUser = async (e) =>{
-      e.preventDefault();
-      const firstName =  editFirstNInputRef.current.value;
-      const lastName =  editLastNInputRef.current.value;
-      const address =  editAddressInputRef.current.value;
-      const dob =  editDOBInputRef.current.value;
-
-      try{
-        const userRef = doc(db, "users", selectedUser.username)
-
-        await updateDoc(userRef, {
-          firstname: firstName,
-          lastname: lastName,
-          address: address,
-          dob: dob,
-        });
-
-        setEditStatus("Edit Info Successful!")
-        setOpenEditAlert(true)
-      }
-      catch(error){
-        setEditStatus("Something went wrong")
-        setOpenEditAlert(true)
-      }
-    }
-
-    function RenderActions(username, statusText, email) {
-      if(statusText === "Requested") {
+  const columns = [
+    {
+      field: "username",
+      headerName: "Username",
+      flex: 1,
+    },
+    {
+      field: "firstName",
+      headerName: "First Name",
+      flex: 1,
+    },
+    {
+      field: "lastName",
+      headerName: "Last Name",
+      flex: 1,
+    },
+    {
+      field: "email",
+      headerName: "Email",
+      flex: 1,
+    },
+    {
+      field: "role",
+      headerName: "Role",
+      flex: 1,
+    },
+    {
+      field: "statusText",
+      flex: 1,
+      headerName: "Status",
+      renderCell: (cellValues) => {
+        return (
+          <h6>
+            <MDBBadge color={cellValues.row.statusPill} pill>
+              {cellValues.row.statusText}
+            </MDBBadge>
+          </h6>
+        );
+      },
+    },
+    {
+      field: "passwordExpiration",
+      headerName: "Pass Expiration",
+      flex: 1,
+    },
+    {
+      field: "suspensionDate",
+      headerName: "Suspension Date",
+      flex: 1,
+    },
+    {
+      field: "Actions",
+      flex: 1,
+      renderCell: (cellValues) => {
         return (
           <div>
-            <MDBTooltip tag='a' placement="auto" title="approve this user">
-              <MDBBtn onClick={() => { UpdateStatus(username, "Approved"); sendEmail(email, "Accountr Request Approved", "Your request for an account with Accountr has been approved. You may now login with the username " + username + " at https://accountr.netlify.app/"); }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            Approve
-            </MDBBtn>
-            </MDBTooltip>
-            <MDBTooltip tag='a' placement="auto" title="Reject this user">
-              <MDBBtn onClick={() => { UpdateStatus(username, "Rejected") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            Reject
-            </MDBBtn>
-            </MDBTooltip>
-            
-          </div>
-        )
-      }
-      else if(statusText === "Approved") {
-        return (
-          <div>
-            <MDBTooltip tag='a' placement="auto" title="Suspend this user">
-              <MDBBtn onClick={() => { UpdateStatus(username, "Suspended") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            Suspend
-            </MDBBtn>
-            </MDBTooltip>
-            
-            <MDBTooltip tag='a' placement="auto" title="Disable this user">
-              <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-            Disable
-            </MDBBtn>
-            </MDBTooltip>
-            
-          </div>
-        )
-      }
-      else if(statusText === "Suspended") {
-        return (
-          <div>
-            <MDBTooltip tag='a' placement="auto" title="Resume this user activity">
-              <MDBBtn onClick={() => { UpdateStatus(username, "Remove Suspension") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                Resume
-              </MDBBtn>
-            </MDBTooltip>
-            <MDBTooltip tag='a' placement="auto" title="Disable this user">
-              <MDBBtn onClick={() => { UpdateStatus(username, "Disabled") }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                Disable
-              </MDBBtn>
-            </MDBTooltip>
-            
-          </div>
-        )
-      }
-      else if(statusText === "Disabled" || statusText === "Rejected") {
-        return (
-          <div>
-            <MDBTooltip tag='a' placement="auto" title="Resume this user activity">
-              <MDBBtn onClick={() => { UpdateStatus(username, "Approved") }} className="d-md-flex gap-2 mb-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                Resume
-              </MDBBtn>
-            </MDBTooltip>
-            
-          </div>
-        )
-      }
-    }
-
-    useEffect(() => {
-        let ignore = false;
-        
-        if (!ignore)  GetRequests()
-        return () => { ignore = true; }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        },[]);
-
-    //disable access for users role
-    useEffect(() => {
-        if(currentRole === "User")
-        {
-            navigate("/home");
-        }
-        })
-
-        const columns = [
-            {
-                field: "username",
-                headerName: "Username",
-                flex: 1
-            },
-            {
-                field: "firstName",
-                headerName: "First Name",
-                flex: 1
-            },
-            {
-                field: "lastName",
-                headerName: "Last Name",
-                flex: 1
-            },
-            {
-                field: "email",
-                headerName: "Email",
-                flex: 1
-            },
-            {
-                field: "role",
-                headerName: "Role",
-                flex: 1
-            },
-            {
-                field: "statusText", flex: 1, headerName: "Status",
-                renderCell: (cellValues) => {
-                  return (
-                    <h6>
-                      <MDBBadge color={cellValues.row.statusPill} pill>
-                          {cellValues.row.statusText}
-                      </MDBBadge>
-                    </h6>
-                  );
-                }
-            },
-            {
-              field: "passwordExpiration",
-              headerName: "Pass Expiration",
-              flex: 1
-            },
-            {
-              field: "suspensionDate",
-              headerName: "Suspension Date",
-              flex: 1
-            },
-            {
-              field: "Actions", flex: 1,
-              renderCell: (cellValues) => {
-                return (
-                    <div>
-                        {RenderActions(cellValues.row.username, cellValues.row.statusText, cellValues.row.email)}
-                        <MDBTooltip tag='a' placement="auto" title="Email this user">
-                          <MDBBtn onClick={() => { EmailOnClick(cellValues.row.email) }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                            Email
-                          </MDBBtn>
-                        </MDBTooltip>
-                        <MDBTooltip tag='a' placement="auto" title="Edit user information">
-                          <MDBBtn onClick={() => { editInfoOnClick() }} className="d-md-flex gap-2 mt-2 btn-sm" style={{background: 'rgba(41,121,255,1)'}}>
-                            Edit Info
-                          </MDBBtn>
-                        </MDBTooltip>
-                        
-                    </div>
-                )
-              }
-            }
-          ];
-
-   return (
-        <div style={{ height: "85vh", marginLeft:"auto", marginRight:"auto", minWidth:900, maxWidth:1800, padding:25 }}>
-        <div className="d-md-flex m-auto mb-3 gap-2">
-          <MDBTooltip tag='a' placement="auto" title="Refresh user list">
-            <MDBBtn onClick={() => {GetRequests()}} style={{background: 'rgba(41,121,255,1)'}}>Refresh</MDBBtn>
-          </MDBTooltip>
-          <MDBTooltip tag='a' placement="auto" title="Create a new user">
-            <MDBBtn onClick={() => {handleOpenNewUser()}} style={{background: 'rgba(41,121,255,1)'}}>Create New User</MDBBtn>
-          </MDBTooltip>
-            
-        </div>
-        <Modal
-            open={openNewUser}
-            onClose={handleCloseNewUser}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
-            <Box sx={style}>
-                {SendAlert()}
-                <MDBInput wrapperClass='mb-4' label='Email' id='regEmail' type='email' inputRef={emailInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Role (User, Manager, Admin)' id='regFirst' type='text' inputRef={roleInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Password' id='regPassword' type='password' onChange={e => setPassword(e.target.value)} inputRef={passwdInputRef}/>
-                  <MDBInput wrapperClass='mb-2' label='Confirm Password' id='regPassword' type='password' onChange={e => setPasswordAgain(e.target.value)} inputRef={conPasswdInputRef}/>
-                  <PasswordChecklist className='mb-3'
-                  rules={["minLength","specialChar","number","letter","match"]}
-                  minLength={8}
-                  value={password}
-                  valueAgain={passwordAgain}
-                  messages={{
-                    minLength: "Password has at least 8 characters.",
-                  }}
-                  onChange={(isValid) => {setValidPass(isValid)}}
-                />
-                <MDBInput wrapperClass='mb-4' label='First Name' id='regFirst' type='text' inputRef={fNameInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef}/>
-                <MDBInput wrapperClass='mb-4' label='Date of Birth' id='regDoB' type='date' inputRef={dobInputRef}/>
-                <MDBTooltip tag='a' placement="auto" title="Finish creating user">
-                  <MDBBtn onClick={() => {SignUpForm()}} className="d-md-flex mb-2 m-auto" style={{background: 'rgba(41,121,255,1)'}}>Create User</MDBBtn>
-                </MDBTooltip>
-                <MDBTooltip tag='a' placement="auto" title="Cancel creating user">
-                  <MDBBtn onClick={() => {handleCloseNewUser()}} className="d-md-flex m-auto" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
-                </MDBTooltip>
-                
-            </Box>
-        </Modal>
-        <Modal
-            open={openSendEmail}
-            onClose={handleCloseSendEmail}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
-            <Box sx={style}>
-                {SendEmailAlert()}
-                <label>To: {emailTo}</label>
-                <label>From: {currentUser.email}</label>
-                <MDBInput wrapperClass='mb-4 mt-2' label='Subject' id='subject' type='text' inputRef={subjectInputRef}/>
-                <MDBTextArea label="Body" id="body" type="text" rows={10} inputRef={bodyInputRef}></MDBTextArea>
-                <MDBTooltip tag='a' placement="auto" title="Finish sending email">
-                  <MDBBtn onClick={SendEmailOnClick} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Send Email</MDBBtn>
-                </MDBTooltip>
-                <MDBTooltip tag='a' placement="auto" title="Cancel sending email">
-                  <MDBBtn onClick={() => {handleCloseSendEmail()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
-                </MDBTooltip>
-                
-            </Box>
-        </Modal>
-        <Modal
-            open={openSuspension}
-            onClose={handleCloseSuspension}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
-            <Box sx={style}>
-                <label>User: {userToSuspend}</label>
-                <MDBInput wrapperClass='mb-4 mt-4' label='Date for Start of Suspension' id='regDoB' type='date' inputRef={suspensionStartDateInputRef}/>
-                <MDBInput wrapperClass='mb-4 mt-4' label='Date for End of Suspension' id='regDoB' type='date' inputRef={suspensionEndDateInputRef}/>
-                <MDBBtn onClick={() => {SuspendUser(userToSuspend)}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Suspend</MDBBtn>
-                <MDBBtn onClick={() => {handleCloseSuspension()}} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
-            </Box>
-        </Modal>
-        <Modal
-            open={openEditInfo}
-            onClose={handleCloseEditInfo}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
-            <Box sx={style}>
-                {SendAlertEdit()}
-                {getUserRow()}
-                <MDBBtn onClick={updateUser} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Apply Changes</MDBBtn>
-                <MDBBtn onClick={handleCloseEditInfo} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
-            </Box>
-        </Modal>
-        <div style={{ display: 'flex', height: '100%' }}>
-          <div id="capture" style={{ flexGrow: 1}}>
-            <DataGrid
-                sx={{ "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "rgba(41,121,255,1)",
-                    color: "rgba(255,255,255,1)",
-                    fontSize: 16,
-                  }, 
-                  '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
-                    outline: 'none', }
+            {RenderActions(
+              cellValues.row.username,
+              cellValues.row.statusText,
+              cellValues.row.email
+            )}
+            <MDBTooltip tag="a" placement="auto" title="Email this user">
+              <MDBBtn
+                onClick={() => {
+                  EmailOnClick(cellValues.row.email);
                 }}
-              rowHeight={160}
-              rows={rows}
-              columns={columns}
-              autoPageSize
-              disableDensitySelector
-              onCellClick = {currentlySelected}
-              components={{ 
-                Pagination: CustomPagination,
-                Toolbar: GridToolbar, 
+                className="d-md-flex gap-2 mt-2 btn-sm"
+                style={{ background: "rgba(41,121,255,1)" }}
+              >
+                Email
+              </MDBBtn>
+            </MDBTooltip>
+            <MDBTooltip tag="a" placement="auto" title="Edit user information">
+              <MDBBtn
+                onClick={() => {
+                  editInfoOnClick();
                 }}
-              hideFooterRowCount={true}
-              hideFooterSelectedRowCount={true}
-              componentsProps={{
-                  toolbar: {
-                    showQuickFilter: true,
-                    quickFilterProps: { debounceMs: 500 },
-                  },
+                className="d-md-flex gap-2 mt-2 btn-sm"
+                style={{ background: "rgba(41,121,255,1)" }}
+              >
+                Edit Info
+              </MDBBtn>
+            </MDBTooltip>
+          </div>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div
+      style={{
+        height: "85vh",
+        marginLeft: "auto",
+        marginRight: "auto",
+        minWidth: 900,
+        maxWidth: 1800,
+        padding: 25,
+      }}
+    >
+      <Modal
+        open={openNewUser}
+        onClose={handleCloseNewUser}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          {SendAlert()}
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Email"
+            id="regEmail"
+            type="email"
+            inputRef={emailInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Role (User, Manager, Admin)"
+            id="regFirst"
+            type="text"
+            inputRef={roleInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Password"
+            id="regPassword"
+            type="password"
+            onChange={(e) => setPassword(e.target.value)}
+            inputRef={passwdInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-2"
+            label="Confirm Password"
+            id="regPassword"
+            type="password"
+            onChange={(e) => setPasswordAgain(e.target.value)}
+            inputRef={conPasswdInputRef}
+          />
+          <PasswordChecklist
+            className="mb-3"
+            rules={["minLength", "specialChar", "number", "letter", "match"]}
+            minLength={8}
+            value={password}
+            valueAgain={passwordAgain}
+            messages={{
+              minLength: "Password has at least 8 characters.",
+            }}
+            onChange={(isValid) => {
+              setValidPass(isValid);
+            }}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="First Name"
+            id="regFirst"
+            type="text"
+            inputRef={fNameInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Last Name"
+            id="regLast"
+            type="text"
+            inputRef={lNameInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Address"
+            id="regAddress"
+            type="text"
+            inputRef={addressInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Date of Birth"
+            id="regDoB"
+            type="date"
+            inputRef={dobInputRef}
+          />
+          <MDBTooltip tag="a" placement="auto" title="Finish creating user">
+            <MDBBtn
+              onClick={() => {
+                SignUpForm();
               }}
-            />
-          </div>
+              className="d-md-flex mb-2 m-auto"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Create User
+            </MDBBtn>
+          </MDBTooltip>
+          <MDBTooltip tag="a" placement="auto" title="Cancel creating user">
+            <MDBBtn
+              onClick={() => {
+                handleCloseNewUser();
+              }}
+              className="d-md-flex m-auto"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Close
+            </MDBBtn>
+          </MDBTooltip>
+        </Box>
+      </Modal>
+      <Modal
+        open={openSendEmail}
+        onClose={handleCloseSendEmail}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          {SendEmailAlert()}
+          <label>To: {emailTo}</label>
+          <label>From: {currentUser.email}</label>
+          <MDBInput
+            wrapperClass="mb-4 mt-2"
+            label="Subject"
+            id="subject"
+            type="text"
+            inputRef={subjectInputRef}
+          />
+          <MDBTextArea
+            label="Body"
+            id="body"
+            type="text"
+            rows={10}
+            inputRef={bodyInputRef}
+          ></MDBTextArea>
+          <MDBTooltip tag="a" placement="auto" title="Finish sending email">
+            <MDBBtn
+              onClick={SendEmailOnClick}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Send Email
+            </MDBBtn>
+          </MDBTooltip>
+          <MDBTooltip tag="a" placement="auto" title="Cancel sending email">
+            <MDBBtn
+              onClick={() => {
+                handleCloseSendEmail();
+              }}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Close
+            </MDBBtn>
+          </MDBTooltip>
+        </Box>
+      </Modal>
+      <Modal
+        open={openSuspension}
+        onClose={handleCloseSuspension}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <label>User: {userToSuspend}</label>
+          <MDBInput
+            wrapperClass="mb-4 mt-4"
+            label="Date for Start of Suspension"
+            id="regDoB"
+            type="date"
+            inputRef={suspensionStartDateInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4 mt-4"
+            label="Date for End of Suspension"
+            id="regDoB"
+            type="date"
+            inputRef={suspensionEndDateInputRef}
+          />
+          <MDBBtn
+            onClick={() => {
+              SuspendUser(userToSuspend);
+            }}
+            className="d-md-flex m-auto mt-4"
+            style={{ background: "rgba(41,121,255,1)" }}
+          >
+            Suspend
+          </MDBBtn>
+          <MDBBtn
+            onClick={() => {
+              handleCloseSuspension();
+            }}
+            className="d-md-flex m-auto mt-4"
+            style={{ background: "rgba(41,121,255,1)" }}
+          >
+            Close
+          </MDBBtn>
+        </Box>
+      </Modal>
+      <Modal
+        open={openEditInfo}
+        onClose={handleCloseEditInfo}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          {SendAlertEdit()}
+          {getUserRow()}
+          <MDBBtn
+            onClick={updateUser}
+            className="d-md-flex m-auto mt-4"
+            style={{ background: "rgba(41,121,255,1)" }}
+          >
+            Apply Changes
+          </MDBBtn>
+          <MDBBtn
+            onClick={handleCloseEditInfo}
+            className="d-md-flex m-auto mt-4"
+            style={{ background: "rgba(41,121,255,1)" }}
+          >
+            Close
+          </MDBBtn>
+        </Box>
+      </Modal>
+      <div style={{ display: "flex", height: "100%" }}>
+        <div id="capture" style={{ flexGrow: 1 }}>
+          <DataGrid
+            sx={{
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "rgba(41,121,255,1)",
+                color: "rgba(255,255,255,1)",
+                fontSize: 16,
+              },
+              "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
+              {
+                outline: "none",
+              },
+            }}
+            rowHeight={160}
+            rows={rows}
+            columns={columns}
+            // autoPageSize
+            rowsPerPage={10}
+            disableDensitySelector
+            onCellClick={currentlySelected}
+            components={{
+              Pagination: CustomPagination,
+              Toolbar: CustomToolBar,
+            }}
+            hideFooterRowCount={true}
+            hideFooterSelectedRowCount={true}
+            componentsProps={{
+              toolbar: {
+                showQuickFilter: true,
+                quickFilterProps: { debounceMs: 500 },
+              },
+            }}
+          />
         </div>
-        <div class="fixed-bottom">
-        <MDBTooltip tag='a' placement="auto" title="Help">
-          <button type="button" class="btn btn-primary btn-floating" onClick={() => {handleOpenHelp()}}>?</button>
+      </div>
+      <div class="fixed-bottom">
+        <MDBTooltip tag="a" placement="auto" title="Help">
+          <button
+            type="button"
+            class="btn btn-primary btn-floating"
+            onClick={() => {
+              handleOpenHelp();
+            }}
+          >
+            ?
+          </button>
         </MDBTooltip>
         <Modal
           open={openHelp}
@@ -820,25 +1136,62 @@ export default function RequestsPage() {
           aria-describedby="modal-modal-description"
         >
           <div class="card">
-              <div class="card-body">
-                <dl class = "row">
+            <div class="card-body">
+              <dl class="row">
                 <dt class="col-sm-3">View users: </dt>
-                <dd class="col-sm-9">All users with a description including, but not limited to, the account time, account type, initial balance, and date added. The search bar can also be used to quickly find a specified value.</dd>
-                <dt class="col-sm-3">Create users:</dt><dd class="col-sm-9">Create a new user by using the Create New User button and inputting the required information and credentials.</dd>
-                <dt class="col-sm-3">Managing users:</dt><dd class="col-sm-9">The Action functionality allows for easy access to edit, suspend, disable, email, and edit current users.</dd>
-                <dt class="col-sm-3">Email User:</dt><dd class="col-sm-9">The Email functionality allows for emails to be sent to the specified user. Include information in the subject and body, and an email will be sent to the user's email address.</dd>  
-                <dt class="col-sm-3">Sort accounts:</dt><dd class="col-sm-9">Accounts can be sorted by sub-categories (username, email, role, status, etc) or the entire table can be filtered by specified values, or by eliminating columns.</dd>
-                <dt class="col-sm-3">Export account information:</dt><dd class="col-sm-9">Export information by using the Export functionality. Take note that data can be filtered prior to exporting for a personalized report.</dd>  
-                <dt class="col-sm-3">Tip:</dt><dd class="col-sm-9">Make sure to refresh the page, by using the refresh button, to view the most recent changes.</dd> 
-                </dl>
-              </div>
-              <MDBTooltip tag='a' placement="auto" title="Exit help screen">
-                <MDBBtn onClick={handleCloseHelp} className="d-md-flex m-auto mt-4" style={{background: 'rgba(41,121,255,1)'}}>Close</MDBBtn>
-              </MDBTooltip>
+                <dd class="col-sm-9">
+                  All users with a description including, but not limited to,
+                  the account time, account type, initial balance, and date
+                  added. The search bar can also be used to quickly find a
+                  specified value.
+                </dd>
+                <dt class="col-sm-3">Create users:</dt>
+                <dd class="col-sm-9">
+                  Create a new user by using the Create New User button and
+                  inputting the required information and credentials.
+                </dd>
+                <dt class="col-sm-3">Managing users:</dt>
+                <dd class="col-sm-9">
+                  The Action functionality allows for easy access to edit,
+                  suspend, disable, email, and edit current users.
+                </dd>
+                <dt class="col-sm-3">Email User:</dt>
+                <dd class="col-sm-9">
+                  The Email functionality allows for emails to be sent to the
+                  specified user. Include information in the subject and body,
+                  and an email will be sent to the user's email address.
+                </dd>
+                <dt class="col-sm-3">Sort accounts:</dt>
+                <dd class="col-sm-9">
+                  Accounts can be sorted by sub-categories (username, email,
+                  role, status, etc) or the entire table can be filtered by
+                  specified values, or by eliminating columns.
+                </dd>
+                <dt class="col-sm-3">Export account information:</dt>
+                <dd class="col-sm-9">
+                  Export information by using the Export functionality. Take
+                  note that data can be filtered prior to exporting for a
+                  personalized report.
+                </dd>
+                <dt class="col-sm-3">Tip:</dt>
+                <dd class="col-sm-9">
+                  Make sure to refresh the page, by using the refresh button, to
+                  view the most recent changes.
+                </dd>
+              </dl>
+            </div>
+            <MDBTooltip tag="a" placement="auto" title="Exit help screen">
+              <MDBBtn
+                onClick={handleCloseHelp}
+                className="d-md-flex m-auto mt-4"
+                style={{ background: "rgba(41,121,255,1)" }}
+              >
+                Close
+              </MDBBtn>
+            </MDBTooltip>
           </div>
         </Modal>
       </div>
-      </div>
-   )
+    </div>
+  );
 }
-
