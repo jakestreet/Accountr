@@ -26,6 +26,7 @@ export default function Ledger() {
             debit: 100,
             credit: 100,
             balance: 100,
+            postreference: 1
 
         }
     ]
@@ -73,6 +74,11 @@ export default function Ledger() {
         {
             field: "description",
             headerName: "Description",
+            flex: 1
+        },
+        {
+            field: "postreference",
+            headerName: "Post Reference",
             flex: 1
         }
 
