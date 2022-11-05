@@ -24,8 +24,8 @@ export default function Ledger() {
             date: randomCreatedDate(),
             description: "Test Description",
             debit: 100,
-            credit: 100,
-            balance: 100,
+            credit: 0,
+            balance: 1745.98,
             postreference: 1
 
         }
@@ -45,8 +45,8 @@ export default function Ledger() {
             valueFormatter: params => params?.value.toLocaleDateString('en-US'),
         },
         {
-            field: "credit",
-            headerName: "Credit",
+            field: "debit",
+            headerName: "Debit",
             flex: 1,
             valueFormatter: params => params?.value.toLocaleString('en-us', {
                 style: 'currency',
@@ -54,8 +54,8 @@ export default function Ledger() {
             })
         },
         {
-            field: "debit",
-            headerName: "Debit",
+            field: "credit",
+            headerName: "Credit",
             flex: 1,
             valueFormatter: params => params?.value.toLocaleString('en-us', {
                 style: 'currency',
