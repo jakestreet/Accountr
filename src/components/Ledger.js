@@ -1,0 +1,158 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from "react-router-dom";
+import { app } from "../components/utils/firebase";
+import { useAuth } from "../contexts/AuthContext";
+import {
+    DataGrid,
+    gridPageCountSelector,
+    gridPageSelector,
+    useGridApiContext,
+    useGridSelector,
+    GridToolbar,
+} from '@mui/x-data-grid';
+import {
+    randomCreatedDate,
+    randomId,
+} from '@mui/x-data-grid-generator';
+import { MDBBtn, MDBTooltip } from 'mdb-react-ui-kit';
+import { Pagination } from '@mui/material';
+import {
+    collection,
+    query,
+    getDocs,
+    getFirestore,
+  } from "firebase/firestore";
+
+export default function Ledger() {
+    const db = getFirestore(app);
+    const navigate = useNavigate();
+
+    const [rows, setRows] = useState();
+    const [arrayToFilter, setArrayToFilter] = useState([]);
+    const [entriesToFilter, setEntriesToFilter] = useState([]);
+    const { currentAccount, setFilterProvidedEntry, ledgerRows  } = useAuth();
+
+
+    const columns = [
+        {
+            field: "id",
+            headerName: "ID",
+            flex: 1,
+        },
+        {
+            field: "date",
+            headerName: "Journal Entry Date",
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleDateString('en-US'),
+        },
+        {
+            field: "debit",
+            headerName: "Debit",
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleString('en-us', {
+                style: 'currency',
+                currency: 'USD'
+            })
+        },
+        {
+            field: "credit",
+            headerName: "Credit",
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleString('en-us', {
+                style: 'currency',
+                currency: 'USD'
+            })
+        },
+        {
+            field: "balance",
+            headerName: "Balance",
+            flex: 1,
+            valueFormatter: params => params?.value.toLocaleString('en-us', {
+                style: 'currency',
+                currency: 'USD'
+            })
+        },
+        {
+            field: "description",
+            headerName: "Description",
+            flex: 1
+        },
+        {
+            field: "postreference",
+            headerName: "Post Reference",
+            flex: 1,
+            renderCell: (cellValues) => {
+                return (
+                <div className="d-flex gap-2">
+                    <MDBTooltip tag="a" placement="auto" title="View this account">
+                        <MDBBtn
+                            onClick={() => {
+                                setFilterProvidedEntry(cellValues?.row.id)
+                                navigate("/journal")
+                            }}
+                            className="d-md-flex gap-2 mt-2 btn-sm"
+                            style={{ background: "rgba(41,121,255,1)" }}
+                        >
+                            Go to Ledger
+                        </MDBBtn>
+                    </MDBTooltip>
+                </div>
+            );}
+        }
+
+    ];
+
+    function CustomPagination() {
+        const apiRef = useGridApiContext();
+        const page = useGridSelector(apiRef, gridPageSelector);
+        const pageCount = useGridSelector(apiRef, gridPageCountSelector);
+
+        return (
+            <Pagination
+                color="primary"
+                count={pageCount}
+                page={page + 1}
+                onChange={(event, value) => apiRef.current.setPage(value - 1)}
+            />
+        );
+    }
+
+    return (
+        <div style={{ height: 650, marginLeft: "auto", marginRight: "auto", minWidth: 900, maxWidth: 1800, padding: 10 }}>
+            <div style={{ display: 'flex', height: '100%' }}>
+                <div id="capture" style={{ flexGrow: 1 }}>
+                    <DataGrid
+                        sx={{
+                            "& .MuiDataGrid-columnHeaders": {
+                                backgroundColor: "rgba(41,121,255,1)",
+                                color: "rgba(255,255,255,1)",
+                                fontSize: 16,
+                            },
+                            '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus': {
+                                outline: 'none',
+                            }
+                        }}
+                        rowHeight={100}
+                        rows={ledgerRows}
+                        columns={columns}
+                        autoPageSize
+                        disableDensitySelector
+                        getRowId={(row) => row.id}
+                        components={{
+                            Pagination: CustomPagination,
+                            Toolbar: GridToolbar,
+                        }}
+                        hideFooterRowCount={true}
+                        hideFooterSelectedRowCount={true}
+                        componentsProps={{
+                            toolbar: {
+                                showQuickFilter: true,
+                                quickFilterProps: { debounceMs: 500 },
+                            },
+                        }}
+                    />
+                </div>
+            </div>
+        </div>
+    )
+}

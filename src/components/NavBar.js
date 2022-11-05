@@ -17,6 +17,8 @@ import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
 
 export default function NavBar() {
   const db = getFirestore(app);
@@ -37,6 +39,7 @@ export default function NavBar() {
     setCurrentUserInfo,
     setPassExpirationDays,
     passExpirationDays,
+    pendingEntries
   } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -50,6 +53,19 @@ export default function NavBar() {
 
   const open = Boolean(anchorEl);
   const id = open ? "simple-popover" : undefined;
+
+  const [anchorElNotif, setAnchorElNotif] = useState(null);
+
+  const handleClickNotif = (event) => {
+    setAnchorElNotif(event.currentTarget);
+  };
+
+  const handleCloseNotif = () => {
+    setAnchorElNotif(null);
+  };
+
+  const openNotif = Boolean(anchorElNotif);
+  const idNotif = openNotif ? 'simple-popover' : undefined;
 
   const HomeNavigate = async (e) => {
     e.preventDefault();
@@ -292,7 +308,6 @@ export default function NavBar() {
                   {new Date().toLocaleDateString()}
                 </Button>
               </MDBTooltip>
-
               <Popover
                 id={id}
                 open={open}
@@ -307,6 +322,29 @@ export default function NavBar() {
                   <Calendar />
                 </Typography>
               </Popover>
+
+              {pendingEntries && currentRole === "Manager" ?
+                <div>
+                  <Button aria-describedby={idNotif} onClick={handleClickNotif}>
+                    <NotificationsIcon />
+                  </Button>
+                  <Popover
+                    id={idNotif}
+                    open={openNotif}
+                    anchorEl={anchorElNotif}
+                    onClose={handleCloseNotif}
+                    anchorOrigin={{
+                      vertical: "bottom",
+                      horizontal: "left",
+                    }}
+                  >
+                    <Typography sx={{ p: 2 }}>
+                      You have pending journal entries.
+                    </Typography>
+                  </Popover>
+                </div> : null
+              }
+
             </div>
             <ul className="navbar-nav">
               <li className="nav-item">

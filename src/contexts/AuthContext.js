@@ -27,6 +27,8 @@ export function AuthProvider({ children }) {
     const [questionOneAnswer, setQuestionOneAnswer] = useState("");
     const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
     const [filterProvidedEntry, setFilterProvidedEntry] = useState();
+    const [ledgerRows, setLedgerRows] = useState();
+    const [pendingEntries, setPendingEntries] = useState(false);
     const db = getFirestore(app);
     const serverStamp = firebase.firestore.Timestamp
 
@@ -159,6 +161,8 @@ export function AuthProvider({ children }) {
         questionOneAnswer,
         questionTwoAnswer,
         filterProvidedEntry,
+        ledgerRows,
+        pendingEntries,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -181,6 +185,9 @@ export function AuthProvider({ children }) {
         storeEvent,
         setEntryFilter,
         uploadEntryDoc,
+        setFilterProvidedEntry,
+        setLedgerRows,
+        setPendingEntries,
     }
 
     return (

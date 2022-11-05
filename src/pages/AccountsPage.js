@@ -55,14 +55,17 @@ import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EmailIcon from '@mui/icons-material/Email';
+import Ledger from '../components/Ledger';
 
 export default function AccountsPage() {
   const db = getFirestore(app);
 
   const [rows, setRows] = useState([]);
 
-  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail } = useAuth();
+  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows } = useAuth();
 
+  const [arrayToFilter, setArrayToFilter] = useState([]);
+  const [entriesToFilter, setEntriesToFilter] = useState([]);
   const [emailTo, setEmailTo] = useState("");
   const subjectInputRef = useRef();
   const bodyInputRef = useRef();
@@ -122,6 +125,7 @@ export default function AccountsPage() {
   // Edit Account
   const [openEditAcc, setEditAcc] = useState(false);
   const [openViewAcc, setViewAcc] = useState(false);
+  const [openViewLedger, setViewLedger] = useState(false);
   const handleOpenEditAcc = () => {
     setChoiceCategory(selectedAcc.category);
     setChoiceNormal(selectedAcc.normalSide);
@@ -131,6 +135,7 @@ export default function AccountsPage() {
   const handleOpenViewAcc = () => setViewAcc(true);
   const handleCloseEditAcc = () => setEditAcc(false);
   const handleCloseViewAcc = () => setViewAcc(false);
+  const handleCloseViewLedger = () => setViewLedger(false);
   const [selectedAcc, setSelectedAcc] = useState({});
 
   // Remove Account
@@ -196,6 +201,19 @@ export default function AccountsPage() {
     p: 4,
   };
 
+  const styleViewLedger = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 1200,
+    bgcolor: 'background.paper',
+    border: '5px solid rgba(255,255,255,1)',
+    boxShadow: 24,
+    p: 4,
+    height: 800,
+  };
+
   const SendEmailOnClick = (e) => {
     e.preventDefault();
     const subject = subjectInputRef.current.value;
@@ -244,6 +262,89 @@ export default function AccountsPage() {
 
       setEmails(emailsArray);
     } catch (error) { }
+  }
+
+  async function GetEntries() {
+    try {
+      // setLoading(true);
+      const entriesRef = collection(db, "entries");
+
+      const q = query(entriesRef);
+
+      const rowArray = [];
+
+      console.log("got accounts");
+
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        rowArray.push({
+          id: doc.id,
+          name: doc.data().account,
+          dateCreated: doc.data().timeStamp.toDate(),
+          debit: doc.data().debit,
+          credit: doc.data().credit,
+          status: doc.data().status,
+          comment: doc.data()?.comment,
+          documentName: doc.data()?.documentName,
+          documentUrl: doc.data()?.documentUrl
+        });
+      });
+      //  setArrayToFilter(rowArray);
+      return rowArray;
+    } catch (error) { }
+  }
+
+  function getBalance(balance, debit, credit) {
+    if (credit !== 0) {
+      return balance - credit;
+    }
+    else {
+      return balance + debit;
+    }
+  }
+
+  function filterEntries(name, balance) {
+    let temp = [];
+    entriesToFilter.map(entry => {
+      entry['name'].map((data, index) => {
+        if (data['name'] === name) {
+          temp.push({
+            id: entry['id'],
+            date: entry['dateCreated'],
+            debit: parseFloat(entry['debit'][index]['amount']),
+            credit: parseFloat(entry['credit'][index]['amount']),
+            balance: getBalance(parseFloat(balance), parseFloat(entry['debit'][index]['amount']), parseFloat(entry['credit'][index]['amount'])),
+            description: entry['comment']
+          })
+        }
+      })
+    })
+    console.log(temp);
+    setLedgerRows(temp);
+
+  }
+
+  function getLedgerRows(accName, balance) {
+
+    setLedgerRows([]);
+    setArrayToFilter([]);
+    setEntriesToFilter([]);
+    let res = GetEntries();
+    res.then((data) => {
+        setArrayToFilter(data);
+    }).then(
+        arrayToFilter.forEach((entry) => {
+            if(entry['status'] === 'Approved'){
+                entry['name'].forEach((name) => {
+                    if(name['name'] === accName){
+                        entriesToFilter.push(entry);
+                        console.log(entriesToFilter);
+                    }
+                })
+            }
+        })
+    ).then(filterEntries(accName, balance))
   }
 
   function CustomToolBar() {
@@ -448,6 +549,8 @@ export default function AccountsPage() {
           accountNumber: doc.data().accountNumber,
         });
       });
+
+
 
       setRows(rowsArray);
     } catch (error) { }
@@ -858,6 +961,7 @@ export default function AccountsPage() {
               <MDBBtn
                 onClick={() => {
                   handleOpenViewAcc();
+                  getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
@@ -897,6 +1001,7 @@ export default function AccountsPage() {
               <MDBBtn
                 onClick={() => {
                   handleOpenViewAcc();
+                  getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
@@ -1110,12 +1215,7 @@ export default function AccountsPage() {
       >
         <Box sx={styleView}>
           {getViewAccRow()}
-          <MDBBtn
-            className="d-md-flex m-auto mt-4"
-            style={{ background: "rgba(41,121,255,1)" }}
-          >
-            View Ledger
-          </MDBBtn>
+          <MDBBtn onClick={() => { setViewLedger(true); handleCloseViewAcc(); }} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>View Ledger</MDBBtn>
           <MDBBtn
             onClick={handleCloseViewAcc}
             className="d-md-flex m-auto mt-4"
@@ -1123,6 +1223,12 @@ export default function AccountsPage() {
           >
             Close
           </MDBBtn>
+        </Box>
+      </Modal>
+      <Modal open={openViewLedger} onClose={handleCloseViewLedger} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={styleViewLedger}>
+          <Ledger />
+          <MDBBtn onClick={handleCloseViewLedger} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>Close</MDBBtn>
         </Box>
       </Modal>
       <Modal

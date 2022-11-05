@@ -6,7 +6,7 @@ import Modal from "@mui/material/Modal";
 import * as React from "react";
 import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
-import { Add, Save, Cancel, Check, Block, Remove, Download, Refresh } from "@mui/icons-material"
+import { Add, Save, Cancel, Check, Block, Remove, Download, Refresh, Edit, Message } from "@mui/icons-material"
 import {
   GridRowModes,
   DataGrid,
@@ -36,7 +36,7 @@ import { styled } from '@mui/material/styles';
 import { Divider } from '@mui/material';
 
 export default function JournalPage() {
-  const { currentRole, filterProvidedEntry, uploadEntryDoc } = useAuth();
+  const { currentRole, filterProvidedEntry, uploadEntryDoc, setPendingEntries } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -66,6 +66,8 @@ export default function JournalPage() {
       setDocFile(e.target.files[0])
     }
   }
+  
+  const [balanceError, setBalanceError] = useState(false)
 
   const handleOpenView = (rowData) => {
     setViewData(rowData)
@@ -118,16 +120,18 @@ export default function JournalPage() {
 
   const handleDebitChange = (event, index) => {
     let data = [...debitField];
-    if (event.target.value !== "")
+    if (event.target.value !== "") {
       data[index][event.target.name] = event.target.value;
+    }
     else
       data[index][event.target.name] = 0
   }
 
   const handleCreditChange = (event, index) => {
     let data = [...creditField];
-    if (event.target.value !== "")
+    if (event.target.value !== "") {
       data[index][event.target.name] = event.target.value;
+    }
     else
       data[index][event.target.name] = 0
   }
@@ -188,16 +192,22 @@ export default function JournalPage() {
 
     return (
       <GridToolbarContainer>
-        <Button color="primary" startIcon={<Refresh />} onClick={() => {
-          setLoading(true);
-          GetAccounts();
-          GetEntries().then(setLoading(false));
-        }}>
-          Refresh
-        </Button>
-        <Button color="primary" startIcon={<Add />} onClick={handleClick}>
-          Add Journal Entry
-        </Button>
+        <MDBTooltip tag="a" placement="auto" title="Refresh for new journal entries">
+          <Button color="primary" startIcon={<Refresh />} onClick={() => {
+            setLoading(true);
+            GetAccounts();
+            GetEntries().then(setLoading(false));
+          }}>
+            Refresh
+          </Button>
+        </MDBTooltip>
+
+        <MDBTooltip tag="a" placement="auto" title="Create a new journal entry">
+          <Button color="primary" startIcon={<Add />} onClick={handleClick}>
+            Add Journal Entry
+          </Button>
+        </MDBTooltip>
+
         <GridToolbarFilterButton />
         <GridToolbarQuickFilter className="ms-auto" />
       </GridToolbarContainer>
@@ -217,9 +227,24 @@ export default function JournalPage() {
     event.defaultMuiPrevented = true;
   };
 
-  const handleSaveClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  //HERE IS SAVE CLICK
+  const handleSaveClick = (id, debit, credit) => () => {
+    setBalanceError(false);
+    var debitTotal = 0;
+    var creditTotal = 0;
+    debitField.forEach(element => debitTotal += parseFloat(element.amount))
+    creditField.forEach(element => creditTotal += parseFloat(element.amount))
+    if(debitTotal === creditTotal) {
+      setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+    }
+    else {
+      alert("The debit and credit totals must be equal.")
+      storeEntryError(id, "The debit and credit totals must be equal.", debitTotal, creditTotal);
+      setBalanceError(true);
+    }
+      
   };
+
 
   const handleApproveClick = (id, status, comment) => async () => {
     // eslint-disable-next-line no-unused-vars
@@ -448,6 +473,7 @@ export default function JournalPage() {
                         outputFormat="number"
                         decimalCharacter="."
                         digitGroupSeparator=","
+                        error={balanceError && debit.amount !== 0 ? true : false}
                         onChange={(event) => {
                           handleDebitChange(event, index);
                         }}
@@ -525,11 +551,12 @@ export default function JournalPage() {
                         outputFormat="number"
                         decimalCharacter="."
                         digitGroupSeparator=","
+                        error={balanceError && credit.amount !== 0  ? true : false}
                         onChange={(event) => {
                           handleCreditChange(event, index);
                         }}
                         size="small"
-                        style={{ width: 150, marginTop: 5 }}
+                        style={{ width: 150, marginTop: 5}}
                       />
                     </Item>
                   </div>
@@ -616,21 +643,27 @@ export default function JournalPage() {
       getActions: (params) => {
         const id = params.row.id;
         const status = params.row.status;
+        const debit = params.row.debit;
+        const credit = params.row.credit;
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
           return [
-            <GridActionsCellItem
-              icon={<Add />}
-              label="Add"
-              className="textPrimary"
-              onClick={() => {
-                setNumberOfRows(numberOfRows + 1);
-                addFields();
-              }}
-              color="inherit"
-            />,
-            numberOfRows > 1 ? <GridActionsCellItem
+            <MDBTooltip tag="a" placement="auto" title="Add a row">
+              <GridActionsCellItem
+                icon={<Add />}
+                label="Add"
+                className="textPrimary"
+                onClick={() => {
+                  setNumberOfRows(numberOfRows + 1);
+                  addFields();
+                }}
+                color="inherit"
+              />
+            </MDBTooltip>,
+            numberOfRows > 1 ? 
+            <MDBTooltip tag="a" placement="auto" title="Remove row">
+              <GridActionsCellItem
               icon={<Remove />}
               label="Remove"
               className="textPrimary"
@@ -639,67 +672,67 @@ export default function JournalPage() {
                 removeFields();
               }}
               color="inherit"
-            /> : <GridActionsCellItem
-              icon={<Remove />}
-              label="Remove"
-              className="textPrimary"
-              disabled
-              onClick={() => {
-                setNumberOfRows(numberOfRows - 1);
-              }}
-              color="inherit"
-            />,
-            <GridActionsCellItem
-              icon={<Save />}
-              label="Save"
-              color="inherit"
-              onClick={handleSaveClick(id)}
-            />,
-            <GridActionsCellItem
-              icon={<Cancel />}
-              label="Cancel"
-              className="textPrimary"
-              onClick={handleCancelClick(id)}
-              color="inherit"
-            />,
+            />
+            </MDBTooltip>
+             : 
+             <MDBTooltip tag="a" placement="auto" title="Remove row">
+                <GridActionsCellItem
+                icon={<Remove />}
+                label="Remove"
+                className="textPrimary"
+                disabled
+                onClick={() => {
+                  setNumberOfRows(numberOfRows - 1);
+                }}
+                color="inherit"
+                />
+             </MDBTooltip>,
+             <MDBTooltip tag="a" placement="auto" title="Save journal entry">
+                <GridActionsCellItem
+                icon={<Save />}
+                label="Save"
+                color="inherit"
+                onClick={handleSaveClick(id, debit, credit)}
+                />
+             </MDBTooltip>,
+             <MDBTooltip tag="a" placement="auto" title="Cancel journal entry">
+              <GridActionsCellItem
+                icon={<Cancel />}
+                label="Cancel"
+                className="textPrimary"
+                onClick={handleCancelClick(id)}
+                color="inherit"
+              />
+             </MDBTooltip>,
           ];
         } else if (currentRole === "Manager" && status === "Pending") {
           return [
             <div style={{ textAlign: "center" }}>
-              <GridActionsCellItem
-                icon={<Check />}
-                label="Approve"
-                className="textPrimary"
-                onClick={handleApproveClick(id, "Approved", "")}
-                color="success"
-              />
-              <GridActionsCellItem
-                icon={<Block />}
-                label="Reject"
-                className="textPrimary"
-                onClick={() => { handleOpenReject(params.row) }}
-                color="error"
-              />
+              <MDBTooltip tag="a" placement="auto" title="Approve journal entry">
+                <GridActionsCellItem
+                  icon={<Check />}
+                  label="Approve"
+                  className="textPrimary"
+                  onClick={handleApproveClick(id, "Approved", "")}
+                  color="success"
+                />
+              </MDBTooltip>
+              <MDBTooltip tag="a" placement="auto" title="Reject journal entry">
+                <GridActionsCellItem
+                  icon={<Block />}
+                  label="Reject"
+                  className="textPrimary"
+                  onClick={() => { handleOpenReject(params.row) }}
+                  color="error"
+                />
+              </MDBTooltip>
+              
             </div>,
           ];
         }
         return [
           <div style={{ textAlign: "center" }}>
             <MDBBtn onClick={() => { handleOpenView(params.row) }}>View</MDBBtn>
-            {/* <GridActionsCellItem
-              icon={<Edit />}
-              label="Edit"
-              className="textPrimary"
-              onClick={handleEditClick(id)}
-              color="primary"
-            />
-            <GridActionsCellItem
-              icon={<Delete />}
-              label="Delete"
-              className="textPrimary"
-              onClick={handleDeleteClick(id)}
-              color="error"
-            /> */}
           </div>,
         ];
       },
@@ -743,7 +776,11 @@ export default function JournalPage() {
 
       const querySnapshot = await getDocs(q);
 
+      var checkPending = false;
+
       querySnapshot.forEach(async (doc) => {
+        if(doc.data().status === "Pending")
+          checkPending = true;
         rowArray.push({
           id: doc.id,
           name: doc.data().account,
@@ -756,6 +793,11 @@ export default function JournalPage() {
           documentUrl: doc.data()?.documentUrl
         });
       });
+
+      if(checkPending === false)
+        setPendingEntries(false);
+      else
+        setPendingEntries(true);
 
       setRows(rowArray);
     } catch (error) { }
@@ -777,6 +819,15 @@ export default function JournalPage() {
     });
     console.log("Added entry with ID: ", newEntryAdded.id);
     return newEntryAdded.id;
+  }
+
+  async function storeEntryError(id, message, debitTotal, creditTotal) {
+    const newErrorAdded = await addDoc(collection(db, "errors"), {
+      journalID: id,
+      errorMessage: message,
+      debitTotal: debitTotal,
+      creditTotal: creditTotal
+    });
   }
 
   async function updateStatus(id, status, comment) {
@@ -808,6 +859,7 @@ export default function JournalPage() {
   }
 
   useEffect(() => {
+    console.log(filterProvidedEntry);
     GetAccounts();
     GetEntries().then(setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -838,8 +890,7 @@ export default function JournalPage() {
               },
             }}
             rows={rows}
-            pagination
-            autoPageSize
+            pagination = {false}
             getRowHeight={() => 'auto'}
             columns={columns}
             editMode="row"
@@ -851,7 +902,13 @@ export default function JournalPage() {
             onRowEditStart={handleRowEditStart}
             onRowEditStop={handleRowEditStop}
             processRowUpdate={processRowUpdate}
-            initialState={filterProvidedEntry}
+            initialState={{
+              filter: {
+                filterModel: {
+                  items: [{ columnField: 'id', operatorValue: 'contains', value: filterProvidedEntry }],
+                },
+              },
+            }}
             // onProcessRowUpdateError={(error) => console.log(error)}
             components={{
               Toolbar: EditToolbar,
