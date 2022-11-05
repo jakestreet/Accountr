@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from "react-router-dom";
+import { app } from "../components/utils/firebase";
+import { useAuth } from "../contexts/AuthContext";
 import {
     DataGrid,
     gridPageCountSelector,
@@ -11,14 +14,25 @@ import {
     randomCreatedDate,
     randomId,
 } from '@mui/x-data-grid-generator';
-import { MDBBtn } from 'mdb-react-ui-kit';
+import { MDBBtn, MDBTooltip } from 'mdb-react-ui-kit';
 import { Pagination } from '@mui/material';
+import {
+    collection,
+    query,
+    getDocs,
+    getFirestore,
+  } from "firebase/firestore";
 
 export default function Ledger() {
-    // const [rows, setRows] = useState();
+    const db = getFirestore(app);
+    const navigate = useNavigate();
 
+    const [rows, setRows] = useState();
+    const [arrayToFilter, setArrayToFilter] = useState([]);
+    const [entriesToFilter, setEntriesToFilter] = useState([]);
+    const { currentAccount, setFilterProvidedEntry  } = useAuth();
 
-    const rows = [
+    const initialRow = [
         {
             id: randomId(),
             date: randomCreatedDate(),
@@ -27,10 +41,85 @@ export default function Ledger() {
             credit: 0,
             balance: 1745.98,
             postreference: 1
-
         }
-    ]
+    ];
 
+    async function GetEntries() {
+        try {
+            // setLoading(true);
+            const entriesRef = collection(db, "entries");
+
+            const q = query(entriesRef);
+
+            const rowArray = [];
+
+            console.log("got accounts");
+
+            const querySnapshot = await getDocs(q);
+
+            querySnapshot.forEach(async (doc) => {
+                rowArray.push({
+                    id: doc.id,
+                    name: doc.data().account,
+                    dateCreated: doc.data().timeStamp.toDate(),
+                    debit: doc.data().debit,
+                    credit: doc.data().credit,
+                    status: doc.data().status,
+                    comment: doc.data()?.comment,
+                    documentName: doc.data()?.documentName,
+                    documentUrl: doc.data()?.documentUrl
+                });
+            });
+             setArrayToFilter(rowArray);
+        } catch (error) { }
+    }
+
+    function getBalance(balance, debit, credit){
+        if(credit !== 0){
+            return balance - credit;
+        }
+        else{
+            return balance + debit;
+        }
+    }
+
+    function filterEntries(){
+        let temp = [];
+        entriesToFilter.map(entry => {
+            entry['name'].map((data, index) => {
+                if(data['name'] === currentAccount.name){
+                    temp.push({
+                        id: entry['id'],
+                        date: entry['dateCreated'],
+                        debit: parseFloat(entry['debit'][index]['amount']),
+                        credit: parseFloat(entry['credit'][index]['amount']),
+                        balance: getBalance(parseFloat(currentAccount.balance), parseFloat(entry['debit'][index]['amount']), parseFloat(entry['credit'][index]['amount'])),
+                        description: entry['comment']
+                    })
+                }
+            })
+        })
+        console.log(temp);
+        setRows(temp);
+    }
+
+    useEffect(() => {
+        console.log(currentAccount.name)
+        GetEntries().then(
+            arrayToFilter.forEach((entry) => {
+                if(entry['status'] === 'Approved'){
+                    entry['name'].forEach((name) => {
+                        if(name['name'] === currentAccount.name){
+                            entriesToFilter.push(entry);
+                            console.log(entriesToFilter);
+                        }
+                    })
+                }
+            })
+        ).then(filterEntries())  
+        
+    }, [])
+    
 
     const columns = [
         {
@@ -79,7 +168,24 @@ export default function Ledger() {
         {
             field: "postreference",
             headerName: "Post Reference",
-            flex: 1
+            flex: 1,
+            renderCell: (cellValues) => {
+                return (
+                <div className="d-flex gap-2">
+                    <MDBTooltip tag="a" placement="auto" title="View this account">
+                        <MDBBtn
+                            onClick={() => {
+                                setFilterProvidedEntry(cellValues?.row.id)
+                                navigate("/journal")
+                            }}
+                            className="d-md-flex gap-2 mt-2 btn-sm"
+                            style={{ background: "rgba(41,121,255,1)" }}
+                        >
+                            Go to Ledger
+                        </MDBBtn>
+                    </MDBTooltip>
+                </div>
+            );}
         }
 
     ];
@@ -115,7 +221,7 @@ export default function Ledger() {
                             }
                         }}
                         rowHeight={100}
-                        rows={rows}
+                        rows={rows ? rows : initialRow}
                         columns={columns}
                         autoPageSize
                         disableDensitySelector

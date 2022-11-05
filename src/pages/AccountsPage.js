@@ -62,7 +62,7 @@ export default function AccountsPage() {
 
   const [rows, setRows] = useState([]);
 
-  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail } = useAuth();
+  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setCurrentAccount } = useAuth();
 
   const [emailTo, setEmailTo] = useState("");
   const subjectInputRef = useRef();
@@ -876,6 +876,7 @@ export default function AccountsPage() {
               <MDBBtn
                 onClick={() => {
                   handleOpenViewAcc();
+                  setCurrentAccount({name: cellValues.row.name, balance: cellValues.row.initialBal});
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}

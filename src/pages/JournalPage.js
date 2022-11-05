@@ -808,6 +808,7 @@ export default function JournalPage() {
   }
 
   useEffect(() => {
+    console.log(filterProvidedEntry);
     GetAccounts();
     GetEntries().then(setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -851,7 +852,14 @@ export default function JournalPage() {
             onRowEditStart={handleRowEditStart}
             onRowEditStop={handleRowEditStop}
             processRowUpdate={processRowUpdate}
-            initialState={filterProvidedEntry}
+            // initialState={filterProvidedEntry}
+            initialState={{
+              filter: {
+                filterModel: {
+                  items: [{ columnField: 'id', operatorValue: 'is', value: filterProvidedEntry }],
+                },
+              },
+            }}
             // onProcessRowUpdateError={(error) => console.log(error)}
             components={{
               Toolbar: EditToolbar,
