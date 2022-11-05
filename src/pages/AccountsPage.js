@@ -73,6 +73,7 @@ export default function AccountsPage() {
   const [openEmailAlert, setOpenEmailAlert] = useState(false);
   const [openSendEmail, setOpenSendEmail] = useState(false);
   const [emails, setEmails] = useState();
+  const [ledgerBalance, setLedgerBalance] = useState();
   const handleCloseSendEmail = () => {
     setOpenSendEmail(false);
     setOpenEmailAlert(false);
@@ -295,26 +296,21 @@ export default function AccountsPage() {
     } catch (error) { }
   }
 
-  function getBalance(balance, debit, credit) {
-    if (credit !== 0) {
-      return balance - credit;
-    }
-    else {
-      return balance + debit;
-    }
-  }
-
   function filterEntries(name, balance) {
+    
     let temp = [];
+    let currentBalance = balance;
     entriesToFilter.map(entry => {
       entry['name'].map((data, index) => {
         if (data['name'] === name) {
+          currentBalance += parseFloat(entry['debit'][index]['amount']);
+          currentBalance -= parseFloat(entry['credit'][index]['amount']);
           temp.push({
             id: entry['id'],
             date: entry['dateCreated'],
             debit: parseFloat(entry['debit'][index]['amount']),
             credit: parseFloat(entry['credit'][index]['amount']),
-            balance: getBalance(parseFloat(balance), parseFloat(entry['debit'][index]['amount']), parseFloat(entry['credit'][index]['amount'])),
+            balance: parseFloat(currentBalance),
             description: entry['comment']
           })
         }
@@ -326,24 +322,24 @@ export default function AccountsPage() {
   }
 
   function getLedgerRows(accName, balance) {
-
+    setLedgerBalance(balance);
     setLedgerRows([]);
     setArrayToFilter([]);
     setEntriesToFilter([]);
     let res = GetEntries();
     res.then((data) => {
-        setArrayToFilter(data);
+      setArrayToFilter(data);
     }).then(
-        arrayToFilter.forEach((entry) => {
-            if(entry['status'] === 'Approved'){
-                entry['name'].forEach((name) => {
-                    if(name['name'] === accName){
-                        entriesToFilter.push(entry);
-                        console.log(entriesToFilter);
-                    }
-                })
+      arrayToFilter.forEach((entry) => {
+        if (entry['status'] === 'Approved') {
+          entry['name'].forEach((name) => {
+            if (name['name'] === accName) {
+              entriesToFilter.push(entry);
+              console.log(entriesToFilter);
             }
-        })
+          })
+        }
+      })
     ).then(filterEntries(accName, balance))
   }
 
