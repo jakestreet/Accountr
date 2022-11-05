@@ -48,7 +48,7 @@ export default function LoginPage() {
   const [justifyActive, setJustifyActive] = useState('tab1');
   const [open, setOpen] = useState(true);
   const db = getFirestore(app);
-  const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays } = useAuth();
+  const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays, currentRole, setPendingEntries } = useAuth();
   const [password, setPassword] = useState("")
   const [passwordAgain, setPasswordAgain] = useState("")
   const [validPass, setValidPass] = useState("invalid")
@@ -183,6 +183,22 @@ export default function LoginPage() {
     }
   }
 
+  async function GetPendingEntries() {
+    try {
+      // setLoading(true);
+      const entriesRef = collection(db, "entries");
+
+      const q = query(entriesRef, where("status", "==", "Pending"));
+
+      const querySnapshot = await getDocs(q);
+
+      console.log(querySnapshot.docs.length)
+      if(querySnapshot.docs.length > 0) {
+        setPendingEntries(true);
+      }
+    } catch (error) { }
+  }
+
   function GetPasswordExpiration(passwordExpiration) {
     const MyDate = new Date();
     const currentYear = String(MyDate.getFullYear());
@@ -221,6 +237,10 @@ export default function LoginPage() {
               console.log(auth.currentUser.displayName);
             }
             const getInfo = await GetRole();
+            if(currentRole === "Manager") {
+              console.log("manager")
+              const pending = await GetPendingEntries();
+            }
             navigate("/home");
           }
           else if (docSnap.data().status === "Requested") {

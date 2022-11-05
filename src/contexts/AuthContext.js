@@ -27,7 +27,8 @@ export function AuthProvider({ children }) {
     const [questionOneAnswer, setQuestionOneAnswer] = useState("");
     const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
     const [filterProvidedEntry, setFilterProvidedEntry] = useState();
-    const [currentAccount, setCurrentAccount] = useState();
+    const [ledgerRows, setLedgerRows] = useState();
+    const [pendingEntries, setPendingEntries] = useState(false);
     const db = getFirestore(app);
     const serverStamp = firebase.firestore.Timestamp
 
@@ -160,7 +161,8 @@ export function AuthProvider({ children }) {
         questionOneAnswer,
         questionTwoAnswer,
         filterProvidedEntry,
-        currentAccount,
+        ledgerRows,
+        pendingEntries,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -183,8 +185,9 @@ export function AuthProvider({ children }) {
         storeEvent,
         setEntryFilter,
         uploadEntryDoc,
-        setCurrentAccount,
         setFilterProvidedEntry,
+        setLedgerRows,
+        setPendingEntries,
     }
 
     return (

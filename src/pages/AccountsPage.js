@@ -62,8 +62,10 @@ export default function AccountsPage() {
 
   const [rows, setRows] = useState([]);
 
-  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setCurrentAccount } = useAuth();
+  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows } = useAuth();
 
+  const [arrayToFilter, setArrayToFilter] = useState([]);
+  const [entriesToFilter, setEntriesToFilter] = useState([]);
   const [emailTo, setEmailTo] = useState("");
   const subjectInputRef = useRef();
   const bodyInputRef = useRef();
@@ -260,6 +262,89 @@ export default function AccountsPage() {
 
       setEmails(emailsArray);
     } catch (error) { }
+  }
+
+  async function GetEntries() {
+    try {
+      // setLoading(true);
+      const entriesRef = collection(db, "entries");
+
+      const q = query(entriesRef);
+
+      const rowArray = [];
+
+      console.log("got accounts");
+
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        rowArray.push({
+          id: doc.id,
+          name: doc.data().account,
+          dateCreated: doc.data().timeStamp.toDate(),
+          debit: doc.data().debit,
+          credit: doc.data().credit,
+          status: doc.data().status,
+          comment: doc.data()?.comment,
+          documentName: doc.data()?.documentName,
+          documentUrl: doc.data()?.documentUrl
+        });
+      });
+      //  setArrayToFilter(rowArray);
+      return rowArray;
+    } catch (error) { }
+  }
+
+  function getBalance(balance, debit, credit) {
+    if (credit !== 0) {
+      return balance - credit;
+    }
+    else {
+      return balance + debit;
+    }
+  }
+
+  function filterEntries(name, balance) {
+    let temp = [];
+    entriesToFilter.map(entry => {
+      entry['name'].map((data, index) => {
+        if (data['name'] === name) {
+          temp.push({
+            id: entry['id'],
+            date: entry['dateCreated'],
+            debit: parseFloat(entry['debit'][index]['amount']),
+            credit: parseFloat(entry['credit'][index]['amount']),
+            balance: getBalance(parseFloat(balance), parseFloat(entry['debit'][index]['amount']), parseFloat(entry['credit'][index]['amount'])),
+            description: entry['comment']
+          })
+        }
+      })
+    })
+    console.log(temp);
+    setLedgerRows(temp);
+
+  }
+
+  function getLedgerRows(accName, balance) {
+
+    setLedgerRows([]);
+    setArrayToFilter([]);
+    setEntriesToFilter([]);
+    let res = GetEntries();
+    res.then((data) => {
+        setArrayToFilter(data);
+    }).then(
+        arrayToFilter.forEach((entry) => {
+            if(entry['status'] === 'Approved'){
+                entry['name'].forEach((name) => {
+                    if(name['name'] === accName){
+                        entriesToFilter.push(entry);
+                        console.log(entriesToFilter);
+                    }
+                })
+            }
+        })
+    ).then(filterEntries(accName, balance))
   }
 
   function CustomToolBar() {
@@ -876,7 +961,7 @@ export default function AccountsPage() {
               <MDBBtn
                 onClick={() => {
                   handleOpenViewAcc();
-                  setCurrentAccount({name: cellValues.row.name, balance: cellValues.row.initialBal});
+                  getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
@@ -916,6 +1001,7 @@ export default function AccountsPage() {
               <MDBBtn
                 onClick={() => {
                   handleOpenViewAcc();
+                  getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
