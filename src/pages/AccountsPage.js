@@ -55,11 +55,15 @@ import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EmailIcon from '@mui/icons-material/Email';
+import React, { Fragment } from "react";
+import { ImportExport } from "@mui/icons-material";
 
 export default function AccountsPage() {
   const db = getFirestore(app);
 
   const [rows, setRows] = useState([]);
+
+  const [entries, setEntries] = useState([]);
 
   const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail } = useAuth();
 
@@ -114,6 +118,103 @@ export default function AccountsPage() {
     setChoiceCategory("");
     setValue();
   };
+
+  // Account Ledger
+  const [openAccountLedger, setOpenAccountLedger] = useState(false);
+  const handleOpenAccountLedger = () => {
+    
+    setOpenAccountLedger(true)
+  };
+  const handleCloseAccountLedger = () => setOpenAccountLedger(false);
+
+  function RenderAccountLedger(){
+    let ledger = [];
+    entries.forEach((entry) => {
+        if(entry['status'] === 'Approved'){
+          entry['name'].forEach((name) => {
+            if(name['name'] === selectedAcc['name']){
+              ledger.push(entry)
+            }
+          })
+        }
+      });
+    return(
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Particulars</th>
+            <th scope="col">J.R.</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Date</th>
+            <th scope="col">Particulars</th>
+            <th scope="col">J.R.</th>
+            <th scope="col">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ledger.map((item, i) => {
+            return (
+              <Fragment>
+                <tr key={i}>
+                  <td>{item.dateCreated.toDateString()}</td>
+                  <td>{item.name[0].name}</td>
+                  <td></td>
+                  <td>{item.debit[0].amount}</td>
+
+                  <td>{item.dateCreated.toDateString()}</td>
+                  <td>{item.name[1].name}</td>
+                  <td></td>
+                  <td>{item.credit[1].amount}</td>
+                </tr>
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+    )
+  }
+
+  function tableTitle(){
+    return(
+      <h1>{selectedAcc['name']} Ledger</h1>
+    )
+  }
+
+  // Get entries
+  async function GetEntries(){
+    try {
+      setLoading(true);
+      const entriesRef = collection(db, "entries");
+
+      const q = query(entriesRef);
+
+      const rowArray = [];
+
+      console.log("got accounts");
+
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        rowArray.push({
+          id: doc.id,
+          name: doc.data().account,
+          dateCreated: doc.data().timeStamp.toDate(),
+          debit: doc.data().debit,
+          credit: doc.data().credit,
+          status: doc.data().status,
+          comment: doc.data()?.comment,
+          documentName: doc.data()?.documentName,
+          documentUrl: doc.data()?.documentUrl
+        });
+      });
+      setEntries(rowArray);
+    } catch (error) { }
+  }
+  useEffect(() => {
+    GetEntries().then(setLoading(false));
+  }, []);
+
 
   const [alert, setAlert] = useState("");
   const [openAlert, setOpenAlert] = useState(true);
@@ -185,6 +286,18 @@ export default function AccountsPage() {
   };
 
   const styleView = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 800,
+    bgcolor: "background.paper",
+    border: "5px solid rgba(255,255,255,1)",
+    boxShadow: 24,
+    p: 4,
+  };
+
+  const styleViewLedger = {
     position: "absolute",
     top: "50%",
     left: "50%",
@@ -1111,6 +1224,7 @@ export default function AccountsPage() {
         <Box sx={styleView}>
           {getViewAccRow()}
           <MDBBtn
+            onClick={handleOpenAccountLedger}
             className="d-md-flex m-auto mt-4"
             style={{ background: "rgba(41,121,255,1)" }}
           >
@@ -1183,6 +1297,14 @@ export default function AccountsPage() {
           </MDBBtn>
         </Box>
       </Modal>
+
+      <Modal open={openAccountLedger} onClose={handleCloseAccountLedger} aira-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={styleView}>
+          {tableTitle()}
+          {RenderAccountLedger()}
+        </Box>
+      </Modal>
+
       <div style={{ display: "flex", height: "100%" }}>
         <div id="capture" style={{ flexGrow: 1 }}>
           <DataGrid
