@@ -933,8 +933,8 @@ export default function AccountsPage() {
             <MDBTooltip tag="a" placement="auto" title="View this account">
               <MDBBtn
                 onClick={async () => {
-                  await getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                   handleOpenViewAcc();
+                  await getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
@@ -973,8 +973,8 @@ export default function AccountsPage() {
             <MDBTooltip tag="a" placement="auto" title="View this account">
               <MDBBtn
                 onClick={async () => {
-                  await getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                   handleOpenViewAcc();
+                  await getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
