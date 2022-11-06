@@ -6,11 +6,11 @@ import {
   getDocs,
   getFirestore,
   doc,
-  getDoc,
   setDoc,
   updateDoc,
   where,
   deleteDoc,
+  orderBy
 } from "firebase/firestore";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -33,7 +33,6 @@ import {
   gridPageSelector,
   useGridApiContext,
   useGridSelector,
-  GridToolbar,
   GridToolbarContainer,
   GridToolbarColumnsButton,
   GridToolbarFilterButton,
@@ -64,8 +63,6 @@ export default function AccountsPage() {
 
   const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows } = useAuth();
 
-  const [arrayToFilter, setArrayToFilter] = useState([]);
-  const [entriesToFilter, setEntriesToFilter] = useState([]);
   const [emailTo, setEmailTo] = useState("");
   const subjectInputRef = useRef();
   const bodyInputRef = useRef();
@@ -73,7 +70,6 @@ export default function AccountsPage() {
   const [openEmailAlert, setOpenEmailAlert] = useState(false);
   const [openSendEmail, setOpenSendEmail] = useState(false);
   const [emails, setEmails] = useState();
-  const [ledgerBalance, setLedgerBalance] = useState();
   const handleCloseSendEmail = () => {
     setOpenSendEmail(false);
     setOpenEmailAlert(false);
@@ -153,12 +149,9 @@ export default function AccountsPage() {
   const subCategoryInputRef = useRef();
   const serverStamp = firebase.firestore.Timestamp;
 
-  const editCategoryInputRef = useRef();
   const editCommentInputRef = useRef();
   const editDescriptionInputRef = useRef();
-  const editInitialBalInputRef = useRef();
   const editNameInputRef = useRef();
-  const editNormalSideInputRef = useRef();
   const editOrderInputRef = useRef();
   const editStatementInputRef = useRef();
   const editSubCategoryInputRef = useRef();
@@ -225,6 +218,7 @@ export default function AccountsPage() {
   };
 
   async function EmailOnClick() {
+    // eslint-disable-next-line
     const getEmails = await GetEmails();
     handleOpenSendEmail();
   }
@@ -242,8 +236,6 @@ export default function AccountsPage() {
         q = query(usersRef)
 
       const emailsArray = [];
-
-      console.log("got accounts");
 
       const querySnapshot = await getDocs(q);
 
@@ -270,11 +262,10 @@ export default function AccountsPage() {
       // setLoading(true);
       const entriesRef = collection(db, "entries");
 
-      const q = query(entriesRef);
+      const q = query(entriesRef, orderBy("timeStamp", "asc"));
 
       const rowArray = [];
 
-      console.log("got accounts");
 
       const querySnapshot = await getDocs(q);
 
@@ -296,11 +287,12 @@ export default function AccountsPage() {
     } catch (error) { }
   }
 
-  function filterEntries(name, balance) {
-    
+  async function filterEntries(name, balance, entriesToFilter) {
     let temp = [];
     let currentBalance = balance;
-    entriesToFilter.map(entry => {
+    // eslint-disable-next-line
+    await entriesToFilter.map(entry => {
+      // eslint-disable-next-line
       entry['name'].map((data, index) => {
         if (data['name'] === name) {
           currentBalance += parseFloat(entry['debit'][index]['amount']);
@@ -313,34 +305,29 @@ export default function AccountsPage() {
             balance: parseFloat(currentBalance),
             description: entry['comment']
           })
+
         }
+        setLedgerRows(temp)
       })
     })
-    console.log(temp);
-    setLedgerRows(temp);
-
   }
 
-  function getLedgerRows(accName, balance) {
-    setLedgerBalance(balance);
+  async function getLedgerRows(accName, balance) {
     setLedgerRows([]);
-    setArrayToFilter([]);
-    setEntriesToFilter([]);
-    let res = GetEntries();
-    res.then((data) => {
-      setArrayToFilter(data);
-    }).then(
-      arrayToFilter.forEach((entry) => {
+    var entriesToFilter = [];
+    await GetEntries().then((data) => {
+      data.forEach((entry) => {
         if (entry['status'] === 'Approved') {
           entry['name'].forEach((name) => {
             if (name['name'] === accName) {
               entriesToFilter.push(entry);
-              console.log(entriesToFilter);
             }
           })
         }
-      })
-    ).then(filterEntries(accName, balance))
+      },
+      )
+    })
+    await filterEntries(accName, balance, entriesToFilter)
   }
 
   function CustomToolBar() {
@@ -381,13 +368,8 @@ export default function AccountsPage() {
     );
   }
   const DeleteAccount = async (e) => {
-    const accountNumber = selectedAcc.id;
-
-    console.log(`Removing ${accountNumber}`);
-
     try {
       setLoading(true);
-      const accountsRef = collection(db, "accounts");
 
       const accRef = doc(db, "accounts", selectedAcc.id);
 
@@ -471,7 +453,6 @@ export default function AccountsPage() {
         const userID = currentUser.displayName;
 
         const docRef = doc(db, "accounts", accountNumber.toString());
-        console.log("reached");
 
         setDoc(docRef, {
           category: category,
@@ -497,6 +478,7 @@ export default function AccountsPage() {
         //     captureEvent(id, "after");
         //   }, 1000)
         // );
+        // eslint-disable-next-line
         const refresh = await GetRequests();
         setLoading(false);
         setAlert("Account succesfully created!");
@@ -523,12 +505,10 @@ export default function AccountsPage() {
 
       const rowsArray = [];
 
-      console.log("got accounts");
 
       const querySnapshot = await getDocs(q);
 
       querySnapshot.forEach(async (doc) => {
-        console.log(doc.id);
         rowsArray.push({
           id: doc.id,
           category: doc.data().category,
@@ -852,7 +832,6 @@ export default function AccountsPage() {
     const description = editDescriptionInputRef.current.value;
     const initialBal = value;
     const accountName = editNameInputRef.current.value;
-    console.log(accountName);
     const normalSide = choiceNormal;
     const order = editOrderInputRef.current.value;
     const statement = editStatementInputRef.current.value;
@@ -867,7 +846,6 @@ export default function AccountsPage() {
     if (accountName === selectedAcc.name) {
       duplicate = false;
     }
-    console.log(selectedAcc);
 
     try {
       if (duplicate === false) {
@@ -903,8 +881,7 @@ export default function AccountsPage() {
         setOpenAlert(true);
       }
     } catch (error) {
-      console.log(error)
-      setAlert("Something went wrong");
+      setAlert(error.message);
       setOpenAlert(true);
     }
   };
@@ -955,9 +932,9 @@ export default function AccountsPage() {
           <div className="d-flex gap-2">
             <MDBTooltip tag="a" placement="auto" title="View this account">
               <MDBBtn
-                onClick={() => {
+                onClick={async () => {
                   handleOpenViewAcc();
-                  getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
+                  await getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
@@ -995,9 +972,9 @@ export default function AccountsPage() {
           <div>
             <MDBTooltip tag="a" placement="auto" title="View this account">
               <MDBBtn
-                onClick={() => {
+                onClick={async () => {
                   handleOpenViewAcc();
-                  getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
+                  await getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}

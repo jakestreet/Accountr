@@ -1,7 +1,7 @@
 import { auth, app } from "../components/utils/firebase";
 import { doc, getDoc, getFirestore } from "firebase/firestore";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import {
   MDBDropdown,
@@ -11,6 +11,7 @@ import {
   MDBTooltip,
 } from "mdb-react-ui-kit";
 import Avatar from "@mui/material/Avatar";
+import IconButton from '@mui/material/IconButton';
 import Calendar from "react-calendar";
 import "../styling/Calendar.css";
 import Popover from "@mui/material/Popover";
@@ -39,7 +40,8 @@ export default function NavBar() {
     setCurrentUserInfo,
     setPassExpirationDays,
     passExpirationDays,
-    pendingEntries
+    pendingEntries,
+    setFilterProvidedEntry
   } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -324,10 +326,8 @@ export default function NavBar() {
               </Popover>
 
               {pendingEntries && currentRole === "Manager" ?
-                <div>
-                  <Button aria-describedby={idNotif} onClick={handleClickNotif}>
-                    <NotificationsIcon />
-                  </Button>
+                <div style={{ paddingTop: 2 }}>
+                  <IconButton aria-describedby={idNotif} onClick={handleClickNotif} color="primary" children={<NotificationsIcon />} />
                   <Popover
                     id={idNotif}
                     open={openNotif}
@@ -342,7 +342,23 @@ export default function NavBar() {
                       You have pending journal entries.
                     </Typography>
                   </Popover>
-                </div> : null
+                </div> : <div style={{ paddingTop: 2 }}>
+                  <IconButton aria-describedby={idNotif} onClick={handleClickNotif} color="primary" children={<NotificationsNoneOutlinedIcon />} />
+                  <Popover
+                    id={idNotif}
+                    open={openNotif}
+                    anchorEl={anchorElNotif}
+                    onClose={handleCloseNotif}
+                    anchorOrigin={{
+                      vertical: "bottom",
+                      horizontal: "left",
+                    }}
+                  >
+                    <Typography sx={{ p: 2 }}>
+                      You have no notifications.
+                    </Typography>
+                  </Popover>
+                </div>
               }
 
             </div>
@@ -509,6 +525,10 @@ export default function NavBar() {
       }
     }
   }
+
+  useEffect(() => {
+    setFilterProvidedEntry();
+  }, [navigate, setFilterProvidedEntry])
 
   return (
     <div>

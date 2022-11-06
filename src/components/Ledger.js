@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from "react-router-dom";
-import { app } from "../components/utils/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import {
     DataGrid,
@@ -10,27 +8,14 @@ import {
     useGridSelector,
     GridToolbar,
 } from '@mui/x-data-grid';
-import {
-    randomCreatedDate,
-    randomId,
-} from '@mui/x-data-grid-generator';
+
 import { MDBBtn, MDBTooltip } from 'mdb-react-ui-kit';
 import { Pagination } from '@mui/material';
-import {
-    collection,
-    query,
-    getDocs,
-    getFirestore,
-  } from "firebase/firestore";
+
 
 export default function Ledger() {
-    const db = getFirestore(app);
     const navigate = useNavigate();
-
-    const [rows, setRows] = useState();
-    const [arrayToFilter, setArrayToFilter] = useState([]);
-    const [entriesToFilter, setEntriesToFilter] = useState([]);
-    const { currentAccount, setFilterProvidedEntry, ledgerRows  } = useAuth();
+    const { setFilterProvidedEntry, ledgerRows  } = useAuth();
 
 
     const columns = [
@@ -118,7 +103,7 @@ export default function Ledger() {
     }
 
     return (
-        <div style={{ height: 650, marginLeft: "auto", marginRight: "auto", minWidth: 900, maxWidth: 1800, padding: 10 }}>
+        <div style={{ height: 670, marginLeft: "auto", marginRight: "auto", minWidth: 900, maxWidth: 1800, padding: 10 }}>
             <div style={{ display: 'flex', height: '100%' }}>
                 <div id="capture" style={{ flexGrow: 1 }}>
                     <DataGrid
