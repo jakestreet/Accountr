@@ -6,11 +6,11 @@ import {
   getDocs,
   getFirestore,
   doc,
-  getDoc,
   setDoc,
   updateDoc,
   where,
   deleteDoc,
+  orderBy
 } from "firebase/firestore";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -33,7 +33,6 @@ import {
   gridPageSelector,
   useGridApiContext,
   useGridSelector,
-  GridToolbar,
   GridToolbarContainer,
   GridToolbarColumnsButton,
   GridToolbarFilterButton,
@@ -73,7 +72,6 @@ export default function AccountsPage() {
   const [openEmailAlert, setOpenEmailAlert] = useState(false);
   const [openSendEmail, setOpenSendEmail] = useState(false);
   const [emails, setEmails] = useState();
-  const [ledgerBalance, setLedgerBalance] = useState();
   const handleCloseSendEmail = () => {
     setOpenSendEmail(false);
     setOpenEmailAlert(false);
@@ -153,12 +151,9 @@ export default function AccountsPage() {
   const subCategoryInputRef = useRef();
   const serverStamp = firebase.firestore.Timestamp;
 
-  const editCategoryInputRef = useRef();
   const editCommentInputRef = useRef();
   const editDescriptionInputRef = useRef();
-  const editInitialBalInputRef = useRef();
   const editNameInputRef = useRef();
-  const editNormalSideInputRef = useRef();
   const editOrderInputRef = useRef();
   const editStatementInputRef = useRef();
   const editSubCategoryInputRef = useRef();
@@ -225,6 +220,7 @@ export default function AccountsPage() {
   };
 
   async function EmailOnClick() {
+    // eslint-disable-next-line
     const getEmails = await GetEmails();
     handleOpenSendEmail();
   }
@@ -270,7 +266,7 @@ export default function AccountsPage() {
       // setLoading(true);
       const entriesRef = collection(db, "entries");
 
-      const q = query(entriesRef);
+      const q = query(entriesRef, orderBy("timeStamp", "asc"));
 
       const rowArray = [];
 
@@ -300,7 +296,9 @@ export default function AccountsPage() {
     
     let temp = [];
     let currentBalance = balance;
+    // eslint-disable-next-line
     entriesToFilter.map(entry => {
+      // eslint-disable-next-line
       entry['name'].map((data, index) => {
         if (data['name'] === name) {
           currentBalance += parseFloat(entry['debit'][index]['amount']);
@@ -322,7 +320,6 @@ export default function AccountsPage() {
   }
 
   function getLedgerRows(accName, balance) {
-    setLedgerBalance(balance);
     setLedgerRows([]);
     setArrayToFilter([]);
     setEntriesToFilter([]);
@@ -387,7 +384,6 @@ export default function AccountsPage() {
 
     try {
       setLoading(true);
-      const accountsRef = collection(db, "accounts");
 
       const accRef = doc(db, "accounts", selectedAcc.id);
 
@@ -497,6 +493,7 @@ export default function AccountsPage() {
         //     captureEvent(id, "after");
         //   }, 1000)
         // );
+        // eslint-disable-next-line
         const refresh = await GetRequests();
         setLoading(false);
         setAlert("Account succesfully created!");

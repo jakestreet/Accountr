@@ -6,7 +6,7 @@ import Modal from "@mui/material/Modal";
 import * as React from "react";
 import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
-import { Add, Save, Cancel, Check, Block, Remove, Download, Refresh, Edit, Message } from "@mui/icons-material"
+import { Add, Save, Cancel, Check, Block, Remove, Download, Refresh } from "@mui/icons-material"
 import {
   GridRowModes,
   DataGrid,
@@ -28,6 +28,7 @@ import {
   addDoc,
   doc,
   updateDoc,
+  orderBy,
 } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { app } from "../components/utils/firebase";
@@ -100,12 +101,6 @@ export default function JournalPage() {
     p: 4,
   };
   const db = getFirestore(app);
-  const [sortModel, setSortModel] = useState([
-    {
-      field: "dateCreated",
-      sort: "asc",
-    },
-  ]);
 
   const Item = styled(Box)(({ theme }) => ({
     padding: theme.spacing(1),
@@ -121,7 +116,7 @@ export default function JournalPage() {
   const handleDebitChange = (event, index) => {
     let data = [...debitField];
     if (event.target.value !== "") {
-      data[index][event.target.name] = event.target.value;
+      data[index][event.target.name] = parseFloat(event.target.value.replaceAll(',', ''));
     }
     else
       data[index][event.target.name] = 0
@@ -130,7 +125,7 @@ export default function JournalPage() {
   const handleCreditChange = (event, index) => {
     let data = [...creditField];
     if (event.target.value !== "") {
-      data[index][event.target.name] = event.target.value;
+      data[index][event.target.name] = parseFloat(event.target.value.replaceAll(',', ''));
     }
     else
       data[index][event.target.name] = 0
@@ -232,8 +227,8 @@ export default function JournalPage() {
     setBalanceError(false);
     var debitTotal = 0;
     var creditTotal = 0;
-    debitField.forEach(element => debitTotal += parseFloat(element.amount))
-    creditField.forEach(element => creditTotal += parseFloat(element.amount))
+    debitField.forEach(element => debitTotal += parseFloat(element.amount.toString().replaceAll(',', '')))
+    creditField.forEach(element => creditTotal += parseFloat(element.amount.toString().replaceAll(',', '')))
     if(debitTotal === creditTotal) {
       setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
     }
@@ -768,7 +763,7 @@ export default function JournalPage() {
       setLoading(true);
       const entriesRef = collection(db, "entries");
 
-      const q = query(entriesRef);
+      const q = query(entriesRef, orderBy("timeStamp", "asc"));
 
       const rowArray = [];
 
@@ -822,6 +817,7 @@ export default function JournalPage() {
   }
 
   async function storeEntryError(id, message, debitTotal, creditTotal) {
+    // eslint-disable-next-line no-unused-vars
     const newErrorAdded = await addDoc(collection(db, "errors"), {
       journalID: id,
       errorMessage: message,
@@ -863,6 +859,7 @@ export default function JournalPage() {
     GetAccounts();
     GetEntries().then(setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  
 
   return (
     <div
@@ -895,8 +892,6 @@ export default function JournalPage() {
             columns={columns}
             editMode="row"
             loading={loading}
-            sortModel={sortModel}
-            onSortModelChange={(newSortModel) => setSortModel(newSortModel)}
             rowModesModel={rowModesModel}
             onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
             onRowEditStart={handleRowEditStart}
@@ -936,7 +931,7 @@ export default function JournalPage() {
             <MDBBtn disabled={loadingUpload || !docFile} onClick={() => { handleUpload(viewData?.id) }}>Upload</MDBBtn>
           </MDBCol>
           <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBBtn disabled={loadingUpload} className="mt-3" onClick={() => { { handleClose() } }}>Close</MDBBtn>
+            <MDBBtn disabled={loadingUpload} className="mt-3" onClick={() => { { handleClose() } }}>Close</MDBBtn> {/* eslint-disable-line */}
           </MDBCol>
         </Box>
       </Modal>
