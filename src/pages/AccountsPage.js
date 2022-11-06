@@ -63,8 +63,6 @@ export default function AccountsPage() {
 
   const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows } = useAuth();
 
-  const [arrayToFilter, setArrayToFilter] = useState([]);
-  const [entriesToFilter, setEntriesToFilter] = useState([]);
   const [emailTo, setEmailTo] = useState("");
   const subjectInputRef = useRef();
   const bodyInputRef = useRef();
@@ -239,8 +237,6 @@ export default function AccountsPage() {
 
       const emailsArray = [];
 
-      console.log("got accounts");
-
       const querySnapshot = await getDocs(q);
 
       var gotFirst = false;
@@ -270,7 +266,6 @@ export default function AccountsPage() {
 
       const rowArray = [];
 
-      console.log("got accounts");
 
       const querySnapshot = await getDocs(q);
 
@@ -292,12 +287,11 @@ export default function AccountsPage() {
     } catch (error) { }
   }
 
-  function filterEntries(name, balance) {
-    
+  async function filterEntries(name, balance, entriesToFilter) {
     let temp = [];
     let currentBalance = balance;
     // eslint-disable-next-line
-    entriesToFilter.map(entry => {
+    await entriesToFilter.map(entry => {
       // eslint-disable-next-line
       entry['name'].map((data, index) => {
         if (data['name'] === name) {
@@ -311,33 +305,29 @@ export default function AccountsPage() {
             balance: parseFloat(currentBalance),
             description: entry['comment']
           })
+
         }
+        setLedgerRows(temp)
       })
     })
-    console.log(temp);
-    setLedgerRows(temp);
-
   }
 
-  function getLedgerRows(accName, balance) {
+  async function getLedgerRows(accName, balance) {
     setLedgerRows([]);
-    setArrayToFilter([]);
-    setEntriesToFilter([]);
-    let res = GetEntries();
-    res.then((data) => {
-      setArrayToFilter(data);
-    }).then(
-      arrayToFilter.forEach((entry) => {
+    var entriesToFilter = [];
+    await GetEntries().then((data) => {
+      data.forEach((entry) => {
         if (entry['status'] === 'Approved') {
           entry['name'].forEach((name) => {
             if (name['name'] === accName) {
               entriesToFilter.push(entry);
-              console.log(entriesToFilter);
             }
           })
         }
-      })
-    ).then(filterEntries(accName, balance))
+      },
+      )
+    })
+    await filterEntries(accName, balance, entriesToFilter)
   }
 
   function CustomToolBar() {
@@ -378,10 +368,6 @@ export default function AccountsPage() {
     );
   }
   const DeleteAccount = async (e) => {
-    const accountNumber = selectedAcc.id;
-
-    console.log(`Removing ${accountNumber}`);
-
     try {
       setLoading(true);
 
@@ -467,7 +453,6 @@ export default function AccountsPage() {
         const userID = currentUser.displayName;
 
         const docRef = doc(db, "accounts", accountNumber.toString());
-        console.log("reached");
 
         setDoc(docRef, {
           category: category,
@@ -520,12 +505,10 @@ export default function AccountsPage() {
 
       const rowsArray = [];
 
-      console.log("got accounts");
 
       const querySnapshot = await getDocs(q);
 
       querySnapshot.forEach(async (doc) => {
-        console.log(doc.id);
         rowsArray.push({
           id: doc.id,
           category: doc.data().category,
@@ -849,7 +832,6 @@ export default function AccountsPage() {
     const description = editDescriptionInputRef.current.value;
     const initialBal = value;
     const accountName = editNameInputRef.current.value;
-    console.log(accountName);
     const normalSide = choiceNormal;
     const order = editOrderInputRef.current.value;
     const statement = editStatementInputRef.current.value;
@@ -864,7 +846,6 @@ export default function AccountsPage() {
     if (accountName === selectedAcc.name) {
       duplicate = false;
     }
-    console.log(selectedAcc);
 
     try {
       if (duplicate === false) {
@@ -900,8 +881,7 @@ export default function AccountsPage() {
         setOpenAlert(true);
       }
     } catch (error) {
-      console.log(error)
-      setAlert("Something went wrong");
+      setAlert(error.message);
       setOpenAlert(true);
     }
   };
@@ -952,9 +932,9 @@ export default function AccountsPage() {
           <div className="d-flex gap-2">
             <MDBTooltip tag="a" placement="auto" title="View this account">
               <MDBBtn
-                onClick={() => {
+                onClick={async () => {
+                  await getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                   handleOpenViewAcc();
-                  getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
@@ -992,9 +972,9 @@ export default function AccountsPage() {
           <div>
             <MDBTooltip tag="a" placement="auto" title="View this account">
               <MDBBtn
-                onClick={() => {
+                onClick={async () => {
+                  await getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                   handleOpenViewAcc();
-                  getLedgerRows(cellValues.row.name, cellValues.row.initialBal);
                 }}
                 className="d-md-flex gap-2 mt-2 btn-sm"
                 style={{ background: "rgba(41,121,255,1)" }}
