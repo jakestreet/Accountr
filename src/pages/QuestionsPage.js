@@ -22,7 +22,7 @@ export default function QuestionsPage() {
   const [message, setMessage] = useState("");
   const [alertSeverity, setAlertSeverity] = useState("success");
   const [open, setOpen] = useState(false);
-  const { forgotPassword, resetEmail, resetUser, questionOne, questionOneAnswer, questionTwo, questionTwoAnswer } = useAuth();
+  const { forgotPassword, resetEmail, resetUser, questionOne, questionOneAnswer, questionTwo, questionTwoAnswer, StyledTooltip } = useAuth();
   const db = getFirestore(app);
   const navigate = useNavigate();
 
@@ -90,12 +90,20 @@ export default function QuestionsPage() {
         <MDBInput wrapperClass='mb-2 w-50 m-auto mt-2' label='Question 1 Answer' id='resetEmail' type='text' inputRef={answerOneInputRef} />
         <MDBCardText className='mt-4 m-auto'>{questionTwo}</MDBCardText>
         <MDBInput wrapperClass='mb-4 w-50 m-auto mt-2' label='Question 2 Answer' id='resetEmail' type='text' inputRef={answerTwoInputRef} />
-        <MDBTooltip tag='a' placement="auto" title="Answer personal questions to reset email">
+        <StyledTooltip
+          title="Submit question answers"
+          placement='top'
+          arrow
+        >
           <MDBBtn onClick={CompareAnswers} className="mb-4 w-25 m-auto mt-2">Answer Questions</MDBBtn>
-        </MDBTooltip>
-        <MDBTooltip tag='a' placement="auto" title="Return to login screen">
+        </StyledTooltip>
+        <StyledTooltip
+          title="Return to login page"
+          placement='bottom'
+          arrow
+        >
           <MDBBtn className="mb-4 w-25 m-auto" href="/" color="link">Return to Log In</MDBBtn>
-        </MDBTooltip>
+        </StyledTooltip>
 
       </MDBContainer>
     </div>

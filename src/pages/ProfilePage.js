@@ -9,7 +9,7 @@ export default function ProfilePage() {
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
 
-  const { currentUser, currentRole, passExpirationDays, currentUserInfo } = useAuth();
+  const { currentUser, currentRole, passExpirationDays, currentUserInfo, StyledTooltip } = useAuth();
   const navigate = useNavigate();
 
   const EditProfileNavigate = async (e) => {
@@ -75,9 +75,13 @@ export default function ProfilePage() {
                 </MDBCol>
               </MDBRow>
               <MDBCardBody className="text-center mt-4">
-                <MDBTooltip tag='a' placement="auto" title="Edit your profile information">
+                <StyledTooltip
+                  title="Edit your profile information"
+                  placement='top'
+                  arrow
+                >
                   <MDBBtn onClick={(e) => { EditProfileNavigate(e) }} className=''>Edit Profile</MDBBtn>
-                </MDBTooltip>
+                </StyledTooltip>
 
               </MDBCardBody>
             </MDBCardBody>

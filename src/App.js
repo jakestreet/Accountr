@@ -32,10 +32,10 @@ function App() {
             <Route path="home" element={<div style={{marginLeft: 24}}><HomePage /></div>} />
             <Route path="edit-profile" element={<div style={{marginLeft: 24}}><EditProfilePage /></div>} />
             <Route path="profile" element={<div style={{marginLeft: 24}}><ProfilePage  /></div>} />
-            <Route path="users" element={<div style={{marginLeft: 55}}><UsersPage /></div>} />
-            <Route path="event-log" element={<div style={{marginLeft: 55}}><EventLogPage /></div>} />
-            <Route path="accounts" element={<div style={{marginLeft: 55}}><AccountsPage /></div>} />
-            <Route path="journal" element={<div style={{marginLeft: 24}}><JournalPage /></div>} />
+            <Route path="users" element={<div style={{}}><UsersPage /></div>} />
+            <Route path="event-log" element={<div style={{}}><EventLogPage /></div>} />
+            <Route path="accounts" element={<div style={{}}><AccountsPage /></div>} />
+            <Route path="journal" element={<div style={{}}><JournalPage /></div>} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { storage } from '../components/utils/firebase'
-import { MDBBtn, MDBCardText, MDBCol, MDBInput, MDBRow, MDBTextArea, MDBTooltip } from "mdb-react-ui-kit";
+import { MDBBtn, MDBCardText, MDBCol, MDBInput, MDBRow, MDBTextArea } from "mdb-react-ui-kit";
 import Modal from "@mui/material/Modal";
 import * as React from "react";
 import PropTypes from "prop-types";
@@ -30,14 +30,14 @@ import {
   updateDoc,
   orderBy,
 } from "firebase/firestore";
-import { getDownloadURL, ref } from "firebase/storage";
+import { getDownloadURL } from "firebase/storage";
 import { app } from "../components/utils/firebase";
 import { Box, IconButton, Typography } from "@mui/material";
 import { styled } from '@mui/material/styles';
 import { Divider } from '@mui/material';
 
 export default function AdjustingJournal() {
-  const { currentRole, filterProvidedEntry, uploadEntryDoc, setPendingEntries } = useAuth();
+  const { currentRole, filterProvidedEntry, uploadEntryDoc, setPendingEntries, width, setWidth, StyledTooltip } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -56,6 +56,19 @@ export default function AdjustingJournal() {
   const [openReject, setOpenReject] = useState(false);
   const [loadingUpload, setLoadingUpload] = useState(false);
   const [docFile, setDocFile] = useState(null);
+  const [category, setCategory] = useState();
+  const [justifyActive, setJustifyActive] = useState('tab1');
+  const ref = useRef();
+  const handleJustifyClick = (value) => {
+    if (value === justifyActive) {
+      return;
+    }
+
+    setJustifyActive(value);
+  };
+  const handleCategory = (event) => {
+    setCategory(event.target.value);
+  }
   async function handleUpload(id) {
     // eslint-disable-next-line
     const upload = await uploadEntryDoc(docFile, id, docFile.name, setLoadingUpload)
@@ -67,7 +80,7 @@ export default function AdjustingJournal() {
       setDocFile(e.target.files[0])
     }
   }
-  
+
   const [balanceError, setBalanceError] = useState(false)
 
   const handleOpenView = (rowData) => {
@@ -187,7 +200,6 @@ export default function AdjustingJournal() {
 
     return (
       <GridToolbarContainer>
-        <MDBTooltip tag="a" placement="auto" title="Refresh for new journal entries">
           <Button color="primary" startIcon={<Refresh />} onClick={() => {
             setLoading(true);
             GetAccounts();
@@ -195,14 +207,9 @@ export default function AdjustingJournal() {
           }}>
             Refresh
           </Button>
-        </MDBTooltip>
-
-        <MDBTooltip tag="a" placement="auto" title="Create a new journal entry">
           <Button color="primary" startIcon={<Add />} onClick={handleClick}>
             Add Journal Entry
           </Button>
-        </MDBTooltip>
-
         <GridToolbarFilterButton />
         <GridToolbarQuickFilter className="ms-auto" />
       </GridToolbarContainer>
@@ -229,7 +236,7 @@ export default function AdjustingJournal() {
     var creditTotal = 0;
     debitField.forEach(element => debitTotal += parseFloat(element.amount.toString().replaceAll(',', '')))
     creditField.forEach(element => creditTotal += parseFloat(element.amount.toString().replaceAll(',', '')))
-    if(debitTotal === creditTotal) {
+    if (debitTotal === creditTotal) {
       setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
     }
     else {
@@ -237,7 +244,7 @@ export default function AdjustingJournal() {
       storeEntryError(id, "The debit and credit totals must be equal.", debitTotal, creditTotal);
       setBalanceError(true);
     }
-      
+
   };
 
 
@@ -277,11 +284,13 @@ export default function AdjustingJournal() {
     updatedRow.name = choiceAccounts;
     updatedRow.debit = debitField;
     updatedRow.credit = creditField;
+    updatedRow.category = category;
     const newRowID = await storeEntry(
       updatedRow.dateCreated,
       choiceAccounts,
       debitField,
       creditField,
+      category,
     );
     updatedRow.id = newRowID;
     setChoiceAccounts([{ name: "" }, { name: "" }]);
@@ -327,7 +336,7 @@ export default function AdjustingJournal() {
               <Item style={{ height: 64 }}>{<div style={{ marginTop: 15 }}>{params.row?.dateCreated?.toDateString()}</div>}</Item>
               {RenderAddRows(numberOfRows,
                 <div>
-                  <Divider flexItem variant='fullWidth' width={225} />
+                  <Divider flexItem variant='fullWidth' width={width / 7} />
                   <Item style={{ height: 64 }}>&nbsp;&nbsp;</Item>
                 </div>
               )}
@@ -345,7 +354,7 @@ export default function AdjustingJournal() {
             params.row.name.map((debit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 7} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {index === 0 ? <p>{params.row.dateCreated.toDateString()}</p> : <p>&nbsp;&nbsp;</p>}
                   </div>
@@ -383,7 +392,7 @@ export default function AdjustingJournal() {
               choiceAccounts.map((account, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 7} /> : null}
                     <Item height={64} >
                       <div style={{ marginTop: 5 }}>
                         <Select
@@ -418,7 +427,7 @@ export default function AdjustingJournal() {
               params?.value.split(",").map((account, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 7} /> : null}
                     <div className="mt-4" style={{ textAlign: "center" }}>
                       <p>{account}</p>
                     </div>
@@ -456,7 +465,7 @@ export default function AdjustingJournal() {
               {debitField.map((debit, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 7} /> : null}
                     <Item style={{ height: 64 }}>
                       <CurrencyTextField
                         placeholder="0.00"
@@ -493,7 +502,7 @@ export default function AdjustingJournal() {
             params?.value.split(",").map((debit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 7} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {parseFloat(debit) !== 0 ? <p>{parseFloat(debit).toLocaleString("en-us", {
                       style: "currency",
@@ -533,7 +542,7 @@ export default function AdjustingJournal() {
               {creditField.map((credit, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 7 - 1} /> : null}
                     <Item style={{ height: 64 }}>
                       <CurrencyTextField
                         placeholder="0.00"
@@ -546,12 +555,12 @@ export default function AdjustingJournal() {
                         outputFormat="number"
                         decimalCharacter="."
                         digitGroupSeparator=","
-                        error={balanceError && credit.amount !== 0  ? true : false}
+                        error={balanceError && credit.amount !== 0 ? true : false}
                         onChange={(event) => {
                           handleCreditChange(event, index);
                         }}
                         size="small"
-                        style={{ width: 150, marginTop: 5}}
+                        style={{ width: 150, marginTop: 5 }}
                       />
                     </Item>
                   </div>
@@ -571,7 +580,7 @@ export default function AdjustingJournal() {
             params?.value.split(",").map((credit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 7 - 1} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {parseFloat(credit) !== 0 ? <p>({parseFloat(credit).toLocaleString("en-us", {
                       style: "currency",
@@ -583,6 +592,39 @@ export default function AdjustingJournal() {
             })
           }
         </div>)
+      },
+    },
+    {
+      field: "category",
+      type: "string",
+      headerName: "Adjusting Category",
+      width: 100,
+      editable: false,
+      align: "center",
+      flex: 1,
+      renderCell: (params) => {
+        const isInEditMode =
+          rowModesModel[params.row.id]?.mode === GridRowModes.Edit;
+          if (isInEditMode)
+            return <Item height={64} >
+              <div style={{ marginTop: 5 }}>
+                <Select
+                  name="name"
+                  labelId="normal-select-label"
+                  id="normal-select"
+                  value={category}
+                  size="small"
+                  style={{ width: 150 }}
+                  onChange={handleCategory}
+                >
+                  <MenuItem value={"Accrual"}>Accrual</MenuItem>
+                  <MenuItem value={"Defferal"}>Defferal</MenuItem>
+                  <MenuItem value={"Estimate"}>Estimate</MenuItem>
+                </Select>
+              </div>
+            </Item>
+          else
+            return <p>{params.row?.category}</p>
       },
     },
     {
@@ -644,7 +686,11 @@ export default function AdjustingJournal() {
 
         if (isInEditMode) {
           return [
-            <MDBTooltip tag="a" placement="auto" title="Add a row">
+            <StyledTooltip
+              title="Add a row"
+              placement='top'
+              arrow
+            >
               <GridActionsCellItem
                 icon={<Add />}
                 label="Add"
@@ -655,23 +701,26 @@ export default function AdjustingJournal() {
                 }}
                 color="inherit"
               />
-            </MDBTooltip>,
-            numberOfRows > 1 ? 
-            <MDBTooltip tag="a" placement="auto" title="Remove row">
-              <GridActionsCellItem
-              icon={<Remove />}
-              label="Remove"
-              className="textPrimary"
-              onClick={() => {
-                setNumberOfRows(numberOfRows - 1);
-                removeFields();
-              }}
-              color="inherit"
-            />
-            </MDBTooltip>
-             : 
-             <MDBTooltip tag="a" placement="auto" title="Remove row">
+            </StyledTooltip>,
+            numberOfRows > 1 ?
+              <StyledTooltip
+                title="Remove a row"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
+                  icon={<Remove />}
+                  label="Remove"
+                  className="textPrimary"
+                  onClick={() => {
+                    setNumberOfRows(numberOfRows - 1);
+                    removeFields();
+                  }}
+                  color="inherit"
+                />
+              </StyledTooltip>
+              :
+              <GridActionsCellItem
                 icon={<Remove />}
                 label="Remove"
                 className="textPrimary"
@@ -680,17 +729,24 @@ export default function AdjustingJournal() {
                   setNumberOfRows(numberOfRows - 1);
                 }}
                 color="inherit"
-                />
-             </MDBTooltip>,
-             <MDBTooltip tag="a" placement="auto" title="Save journal entry">
-                <GridActionsCellItem
+              />,
+            <StyledTooltip
+              title="Save"
+              placement='top'
+              arrow
+            >
+              <GridActionsCellItem
                 icon={<Save />}
                 label="Save"
                 color="inherit"
                 onClick={handleSaveClick(id, debit, credit)}
-                />
-             </MDBTooltip>,
-             <MDBTooltip tag="a" placement="auto" title="Cancel journal entry">
+              />
+            </StyledTooltip>,
+            <StyledTooltip
+              title="Cancel"
+              placement='top'
+              arrow
+            >
               <GridActionsCellItem
                 icon={<Cancel />}
                 label="Cancel"
@@ -698,12 +754,16 @@ export default function AdjustingJournal() {
                 onClick={handleCancelClick(id)}
                 color="inherit"
               />
-             </MDBTooltip>,
+            </StyledTooltip>,
           ];
         } else if (currentRole === "Manager" && status === "Pending") {
           return [
             <div style={{ textAlign: "center" }}>
-              <MDBTooltip tag="a" placement="auto" title="Approve journal entry">
+              <StyledTooltip
+                title="Approve journal entry"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
                   icon={<Check />}
                   label="Approve"
@@ -711,8 +771,12 @@ export default function AdjustingJournal() {
                   onClick={handleApproveClick(id, "Approved", "")}
                   color="success"
                 />
-              </MDBTooltip>
-              <MDBTooltip tag="a" placement="auto" title="Reject journal entry">
+              </StyledTooltip>
+              <StyledTooltip
+                title="Reject journal entry"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
                   icon={<Block />}
                   label="Reject"
@@ -720,14 +784,20 @@ export default function AdjustingJournal() {
                   onClick={() => { handleOpenReject(params.row) }}
                   color="error"
                 />
-              </MDBTooltip>
-              
+              </StyledTooltip>
+
             </div>,
           ];
         }
         return [
           <div style={{ textAlign: "center" }}>
-            <MDBBtn onClick={() => { handleOpenView(params.row) }}>View</MDBBtn>
+            <StyledTooltip
+              title="View journal entry"
+              placement='left'
+              arrow
+            >
+              <MDBBtn onClick={() => { handleOpenView(params.row) }}>View</MDBBtn>
+            </StyledTooltip>
           </div>,
         ];
       },
@@ -761,7 +831,7 @@ export default function AdjustingJournal() {
   async function GetEntries() {
     try {
       setLoading(true);
-      const entriesRef = collection(db, "entries");
+      const entriesRef = collection(db, "adjusting-entries");
 
       const q = query(entriesRef, orderBy("timeStamp", "asc"));
 
@@ -774,7 +844,7 @@ export default function AdjustingJournal() {
       var checkPending = false;
 
       querySnapshot.forEach(async (doc) => {
-        if(doc.data().status === "Pending")
+        if (doc.data().status === "Pending")
           checkPending = true;
         rowArray.push({
           id: doc.id,
@@ -785,11 +855,12 @@ export default function AdjustingJournal() {
           status: doc.data().status,
           comment: doc.data()?.comment,
           documentName: doc.data()?.documentName,
-          documentUrl: doc.data()?.documentUrl
+          documentUrl: doc.data()?.documentUrl,
+          category: doc.data().category
         });
       });
 
-      if(checkPending === false)
+      if (checkPending === false)
         setPendingEntries(false);
       else
         setPendingEntries(true);
@@ -802,15 +873,17 @@ export default function AdjustingJournal() {
     dateCreated,
     choiceAccounts,
     debitField,
-    creditField
+    creditField,
+    category
   ) {
-    const newEntryAdded = await addDoc(collection(db, "entries"), {
+    const newEntryAdded = await addDoc(collection(db, "adjusting-entries"), {
       timeStamp: dateCreated,
       account: choiceAccounts,
       debit: debitField,
       credit: creditField,
       status: "Pending",
       comment: "",
+      category: category,
     });
     console.log("Added entry with ID: ", newEntryAdded.id);
     return newEntryAdded.id;
@@ -829,7 +902,7 @@ export default function AdjustingJournal() {
   async function updateStatus(id, status, comment) {
     console.log("status: " + status);
     console.log("id: " + id);
-    const entryRef = doc(db, "entries", id);
+    const entryRef = doc(db, "adjusting-entries", id);
     // eslint-disable-next-line no-unused-vars
     const update = await updateDoc(entryRef, {
       status: status,
@@ -843,7 +916,7 @@ export default function AdjustingJournal() {
     const fileRef = ref(storage, "entry docs/" + "journal-entry-" + id + '/' + name);
 
     getDownloadURL(fileRef).then(async (url) => {
-      const entryRef = doc(db, "entries", id);
+      const entryRef = doc(db, "adjusting-entries", id);
       // eslint-disable-next-line no-unused-vars
       const update = await updateDoc(entryRef, {
         documentName: name,
@@ -854,26 +927,63 @@ export default function AdjustingJournal() {
     console.log("Added document name to entry with ID: ", id);
   }
 
+  const useContainerDimensions = myRef => {
+    const getDimensions = () => ({
+      width: myRef.current.offsetWidth,
+      height: myRef.current.offsetHeight
+    })
+
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+
+    useEffect(() => {
+      const handleResize = () => {
+        setDimensions(getDimensions())
+      }
+
+      if (myRef.current) {
+        setDimensions(getDimensions())
+      }
+
+      window.addEventListener("resize", handleResize)
+
+      return () => {
+        window.removeEventListener("resize", handleResize)
+      }
+    }, [myRef])
+
+    if (dimensions.width != 0)
+      setWidth(dimensions.width);
+
+    return dimensions;
+  };
+
+  const { widthCalc } = useContainerDimensions(ref)
+
   useEffect(() => {
     console.log(filterProvidedEntry);
     GetAccounts();
     GetEntries().then(setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  
+
+
 
   return (
-    <div style={{
+    <div
+      style={{
         height: "85vh",
         marginLeft: "auto",
         marginRight: "auto",
-        minWidth: 1400,
-        maxWidth: 1400,
-        padding: 10,
+        maxWidth: 900,
+        maxWidth: 1900,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 10
       }}>
       <div style={{ display: "flex", height: "100%" }}>
-        <div id="capture" style={{ flexGrow: 1 }}>
+        <div id="capture" style={{ flexGrow: 1, marginLeft: 60 }} ref={ref}>
           <DataGrid
             sx={{
+
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "rgba(41,121,255,1)",
                 color: "rgba(255,255,255,1)",
@@ -885,7 +995,7 @@ export default function AdjustingJournal() {
               },
             }}
             rows={rows}
-            pagination = {false}
+            pagination={false}
             getRowHeight={() => 'auto'}
             columns={columns}
             editMode="row"
@@ -997,41 +1107,6 @@ export default function AdjustingJournal() {
           </MDBCol>
         </Box>
       </Modal>
-      <div className="fixed-bottom" style={{ padding: 10 }}>
-        <MDBTooltip tag="a" placement="auto" title="Help">
-          <button
-            type="button"
-            className="btn btn-primary btn-floating"
-            onClick={() => {
-              handleOpenHelp();
-            }}
-          >
-            ?
-          </button>
-        </MDBTooltip>
-
-        <Modal
-          open={openHelp}
-          onClose={handleOpenHelp}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <div className="card">
-            <div className="card-body">
-              <dl className="row">
-                <dd className="col-sm-9">No Content</dd>
-              </dl>
-            </div>
-            <MDBBtn
-              onClick={handleCloseHelp}
-              className="d-md-flex m-auto mt-4"
-              style={{ background: "rgba(41,121,255,1)" }}
-            >
-              Close
-            </MDBBtn>
-          </div>
-        </Modal>
-      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { storage } from '../components/utils/firebase'
 import { MDBBtn, MDBCardText, MDBCol, MDBInput, MDBRow, MDBTabs, MDBTabsContent, MDBTabsItem, MDBTabsLink, MDBTabsPane, MDBTextArea, MDBTooltip } from "mdb-react-ui-kit";
@@ -38,7 +38,7 @@ import { Divider } from '@mui/material';
 import AdjustingJournal from "../components/AdjustingJournal";
 
 export default function JournalPage() {
-  const { currentRole, filterProvidedEntry, uploadEntryDoc, setPendingEntries } = useAuth();
+  const { currentRole, filterProvidedEntry, uploadEntryDoc, setPendingEntries, setWidth, width, StyledTooltip } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -58,6 +58,7 @@ export default function JournalPage() {
   const [loadingUpload, setLoadingUpload] = useState(false);
   const [docFile, setDocFile] = useState(null);
   const [justifyActive, setJustifyActive] = useState('tab1');
+  const ref = useRef();
   const handleJustifyClick = (value) => {
     if (value === justifyActive) {
       return;
@@ -196,22 +197,16 @@ export default function JournalPage() {
 
     return (
       <GridToolbarContainer>
-        <MDBTooltip tag="a" placement="auto" title="Refresh for new journal entries">
-          <Button color="primary" startIcon={<Refresh />} onClick={() => {
-            setLoading(true);
-            GetAccounts();
-            GetEntries().then(setLoading(false));
-          }}>
-            Refresh
-          </Button>
-        </MDBTooltip>
-
-        <MDBTooltip tag="a" placement="auto" title="Create a new journal entry">
-          <Button color="primary" startIcon={<Add />} onClick={handleClick}>
-            Add Journal Entry
-          </Button>
-        </MDBTooltip>
-
+        <Button color="primary" startIcon={<Refresh />} onClick={() => {
+          setLoading(true);
+          GetAccounts();
+          GetEntries().then(setLoading(false));
+        }}>
+          Refresh
+        </Button>
+        <Button color="primary" startIcon={<Add />} onClick={handleClick}>
+          Add Journal Entry
+        </Button>
         <GridToolbarFilterButton />
         <GridToolbarQuickFilter className="ms-auto" />
       </GridToolbarContainer>
@@ -336,7 +331,7 @@ export default function JournalPage() {
               <Item style={{ height: 64 }}>{<div style={{ marginTop: 15 }}>{params.row?.dateCreated?.toDateString()}</div>}</Item>
               {RenderAddRows(numberOfRows,
                 <div>
-                  <Divider flexItem variant='fullWidth' width={225} />
+                  <Divider flexItem variant='fullWidth' width={width / 6 - 3} />
                   <Item style={{ height: 64 }}>&nbsp;&nbsp;</Item>
                 </div>
               )}
@@ -354,7 +349,7 @@ export default function JournalPage() {
             params.row.name.map((debit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {index === 0 ? <p>{params.row.dateCreated.toDateString()}</p> : <p>&nbsp;&nbsp;</p>}
                   </div>
@@ -392,7 +387,7 @@ export default function JournalPage() {
               choiceAccounts.map((account, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                     <Item height={64} >
                       <div style={{ marginTop: 5 }}>
                         <Select
@@ -427,7 +422,7 @@ export default function JournalPage() {
               params?.value.split(",").map((account, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                     <div className="mt-4" style={{ textAlign: "center" }}>
                       <p>{account}</p>
                     </div>
@@ -465,7 +460,7 @@ export default function JournalPage() {
               {debitField.map((debit, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                     <Item style={{ height: 64 }}>
                       <CurrencyTextField
                         placeholder="0.00"
@@ -502,7 +497,7 @@ export default function JournalPage() {
             params?.value.split(",").map((debit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {parseFloat(debit) !== 0 ? <p>{parseFloat(debit).toLocaleString("en-us", {
                       style: "currency",
@@ -542,7 +537,7 @@ export default function JournalPage() {
               {creditField.map((credit, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 6 - 4} /> : null}
                     <Item style={{ height: 64 }}>
                       <CurrencyTextField
                         placeholder="0.00"
@@ -580,7 +575,7 @@ export default function JournalPage() {
             params?.value.split(",").map((credit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 6 - 4} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {parseFloat(credit) !== 0 ? <p>({parseFloat(credit).toLocaleString("en-us", {
                       style: "currency",
@@ -653,7 +648,11 @@ export default function JournalPage() {
 
         if (isInEditMode) {
           return [
-            <MDBTooltip tag="a" placement="auto" title="Add a row">
+            <StyledTooltip
+              title="Add a row"
+              placement='top'
+              arrow
+            >
               <GridActionsCellItem
                 icon={<Add />}
                 label="Add"
@@ -664,9 +663,13 @@ export default function JournalPage() {
                 }}
                 color="inherit"
               />
-            </MDBTooltip>,
+            </StyledTooltip>,
             numberOfRows > 1 ?
-              <MDBTooltip tag="a" placement="auto" title="Remove row">
+              <StyledTooltip
+                title="Remove a row"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
                   icon={<Remove />}
                   label="Remove"
@@ -677,29 +680,35 @@ export default function JournalPage() {
                   }}
                   color="inherit"
                 />
-              </MDBTooltip>
+              </StyledTooltip>
               :
-              <MDBTooltip tag="a" placement="auto" title="Remove row">
-                <GridActionsCellItem
-                  icon={<Remove />}
-                  label="Remove"
-                  className="textPrimary"
-                  disabled
-                  onClick={() => {
-                    setNumberOfRows(numberOfRows - 1);
-                  }}
-                  color="inherit"
-                />
-              </MDBTooltip>,
-            <MDBTooltip tag="a" placement="auto" title="Save journal entry">
+              <GridActionsCellItem
+                icon={<Remove />}
+                label="Remove"
+                className="textPrimary"
+                disabled
+                onClick={() => {
+                  setNumberOfRows(numberOfRows - 1);
+                }}
+                color="inherit"
+              />,
+            <StyledTooltip
+              title="Save"
+              placement='top'
+              arrow
+            >
               <GridActionsCellItem
                 icon={<Save />}
                 label="Save"
                 color="inherit"
                 onClick={handleSaveClick(id, debit, credit)}
               />
-            </MDBTooltip>,
-            <MDBTooltip tag="a" placement="auto" title="Cancel journal entry">
+            </StyledTooltip>,
+            <StyledTooltip
+              title="Cancel"
+              placement='top'
+              arrow
+            >
               <GridActionsCellItem
                 icon={<Cancel />}
                 label="Cancel"
@@ -707,12 +716,16 @@ export default function JournalPage() {
                 onClick={handleCancelClick(id)}
                 color="inherit"
               />
-            </MDBTooltip>,
+            </StyledTooltip>,
           ];
         } else if (currentRole === "Manager" && status === "Pending") {
           return [
             <div style={{ textAlign: "center" }}>
-              <MDBTooltip tag="a" placement="auto" title="Approve journal entry">
+              <StyledTooltip
+                title="Approve journal entry"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
                   icon={<Check />}
                   label="Approve"
@@ -720,8 +733,12 @@ export default function JournalPage() {
                   onClick={handleApproveClick(id, "Approved", "")}
                   color="success"
                 />
-              </MDBTooltip>
-              <MDBTooltip tag="a" placement="auto" title="Reject journal entry">
+              </StyledTooltip>
+              <StyledTooltip
+                title="Reject journal entry"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
                   icon={<Block />}
                   label="Reject"
@@ -729,14 +746,20 @@ export default function JournalPage() {
                   onClick={() => { handleOpenReject(params.row) }}
                   color="error"
                 />
-              </MDBTooltip>
+              </StyledTooltip>
 
             </div>,
           ];
         }
         return [
           <div style={{ textAlign: "center" }}>
-            <MDBBtn onClick={() => { handleOpenView(params.row) }}>View</MDBBtn>
+            <StyledTooltip
+              title="View journal entry"
+              placement='left'
+              arrow
+            >
+              <MDBBtn onClick={() => { handleOpenView(params.row) }}>View</MDBBtn>
+            </StyledTooltip>
           </div>,
         ];
       },
@@ -863,6 +886,38 @@ export default function JournalPage() {
     console.log("Added document name to entry with ID: ", id);
   }
 
+  const useContainerDimensions = myRef => {
+    const getDimensions = () => ({
+      width: myRef.current.offsetWidth,
+      height: myRef.current.offsetHeight
+    })
+
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+
+    useEffect(() => {
+      const handleResize = () => {
+        setDimensions(getDimensions())
+      }
+
+      if (myRef.current) {
+        setDimensions(getDimensions())
+      }
+
+      window.addEventListener("resize", handleResize)
+
+      return () => {
+        window.removeEventListener("resize", handleResize)
+      }
+    }, [myRef])
+
+    if (dimensions.width != 0)
+      setWidth(dimensions.width);
+
+    return dimensions;
+  };
+
+  const { widthCalc } = useContainerDimensions(ref)
+
   useEffect(() => {
     console.log(filterProvidedEntry);
     GetAccounts();
@@ -870,41 +925,54 @@ export default function JournalPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 
+
   return (
     <div>
       <MDBTabs style={{ maxWidth: 600, margin: "auto" }} justify className='d-flex flex-row justify-content-between'>
         <MDBTabsItem>
 
-          <MDBTabsLink onClick={() => handleJustifyClick('tab1')} active={justifyActive === 'tab1'}>
-            Journal Entries
-          </MDBTabsLink>
-
+          <StyledTooltip
+            title="View journal entries"
+            placement='bottom'
+            arrow
+          >
+            <MDBTabsLink onClick={() => handleJustifyClick('tab1')} active={justifyActive === 'tab1'}>
+              Journal Entries
+            </MDBTabsLink>
+          </StyledTooltip>
 
         </MDBTabsItem>
         <MDBTabsItem>
-
-          <MDBTabsLink onClick={() => handleJustifyClick('tab2')} active={justifyActive === 'tab2'}>
-            Adjusting Journal Entries
-          </MDBTabsLink>
-
+          <StyledTooltip
+            title="View adjusting journal entries"
+            placement='bottom'
+            arrow
+          >
+            <MDBTabsLink onClick={() => handleJustifyClick('tab2')} active={justifyActive === 'tab2'}>
+              Adjusting Journal Entries
+            </MDBTabsLink>
+          </StyledTooltip>
 
         </MDBTabsItem>
       </MDBTabs>
       <MDBTabsContent>
 
-        <MDBTabsPane show={justifyActive === 'tab1'} style={{
-          height: "85vh",
-          marginLeft: "auto",
-          marginRight: "auto",
-          minWidth: 1400,
-          maxWidth: 1400,
-          paddingLeft: 10,
-          paddingRight: 10,
-        }}>
+        <MDBTabsPane show={justifyActive === 'tab1'}
+          style={{
+            height: "85vh",
+            marginLeft: "auto",
+            marginRight: "auto",
+            maxWidth: 900,
+            maxWidth: 1900,
+            paddingLeft: 25,
+            paddingRight: 25,
+            paddingTop: 10
+          }}>
           <div style={{ display: "flex", height: "100%" }}>
-            <div id="capture" style={{ flexGrow: 1 }}>
+            <div id="capture" style={{ flexGrow: 1, marginLeft: 60 }} ref={ref}>
               <DataGrid
                 sx={{
+
                   "& .MuiDataGrid-columnHeaders": {
                     backgroundColor: "rgba(41,121,255,1)",
                     color: "rgba(255,255,255,1)",
@@ -1028,41 +1096,6 @@ export default function JournalPage() {
               </MDBCol>
             </Box>
           </Modal>
-          <div className="fixed-bottom" style={{ padding: 10 }}>
-            <MDBTooltip tag="a" placement="auto" title="Help">
-              <button
-                type="button"
-                className="btn btn-primary btn-floating"
-                onClick={() => {
-                  handleOpenHelp();
-                }}
-              >
-                ?
-              </button>
-            </MDBTooltip>
-
-            <Modal
-              open={openHelp}
-              onClose={handleOpenHelp}
-              aria-labelledby="modal-modal-title"
-              aria-describedby="modal-modal-description"
-            >
-              <div className="card">
-                <div className="card-body">
-                  <dl className="row">
-                    <dd className="col-sm-9">No Content</dd>
-                  </dl>
-                </div>
-                <MDBBtn
-                  onClick={handleCloseHelp}
-                  className="d-md-flex m-auto mt-4"
-                  style={{ background: "rgba(41,121,255,1)" }}
-                >
-                  Close
-                </MDBBtn>
-              </div>
-            </Modal>
-          </div>
         </MDBTabsPane>
       </MDBTabsContent>
       <MDBTabsContent>

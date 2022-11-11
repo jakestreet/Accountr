@@ -23,7 +23,7 @@ export default function ForgotPage() {
   const [message, setMessage] = useState("");
   const [alertSeverity, setAlertSeverity] = useState("success");
   const [open, setOpen] = useState(false);
-  const { forgotPassword, setResetEmail, setResetUser, setQuestionOne, setQuestionOneAnswer, setQuestionTwo, setQuestionTwoAnswer, resetUser } = useAuth();
+  const { forgotPassword, setResetEmail, setResetUser, setQuestionOne, setQuestionOneAnswer, setQuestionTwo, setQuestionTwoAnswer, resetUser, StyledTooltip } = useAuth();
   const navigate = useNavigate();
   const db = getFirestore(app);
 
@@ -80,12 +80,20 @@ export default function ForgotPage() {
         <h1>Forgot Password</h1>
         <MDBInput wrapperClass='mb-2 w-50 m-auto mt-4' label='Username' id='resetEmail' type='email' inputRef={userInputRef} />
         <MDBInput wrapperClass='mb-4 w-50 m-auto mt-2' label='Email address' id='resetEmail' type='email' inputRef={emailQuestionsInputRef} />
-        <MDBTooltip tag='a' placement="auto" title="Answer security questions to recover password">
+        <StyledTooltip
+              title="Get your accounts security questions"
+              placement='top'
+              arrow
+            >
           <MDBBtn onClick={NavigateToQuestions} className="mb-4 w-25 m-auto mt-2">Get Security Questions</MDBBtn>
-        </MDBTooltip>
-        <MDBTooltip tag='a' placement="auto" title="Return to log in screen">
+        </StyledTooltip>
+        <StyledTooltip
+              title="Return to login page"
+              placement='bottom'
+              arrow
+            >
           <MDBBtn className="mb-4 w-25 m-auto" href="/" color="link">Return to Log In</MDBBtn>
-        </MDBTooltip>
+        </StyledTooltip>
 
       </MDBContainer>
     </div>

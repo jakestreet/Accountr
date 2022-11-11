@@ -78,7 +78,7 @@ export default function Ledger() {
                             className="d-md-flex gap-2 mt-2 btn-sm"
                             style={{ background: "rgba(41,121,255,1)" }}
                         >
-                            Go to Ledger
+                            Go to Entry
                         </MDBBtn>
                     </MDBTooltip>
                 </div>

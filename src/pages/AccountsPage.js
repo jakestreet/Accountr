@@ -20,7 +20,6 @@ import {
   MDBCardText,
   MDBRow,
   MDBCol,
-  MDBTooltip,
   MDBTextArea,
 } from "mdb-react-ui-kit";
 import { Alert, CircularProgress } from "@mui/material";
@@ -61,7 +60,7 @@ export default function AccountsPage() {
 
   const [rows, setRows] = useState([]);
 
-  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows } = useAuth();
+  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows, StyledTooltip } = useAuth();
 
   const [emailTo, setEmailTo] = useState("");
   const subjectInputRef = useRef();
@@ -333,29 +332,25 @@ export default function AccountsPage() {
   function CustomToolBar() {
     return (
       <GridToolbarContainer>
-        <MDBTooltip tag="a" placement="auto" title="Refresh user list">
+        <Button
+          color="primary"
+          onClick={() => {
+            GetRequests();
+          }}
+          startIcon={<RefreshIcon />}
+        >
+          Refresh
+        </Button>
+        {currentRole === "Admin" ? (
           <Button
             color="primary"
             onClick={() => {
-              GetRequests();
+              handleOpenNewAccount();
             }}
-            startIcon={<RefreshIcon />}
+            startIcon={<AddIcon />}
           >
-            Refresh
+            Create New Account
           </Button>
-        </MDBTooltip>
-        {currentRole === "Admin" ? (
-          <MDBTooltip tag="a" placement="auto" title="Create a new user">
-            <Button
-              color="primary"
-              onClick={() => {
-                handleOpenNewAccount();
-              }}
-              startIcon={<AddIcon />}
-            >
-              Create New Account
-            </Button>
-          </MDBTooltip>
         ) : null}
         <Button onClick={() => {
           EmailOnClick();
@@ -930,7 +925,11 @@ export default function AccountsPage() {
       renderCell: (cellValues) => {
         return currentRole === "Admin" ? (
           <div className="d-flex gap-2">
-            <MDBTooltip tag="a" placement="auto" title="View this account">
+            <StyledTooltip
+              title="View this account"
+              placement='top'
+              arrow
+            >
               <MDBBtn
                 onClick={async () => {
                   handleOpenViewAcc();
@@ -941,8 +940,12 @@ export default function AccountsPage() {
               >
                 View
               </MDBBtn>
-            </MDBTooltip>
-            <MDBTooltip tag="a" placement="auto" title="Edit this account">
+            </StyledTooltip>
+            <StyledTooltip
+              title="Edit this account"
+              placement='top'
+              arrow
+            >
               <MDBBtn
                 onClick={() => {
                   handleOpenEditAcc();
@@ -952,10 +955,14 @@ export default function AccountsPage() {
               >
                 Edit
               </MDBBtn>
-            </MDBTooltip>
+            </StyledTooltip>
 
             {cellValues.row.initialBal === 0 ? (
-              <MDBTooltip tag="a" placement="auto" title="Remove this account">
+              <StyledTooltip
+                title="Remove this account"
+                placement='top'
+                arrow
+              >
                 <MDBBtn
                   onClick={() => {
                     handleOpenRemoveConfirmation();
@@ -965,12 +972,16 @@ export default function AccountsPage() {
                 >
                   Remove
                 </MDBBtn>
-              </MDBTooltip>
+              </StyledTooltip>
             ) : null}
           </div>
         ) : (
           <div>
-            <MDBTooltip tag="a" placement="auto" title="View this account">
+            <StyledTooltip
+              title="View this account"
+              placement='right'
+              arrow
+            >
               <MDBBtn
                 onClick={async () => {
                   handleOpenViewAcc();
@@ -981,7 +992,7 @@ export default function AccountsPage() {
               >
                 View
               </MDBBtn>
-            </MDBTooltip>
+            </StyledTooltip>
           </div>
         );
       },
@@ -997,170 +1008,183 @@ export default function AccountsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-      <div
-        style={{
-          height: "89vh",
-          marginLeft: "auto",
-          marginRight: "auto",
-          minWidth: 900,
-          maxWidth: 1800,
-          paddingLeft: 25,
-          paddingRight: 25,
-          paddingTop: 10
-        }}
+    <div
+      style={{
+        height: "89vh",
+        marginLeft: "auto",
+        marginRight: "auto",
+        minWidth: 900,
+        maxWidth: 1900,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 10
+      }}
+    >
+      <Modal
+        open={openSendEmail}
+        onClose={handleCloseSendEmail}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
       >
-        <Modal
-          open={openSendEmail}
-          onClose={handleCloseSendEmail}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box sx={styleEmail}>
-            {SendEmailAlert()}
-            <label>To:</label>
-            <Select className="ms-2 mb-2" size="small" autoWidth value={emailTo} onChange={handleEmailChange}>
-              {emails}
+        <Box sx={styleEmail}>
+          {SendEmailAlert()}
+          <label>To:</label>
+          <Select className="ms-2 mb-2" size="small" autoWidth value={emailTo} onChange={handleEmailChange}>
+            {emails}
+          </Select>
+          <MDBCol>
+            <label>From: {currentUser.email}</label>
+          </MDBCol>
+          <MDBInput
+            wrapperClass="mb-4 mt-2"
+            label="Subject"
+            id="subject"
+            type="text"
+            inputRef={subjectInputRef}
+          />
+          <MDBTextArea
+            label="Body"
+            id="body"
+            type="text"
+            rows={10}
+            inputRef={bodyInputRef}
+          ></MDBTextArea>
+          <StyledTooltip
+            title="Finish sending email"
+            placement='top'
+            arrow
+          >
+            <MDBBtn
+              onClick={SendEmailOnClick}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Send Email
+            </MDBBtn>
+          </StyledTooltip>
+          <StyledTooltip
+            title="Cancel sending email"
+            placement='bottom'
+            arrow
+          >
+            <MDBBtn
+              onClick={() => {
+                handleCloseSendEmail();
+              }}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Close
+            </MDBBtn>
+          </StyledTooltip>
+        </Box>
+      </Modal>
+      <Modal
+        open={openNewAccount}
+        onClose={handleCloseNewAccount}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          {SendAlert()}
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Account Name"
+            id="regAccountName"
+            type="text"
+            inputRef={nameInputRef}
+          />
+          <FormControl fullWidth className="mb-4" size="small">
+            <InputLabel id="category-select-label">Category</InputLabel>
+            <Select
+              labelId="category-select-label"
+              id="category-select"
+              value={choiceCategory}
+              label="Category"
+              onChange={(event) => {
+                setChoiceCategory(event.target.value);
+              }}
+            >
+              <MenuItem value={"Assets"}>Assets</MenuItem>
+              <MenuItem value={"Liabilities"}>Liabilities</MenuItem>
+              <MenuItem value={"Equity"}>Equity</MenuItem>
+              <MenuItem value={"Revenue"}>Revenue</MenuItem>
+              <MenuItem value={"Expenses"}>Expenses</MenuItem>
             </Select>
-            <MDBCol>
-              <label>From: {currentUser.email}</label>
-            </MDBCol>
-            <MDBInput
-              wrapperClass="mb-4 mt-2"
-              label="Subject"
-              id="subject"
-              type="text"
-              inputRef={subjectInputRef}
-            />
-            <MDBTextArea
-              label="Body"
-              id="body"
-              type="text"
-              rows={10}
-              inputRef={bodyInputRef}
-            ></MDBTextArea>
-            <MDBTooltip tag="a" placement="auto" title="Finish sending email">
-              <MDBBtn
-                onClick={SendEmailOnClick}
-                className="d-md-flex m-auto mt-4"
-                style={{ background: "rgba(41,121,255,1)" }}
-              >
-                Send Email
-              </MDBBtn>
-            </MDBTooltip>
-            <MDBTooltip tag="a" placement="auto" title="Cancel sending email">
-              <MDBBtn
-                onClick={() => {
-                  handleCloseSendEmail();
-                }}
-                className="d-md-flex m-auto mt-4"
-                style={{ background: "rgba(41,121,255,1)" }}
-              >
-                Close
-              </MDBBtn>
-            </MDBTooltip>
-          </Box>
-        </Modal>
-        <Modal
-          open={openNewAccount}
-          onClose={handleCloseNewAccount}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box sx={style}>
-            {SendAlert()}
-            <MDBInput
-              wrapperClass="mb-4"
-              label="Account Name"
-              id="regAccountName"
-              type="text"
-              inputRef={nameInputRef}
-            />
-            <FormControl fullWidth className="mb-4" size="small">
-              <InputLabel id="category-select-label">Category</InputLabel>
-              <Select
-                labelId="category-select-label"
-                id="category-select"
-                value={choiceCategory}
-                label="Category"
-                onChange={(event) => {
-                  setChoiceCategory(event.target.value);
-                }}
-              >
-                <MenuItem value={"Assets"}>Assets</MenuItem>
-                <MenuItem value={"Liabilities"}>Liabilities</MenuItem>
-                <MenuItem value={"Equity"}>Equity</MenuItem>
-                <MenuItem value={"Revenue"}>Revenue</MenuItem>
-                <MenuItem value={"Expenses"}>Expenses</MenuItem>
-              </Select>
-            </FormControl>
-            <MDBInput
-              wrapperClass="mb-4"
-              label="Sub-Category"
-              id="regSubCategory"
-              type="text"
-              inputRef={subCategoryInputRef}
-            />
-            <MDBInput
-              wrapperClass="mb-4"
-              label="Description"
-              id="regDescription"
-              type="text"
-              inputRef={descriptionInputRef}
-            />
-            <MDBInput
-              wrapperClass="mb-4"
-              label="Comment"
-              id="regComment"
-              type="text"
-              inputRef={commentInputRef}
-            />
-            <CurrencyTextField
-              label="Initial Balance"
-              placeholder="0.00"
-              variant="outlined"
-              value={value}
-              currencySymbol="$"
-              fixedDecimalLength="2"
-              outputFormat="number"
-              decimalCharacter="."
-              digitGroupSeparator=","
-              onChange={(event, value) => setValue(value)}
-              className="mb-4"
-              size="small"
-              fullWidth
-            />
-            <FormControl fullWidth className="mb-4" size="small">
-              <InputLabel id="normal-select-label">Normal Side</InputLabel>
-              <Select
-                labelId="normal-select-label"
-                id="normal-select"
-                value={choiceNormal}
-                label="Normal Side"
-                onChange={(event) => {
-                  setChoiceNormal(event.target.value);
-                }}
-              >
-                <MenuItem value={"Debit"}>Debit</MenuItem>
-                <MenuItem value={"Credit"}>Credit</MenuItem>
-              </Select>
-            </FormControl>
-            <MDBInput
-              wrapperClass="mb-4"
-              label="Order"
-              id="regOrder"
-              type="number"
-              inputRef={orderInputRef}
-            />
-            <MDBInput
-              wrapperClass="mb-4"
-              label="Statement"
-              id="regStatement"
-              type="text"
-              inputRef={statementInputRef}
-            />
-            {loading ? (
-              <CircularProgress className="d-md-flex mb-2 m-auto" />
-            ) : (
+          </FormControl>
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Sub-Category"
+            id="regSubCategory"
+            type="text"
+            inputRef={subCategoryInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Description"
+            id="regDescription"
+            type="text"
+            inputRef={descriptionInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Comment"
+            id="regComment"
+            type="text"
+            inputRef={commentInputRef}
+          />
+          <CurrencyTextField
+            label="Initial Balance"
+            placeholder="0.00"
+            variant="outlined"
+            value={value}
+            currencySymbol="$"
+            fixedDecimalLength="2"
+            outputFormat="number"
+            decimalCharacter="."
+            digitGroupSeparator=","
+            onChange={(event, value) => setValue(value)}
+            className="mb-4"
+            size="small"
+            fullWidth
+          />
+          <FormControl fullWidth className="mb-4" size="small">
+            <InputLabel id="normal-select-label">Normal Side</InputLabel>
+            <Select
+              labelId="normal-select-label"
+              id="normal-select"
+              value={choiceNormal}
+              label="Normal Side"
+              onChange={(event) => {
+                setChoiceNormal(event.target.value);
+              }}
+            >
+              <MenuItem value={"Debit"}>Debit</MenuItem>
+              <MenuItem value={"Credit"}>Credit</MenuItem>
+            </Select>
+          </FormControl>
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Order"
+            id="regOrder"
+            type="number"
+            inputRef={orderInputRef}
+          />
+          <MDBInput
+            wrapperClass="mb-4"
+            label="Statement"
+            id="regStatement"
+            type="text"
+            inputRef={statementInputRef}
+          />
+          {loading ? (
+            <CircularProgress className="d-md-flex mb-2 m-auto" />
+          ) : (
+            <StyledTooltip
+              title="Create new account"
+              placement='top'
+              arrow
+            >
               <MDBBtn
                 onClick={() => {
                   NewAccountForm();
@@ -1170,7 +1194,13 @@ export default function AccountsPage() {
               >
                 Create Account
               </MDBBtn>
-            )}
+            </StyledTooltip>
+          )}
+          <StyledTooltip
+            title="Cancel creating account"
+            placement='bottom'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 handleCloseNewAccount();
@@ -1180,17 +1210,29 @@ export default function AccountsPage() {
             >
               Close
             </MDBBtn>
-          </Box>
-        </Modal>
-        <Modal
-          open={openViewAcc}
-          onClose={handleCloseViewAcc}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box sx={styleView}>
-            {getViewAccRow()}
+          </StyledTooltip>
+        </Box>
+      </Modal>
+      <Modal
+        open={openViewAcc}
+        onClose={handleCloseViewAcc}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={styleView}>
+          {getViewAccRow()}
+          <StyledTooltip
+            title="View ledger for selected account"
+            placement='top'
+            arrow
+          >
             <MDBBtn onClick={() => { setViewLedger(true); handleCloseViewAcc(); }} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>View Ledger</MDBBtn>
+          </StyledTooltip>
+          <StyledTooltip
+            title="Close account view"
+            placement='bottom'
+            arrow
+          >
             <MDBBtn
               onClick={handleCloseViewAcc}
               className="d-md-flex m-auto mt-4"
@@ -1198,176 +1240,117 @@ export default function AccountsPage() {
             >
               Close
             </MDBBtn>
-          </Box>
-        </Modal>
-        <Modal open={openViewLedger} onClose={handleCloseViewLedger} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
-          <Box sx={styleViewLedger}>
-            <Ledger />
-            <MDBBtn onClick={handleCloseViewLedger} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>Close</MDBBtn>
-          </Box>
-        </Modal>
-        <Modal
-          open={openEditAcc}
-          onClose={handleCloseEditAcc}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box sx={style}>
-            {SendAlert()}
-            {getAccRow()}
-            {loading ? (
-              <CircularProgress className="d-md-flex mb-2 m-auto" />
-            ) : (
-              <MDBBtn
-                onClick={updateAccount}
-                className="d-md-flex m-auto mt-4"
-                style={{ background: "rgba(41,121,255,1)" }}
-              >
-                Apply Changes
-              </MDBBtn>
-            )}
-            <MDBBtn
-              onClick={handleCloseEditAcc}
-              className="d-md-flex m-auto mt-4"
-              style={{ background: "rgba(41,121,255,1)" }}
-            >
-              Close
-            </MDBBtn>
-          </Box>
-        </Modal>
-        <Modal
-          open={openRemoveConfirmation}
-          onClose={handleCloseRemoveConfirmation}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box sx={style}>
-            {SendAlert()}
-            {RemoveConfirmation()}
-            {loading ? (
-              <CircularProgress className="d-md-flex mb-2 m-auto" />
-            ) : (
-              <MDBBtn
-                onClick={DeleteAccount}
-                className="d-md-flex m-auto mt-4"
-                style={{ background: "rgba(255,0,0,1)" }}
-              >
-                Delete
-              </MDBBtn>
-            )}
-            <MDBBtn
-              onClick={handleCloseRemoveConfirmation}
-              className="d-md-flex m-auto mt-4"
-              style={{ background: "rgba(41,121,255,1)" }}
-            >
-              Close
-            </MDBBtn>
-          </Box>
-        </Modal>
-        <div style={{ display: "flex", height: "100%" }}>
-          <div id="capture" style={{ flexGrow: 1 }}>
-            <DataGrid
-              sx={{
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "rgba(41,121,255,1)",
-                  color: "rgba(255,255,255,1)",
-                  fontSize: 16,
-                },
-                "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
-                {
-                  outline: "none",
-                },
-              }}
-              rowHeight={100}
-              rows={rows}
-              columns={columns}
-              autoPageSize
-              // autoPageSize
-              rowsPerPage={10}
-              disableDensitySelector
-              onCellClick={currentlySelected}
-              getRowId={(row) => row.id}
-              components={{
-                Pagination: CustomPagination,
-                Toolbar: CustomToolBar,
-              }}
-              hideFooterRowCount={true}
-              hideFooterSelectedRowCount={true}
-              componentsProps={{
-                toolbar: {
-                  showQuickFilter: true,
-                  quickFilterProps: { debounceMs: 500 },
-                },
-              }}
-            />
-          </div>
-        </div>
-        <div class="fixed-bottom">
-          <MDBTooltip tag="a" placement="auto" title="Help">
-            <button
-              type="button"
-              class="btn btn-primary btn-floating"
-              onClick={() => {
-                handleOpenHelp();
-              }}
-            >
-              ?
-            </button>
-          </MDBTooltip>
-
-          <Modal
-            open={openHelp}
-            onClose={handleOpenHelp}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
+          </StyledTooltip>
+        </Box>
+      </Modal>
+      <Modal open={openViewLedger} onClose={handleCloseViewLedger} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={styleViewLedger}>
+          <Ledger />
+          <StyledTooltip
+            title="Close ledger view"
+            placement='bottom'
+            arrow
           >
-            <div class="card">
-              <div class="card-body">
-                <dl class="row">
-                  <dt class="col-sm-3">View accounts:</dt>
-                  <dd class="col-sm-9">
-                    All current accounts including, but not limited to, the
-                    account time, account type, initial balance, and date added.
-                  </dd>
-                  <dt class="col-sm-3">Create account:</dt>
-                  <dd class="col-sm-9">
-                    Create a new account by using the Create New Account button
-                    and inputting the required information.
-                  </dd>
-                  <dt class="col-sm-3">Edit and delete account:</dt>
-                  <dd class="col-sm-9">
-                    The Action functionality allows for easy editing and removal
-                    of current accounts.
-                  </dd>
-                  <dt class="col-sm-3">Sort accounts:</dt>
-                  <dd class="col-sm-9">
-                    Accounts can be sorted by sub-categories (account name, date
-                    added, etc) or the entire table can be filtered by specified
-                    values, or by eliminating columns.
-                  </dd>
-                  <dt class="col-sm-3">Export account information:</dt>
-                  <dd class="col-sm-9">
-                    Export information by using the Export functionality, take
-                    note that data can be filtered prior to exporting for a
-                    personalized report.
-                  </dd>
-                  <dt class="col-sm-3">Tip:</dt>
-                  <dd class="col-sm-9">
-                    Make sure to refresh the page, by using the refresh button, to
-                    view the most recent changes.
-                  </dd>
-                </dl>
-              </div>
-              <MDBBtn
-                onClick={handleCloseHelp}
-                className="d-md-flex m-auto mt-4"
-                style={{ background: "rgba(41,121,255,1)" }}
-              >
-                Close
-              </MDBBtn>
-            </div>
-          </Modal>
+            <MDBBtn onClick={handleCloseViewLedger} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>Close</MDBBtn>
+          </StyledTooltip>
+        </Box>
+      </Modal>
+      <Modal
+        open={openEditAcc}
+        onClose={handleCloseEditAcc}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          {SendAlert()}
+          {getAccRow()}
+          {loading ? (
+            <CircularProgress className="d-md-flex mb-2 m-auto" />
+          ) : (
+            <MDBBtn
+              onClick={updateAccount}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Apply Changes
+            </MDBBtn>
+          )}
+          <MDBBtn
+            onClick={handleCloseEditAcc}
+            className="d-md-flex m-auto mt-4"
+            style={{ background: "rgba(41,121,255,1)" }}
+          >
+            Close
+          </MDBBtn>
+        </Box>
+      </Modal>
+      <Modal
+        open={openRemoveConfirmation}
+        onClose={handleCloseRemoveConfirmation}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          {SendAlert()}
+          {RemoveConfirmation()}
+          {loading ? (
+            <CircularProgress className="d-md-flex mb-2 m-auto" />
+          ) : (
+            <MDBBtn
+              onClick={DeleteAccount}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(255,0,0,1)" }}
+            >
+              Delete
+            </MDBBtn>
+          )}
+          <MDBBtn
+            onClick={handleCloseRemoveConfirmation}
+            className="d-md-flex m-auto mt-4"
+            style={{ background: "rgba(41,121,255,1)" }}
+          >
+            Close
+          </MDBBtn>
+        </Box>
+      </Modal>
+      <div style={{ display: "flex", height: "100%" }}>
+        <div id="capture" style={{ flexGrow: 1, marginLeft: 60 }}>
+          <DataGrid
+            sx={{
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "rgba(41,121,255,1)",
+                color: "rgba(255,255,255,1)",
+                fontSize: 16,
+              },
+              "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
+              {
+                outline: "none",
+              },
+            }}
+            rowHeight={100}
+            rows={rows}
+            columns={columns}
+            autoPageSize
+            // autoPageSize
+            rowsPerPage={10}
+            disableDensitySelector
+            onCellClick={currentlySelected}
+            getRowId={(row) => row.id}
+            components={{
+              Pagination: CustomPagination,
+              Toolbar: CustomToolBar,
+            }}
+            hideFooterRowCount={true}
+            hideFooterSelectedRowCount={true}
+            componentsProps={{
+              toolbar: {
+                showQuickFilter: true,
+                quickFilterProps: { debounceMs: 500 },
+              },
+            }}
+          />
         </div>
       </div>
+    </div>
   );
 }
