@@ -17,6 +17,7 @@ export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState();
     const [currentUserInfo, setCurrentUserInfo] = useState();
     const [currentRole, setCurrentRole] = useState();
+    const [currentPage, setCurrentPage] = useState("Home");
     const [emailMessage, setEmailMessage] = useState();
     const [passExpirationDays, setPassExpirationDays] = useState();
     const [loading, setLoading] = useState(true);
@@ -163,6 +164,7 @@ export function AuthProvider({ children }) {
         filterProvidedEntry,
         ledgerRows,
         pendingEntries,
+        currentPage,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -188,6 +190,7 @@ export function AuthProvider({ children }) {
         setFilterProvidedEntry,
         setLedgerRows,
         setPendingEntries,
+        setCurrentPage,
     }
 
     return (

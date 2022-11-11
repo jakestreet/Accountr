@@ -857,12 +857,14 @@ export default function RequestsPage() {
   return (
     <div
       style={{
-        height: "85vh",
+        height: "89vh",
         marginLeft: "auto",
         marginRight: "auto",
         minWidth: 900,
         maxWidth: 1800,
-        padding: 25,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 10
       }}
     >
       <Modal
@@ -1096,6 +1098,7 @@ export default function RequestsPage() {
               },
             }}
             rowHeight={160}
+            autoPageSize
             rows={rows}
             columns={columns}
             // autoPageSize

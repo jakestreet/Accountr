@@ -10,6 +10,7 @@ import EventLogPage from "./pages/EventLogPage";
 import AccountsPage from "./pages/AccountsPage";
 import JournalPage from "./pages/JournalPage";
 import PrivateRoutes from "./components/PrivateRoutes";
+import NewNavBar from "./components/NewNavBar";
 
 import "./App.css";
 import "mdb-react-ui-kit/dist/css/mdb.min.css";
@@ -21,20 +22,20 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <NavBar />
+        <NewNavBar />
         <Routes>
           <Route index element={<LoginPage />} />
           <Route path="forgot-password" element={<ForgotPage />} />
           <Route path="reset-password" element={<ResetPage />} />
           <Route path="answer-questions" element={<QuestionsPage />} />
           <Route element={<PrivateRoutes />}>
-            <Route path="home" element={<HomePage />} />
-            <Route path="edit-profile" element={<EditProfilePage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="event-log" element={<EventLogPage />} />
-            <Route path="accounts" element={<AccountsPage />} />
-            <Route path="journal" element={<JournalPage />} />
+            <Route path="home" element={<div style={{marginLeft: 24}}><HomePage /></div>} />
+            <Route path="edit-profile" element={<div style={{marginLeft: 24}}><EditProfilePage /></div>} />
+            <Route path="profile" element={<div style={{marginLeft: 24}}><ProfilePage  /></div>} />
+            <Route path="users" element={<div style={{marginLeft: 55}}><UsersPage /></div>} />
+            <Route path="event-log" element={<div style={{marginLeft: 55}}><EventLogPage /></div>} />
+            <Route path="accounts" element={<div style={{marginLeft: 55}}><AccountsPage /></div>} />
+            <Route path="journal" element={<div style={{marginLeft: 24}}><JournalPage /></div>} />
           </Route>
         </Routes>
       </BrowserRouter>

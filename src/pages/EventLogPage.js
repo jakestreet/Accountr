@@ -184,12 +184,14 @@ export default function EventLogPage() {
   return (
     <div
       style={{
-        height: "85vh",
+        height: "89vh",
         marginLeft: "auto",
         marginRight: "auto",
         minWidth: 900,
         maxWidth: 1800,
-        padding: 25,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 10
       }}
     >
       <Modal
@@ -204,20 +206,30 @@ export default function EventLogPage() {
             direction="row"
             alignItems="center"
             justifyContent="space-evenly"
-            spacing={2}
+            spacing={1}
           >
+            <h4 className="mb-4">Before Image</h4>
             {imageBefore && imageAfter ? (
-              <div>
-                <h1 className="mb-4">Before Image</h1>
-                <img src={imageBefore} height="500" />
+              <div className="mb-5">
+                <img src={imageBefore} height="400" />
               </div>
             ) : (
               <CircularProgress />
             )}
+
+          </Grid>
+          <Grid
+            container
+            direction="row"
+            alignItems="center"
+            justifyContent="space-evenly"
+            spacing={1}
+          >
+            <h4 className="mb-4">After Image</h4>
             {imageBefore && imageAfter ? (
               <div>
-                <h1 className="mb-4">After Image</h1>
-                <img src={imageAfter} height="500" />
+
+                <img src={imageAfter} height="400" />
               </div>
             ) : null}
           </Grid>
