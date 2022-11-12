@@ -517,7 +517,7 @@ export default function MiniDrawer() {
                             ['Home', 'Accounts', 'Journal'].map((text, index) => (
                                 <ListItem key={text} disablePadding sx={{ display: 'block' }}>
                                     <StyledTooltip
-                                        title={text}
+                                        title={open ? null : text}
                                         placement='right'
                                         arrow
                                     >
