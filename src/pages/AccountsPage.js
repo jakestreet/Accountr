@@ -20,7 +20,6 @@ import {
   MDBCardText,
   MDBRow,
   MDBCol,
-  MDBTooltip,
   MDBTextArea,
 } from "mdb-react-ui-kit";
 import { Alert, CircularProgress } from "@mui/material";
@@ -61,7 +60,7 @@ export default function AccountsPage() {
 
   const [rows, setRows] = useState([]);
 
-  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows } = useAuth();
+  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows, StyledTooltip } = useAuth();
 
   const [emailTo, setEmailTo] = useState("");
   const subjectInputRef = useRef();
@@ -276,6 +275,7 @@ export default function AccountsPage() {
           dateCreated: doc.data().timeStamp.toDate(),
           debit: doc.data().debit,
           credit: doc.data().credit,
+          balance: doc.data().balance,
           status: doc.data().status,
           comment: doc.data()?.comment,
           documentName: doc.data()?.documentName,
@@ -287,7 +287,38 @@ export default function AccountsPage() {
     } catch (error) { }
   }
 
-  async function filterEntries(name, balance, entriesToFilter) {
+  async function GetAdjEntries() {
+    try {
+      const entriesRef = collection(db, "adjusting-entries");
+
+      const q = query(entriesRef, orderBy("timeStamp", "asc"));
+
+      const rowArray = [];
+
+      const querySnapshot = await getDocs(q);
+
+
+      querySnapshot.forEach(async (doc) => {
+        rowArray.push({
+          id: doc.id,
+          name: doc.data().account,
+          dateCreated: doc.data().timeStamp.toDate(),
+          debit: doc.data().debit,
+          credit: doc.data().credit,
+          balance: doc.data().balance,
+          status: doc.data().status,
+          comment: doc.data()?.comment,
+          documentName: doc.data()?.documentName,
+          documentUrl: doc.data()?.documentUrl,
+          category: doc.data().category
+        });
+      });
+
+      return rowArray;
+    } catch (error) { }
+  }
+
+  async function filterEntries(name, balance, entriesToFilter, entriesToFilterAdj) {
     let temp = [];
     let currentBalance = balance;
     // eslint-disable-next-line
@@ -295,26 +326,47 @@ export default function AccountsPage() {
       // eslint-disable-next-line
       entry['name'].map((data, index) => {
         if (data['name'] === name) {
-          currentBalance += parseFloat(entry['debit'][index]['amount']);
-          currentBalance -= parseFloat(entry['credit'][index]['amount']);
+          // currentBalance += parseFloat(entry['debit'][index]['amount']);
+          // currentBalance -= parseFloat(entry['credit'][index]['amount']);
           temp.push({
             id: entry['id'],
             date: entry['dateCreated'],
             debit: parseFloat(entry['debit'][index]['amount']),
             credit: parseFloat(entry['credit'][index]['amount']),
-            balance: parseFloat(currentBalance),
+            balance: parseFloat(entry['balance'][index]['amount']),
             description: entry['comment']
           })
 
         }
-        setLedgerRows(temp)
+        
       })
     })
+    await entriesToFilterAdj.map(entry => {
+      // eslint-disable-next-line
+      entry['name'].map((data, index) => {
+        if (data['name'] === name) {
+          // currentBalance += parseFloat(entry['debit'][index]['amount']);
+          // currentBalance -= parseFloat(entry['credit'][index]['amount']);
+          temp.push({
+            id: entry['id'],
+            date: entry['dateCreated'],
+            debit: parseFloat(entry['debit'][index]['amount']),
+            credit: parseFloat(entry['credit'][index]['amount']),
+            balance: parseFloat(entry['balance'][index]['amount']),
+            description: entry['category']
+          })
+
+        }
+        
+      })
+    })
+    setLedgerRows(temp)
   }
 
   async function getLedgerRows(accName, balance) {
     setLedgerRows([]);
     var entriesToFilter = [];
+    var entriesToFilterAdj = [];
     await GetEntries().then((data) => {
       data.forEach((entry) => {
         if (entry['status'] === 'Approved') {
@@ -327,35 +379,43 @@ export default function AccountsPage() {
       },
       )
     })
-    await filterEntries(accName, balance, entriesToFilter)
+    await GetAdjEntries().then((data) => {
+      data.forEach((entry) => {
+        if (entry['status'] === 'Approved') {
+          entry['name'].forEach((name) => {
+            if (name['name'] === accName) {
+              entriesToFilterAdj.push(entry);
+            }
+          })
+        }
+      },
+      )
+    })
+    await filterEntries(accName, balance, entriesToFilter, entriesToFilterAdj)
   }
 
   function CustomToolBar() {
     return (
       <GridToolbarContainer>
-        <MDBTooltip tag="a" placement="auto" title="Refresh user list">
+        <Button
+          color="primary"
+          onClick={() => {
+            GetRequests();
+          }}
+          startIcon={<RefreshIcon />}
+        >
+          Refresh
+        </Button>
+        {currentRole === "Admin" ? (
           <Button
             color="primary"
             onClick={() => {
-              GetRequests();
+              handleOpenNewAccount();
             }}
-            startIcon={<RefreshIcon />}
+            startIcon={<AddIcon />}
           >
-            Refresh
+            Create New Account
           </Button>
-        </MDBTooltip>
-        {currentRole === "Admin" ? (
-          <MDBTooltip tag="a" placement="auto" title="Create a new user">
-            <Button
-              color="primary"
-              onClick={() => {
-                handleOpenNewAccount();
-              }}
-              startIcon={<AddIcon />}
-            >
-              Create New Account
-            </Button>
-          </MDBTooltip>
         ) : null}
         <Button onClick={() => {
           EmailOnClick();
@@ -460,6 +520,7 @@ export default function AccountsPage() {
           dateAdded: serverStamp.now(),
           description: description,
           initialBal: initialBal,
+          balance: initialBal,
           name: accountName,
           normalSide: normalSide,
           order: order,
@@ -516,6 +577,7 @@ export default function AccountsPage() {
           dateAdded: doc.data().dateAdded.toDate(),
           description: doc.data().description,
           initialBal: doc.data().initialBal,
+          balance: doc.data().balance,
           name: doc.data().name,
           normalSide: doc.data().normalSide,
           order: doc.data().order,
@@ -760,6 +822,20 @@ export default function AccountsPage() {
             <hr />
             <MDBRow>
               <MDBCol sm="4">
+                <MDBCardText className="ms-4">Current Balance:</MDBCardText>
+              </MDBCol>
+              <MDBCol sm="8">
+                <MDBCardText className="text-end me-4 text-muted">
+                  {selectedAcc.balance?.toLocaleString("en-us", {
+                    style: "currency",
+                    currency: "USD",
+                  })}
+                </MDBCardText>
+              </MDBCol>
+            </MDBRow>
+            <hr />
+            <MDBRow>
+              <MDBCol sm="4">
                 <MDBCardText className="ms-4">Order:</MDBCardText>
               </MDBCol>
               <MDBCol sm="8">
@@ -908,8 +984,8 @@ export default function AccountsPage() {
       flex: 1,
     },
     {
-      field: "initialBal",
-      headerName: "Initial Balance",
+      field: "balance",
+      headerName: "Balance",
       flex: 1,
       valueFormatter: (params) =>
         params?.value.toLocaleString("en-us", {
@@ -930,7 +1006,11 @@ export default function AccountsPage() {
       renderCell: (cellValues) => {
         return currentRole === "Admin" ? (
           <div className="d-flex gap-2">
-            <MDBTooltip tag="a" placement="auto" title="View this account">
+            <StyledTooltip
+              title="View this account"
+              placement='top'
+              arrow
+            >
               <MDBBtn
                 onClick={async () => {
                   handleOpenViewAcc();
@@ -941,8 +1021,12 @@ export default function AccountsPage() {
               >
                 View
               </MDBBtn>
-            </MDBTooltip>
-            <MDBTooltip tag="a" placement="auto" title="Edit this account">
+            </StyledTooltip>
+            <StyledTooltip
+              title="Edit this account"
+              placement='top'
+              arrow
+            >
               <MDBBtn
                 onClick={() => {
                   handleOpenEditAcc();
@@ -952,10 +1036,14 @@ export default function AccountsPage() {
               >
                 Edit
               </MDBBtn>
-            </MDBTooltip>
+            </StyledTooltip>
 
             {cellValues.row.initialBal === 0 ? (
-              <MDBTooltip tag="a" placement="auto" title="Remove this account">
+              <StyledTooltip
+                title="Remove this account"
+                placement='top'
+                arrow
+              >
                 <MDBBtn
                   onClick={() => {
                     handleOpenRemoveConfirmation();
@@ -965,12 +1053,16 @@ export default function AccountsPage() {
                 >
                   Remove
                 </MDBBtn>
-              </MDBTooltip>
+              </StyledTooltip>
             ) : null}
           </div>
         ) : (
           <div>
-            <MDBTooltip tag="a" placement="auto" title="View this account">
+            <StyledTooltip
+              title="View this account"
+              placement='right'
+              arrow
+            >
               <MDBBtn
                 onClick={async () => {
                   handleOpenViewAcc();
@@ -981,7 +1073,7 @@ export default function AccountsPage() {
               >
                 View
               </MDBBtn>
-            </MDBTooltip>
+            </StyledTooltip>
           </div>
         );
       },
@@ -999,12 +1091,14 @@ export default function AccountsPage() {
   return (
     <div
       style={{
-        height: "85vh",
+        height: "89vh",
         marginLeft: "auto",
         marginRight: "auto",
         minWidth: 900,
-        maxWidth: 1800,
-        padding: 25,
+        maxWidth: 1900,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 10
       }}
     >
       <Modal
@@ -1036,7 +1130,11 @@ export default function AccountsPage() {
             rows={10}
             inputRef={bodyInputRef}
           ></MDBTextArea>
-          <MDBTooltip tag="a" placement="auto" title="Finish sending email">
+          <StyledTooltip
+            title="Finish sending email"
+            placement='top'
+            arrow
+          >
             <MDBBtn
               onClick={SendEmailOnClick}
               className="d-md-flex m-auto mt-4"
@@ -1044,8 +1142,12 @@ export default function AccountsPage() {
             >
               Send Email
             </MDBBtn>
-          </MDBTooltip>
-          <MDBTooltip tag="a" placement="auto" title="Cancel sending email">
+          </StyledTooltip>
+          <StyledTooltip
+            title="Cancel sending email"
+            placement='bottom'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 handleCloseSendEmail();
@@ -1055,7 +1157,7 @@ export default function AccountsPage() {
             >
               Close
             </MDBBtn>
-          </MDBTooltip>
+          </StyledTooltip>
         </Box>
       </Modal>
       <Modal
@@ -1159,25 +1261,37 @@ export default function AccountsPage() {
           {loading ? (
             <CircularProgress className="d-md-flex mb-2 m-auto" />
           ) : (
+            <StyledTooltip
+              title="Create new account"
+              placement='top'
+              arrow
+            >
+              <MDBBtn
+                onClick={() => {
+                  NewAccountForm();
+                }}
+                className="d-md-flex mb-2 m-auto"
+                style={{ background: "rgba(41,121,255,1)" }}
+              >
+                Create Account
+              </MDBBtn>
+            </StyledTooltip>
+          )}
+          <StyledTooltip
+            title="Cancel creating account"
+            placement='bottom'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
-                NewAccountForm();
+                handleCloseNewAccount();
               }}
-              className="d-md-flex mb-2 m-auto"
+              className="d-md-flex m-auto"
               style={{ background: "rgba(41,121,255,1)" }}
             >
-              Create Account
+              Close
             </MDBBtn>
-          )}
-          <MDBBtn
-            onClick={() => {
-              handleCloseNewAccount();
-            }}
-            className="d-md-flex m-auto"
-            style={{ background: "rgba(41,121,255,1)" }}
-          >
-            Close
-          </MDBBtn>
+          </StyledTooltip>
         </Box>
       </Modal>
       <Modal
@@ -1188,20 +1302,38 @@ export default function AccountsPage() {
       >
         <Box sx={styleView}>
           {getViewAccRow()}
-          <MDBBtn onClick={() => { setViewLedger(true); handleCloseViewAcc(); }} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>View Ledger</MDBBtn>
-          <MDBBtn
-            onClick={handleCloseViewAcc}
-            className="d-md-flex m-auto mt-4"
-            style={{ background: "rgba(41,121,255,1)" }}
+          <StyledTooltip
+            title="View ledger for selected account"
+            placement='top'
+            arrow
           >
-            Close
-          </MDBBtn>
+            <MDBBtn onClick={() => { setViewLedger(true); handleCloseViewAcc(); }} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>View Ledger</MDBBtn>
+          </StyledTooltip>
+          <StyledTooltip
+            title="Close account view"
+            placement='bottom'
+            arrow
+          >
+            <MDBBtn
+              onClick={handleCloseViewAcc}
+              className="d-md-flex m-auto mt-4"
+              style={{ background: "rgba(41,121,255,1)" }}
+            >
+              Close
+            </MDBBtn>
+          </StyledTooltip>
         </Box>
       </Modal>
       <Modal open={openViewLedger} onClose={handleCloseViewLedger} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
         <Box sx={styleViewLedger}>
           <Ledger />
-          <MDBBtn onClick={handleCloseViewLedger} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>Close</MDBBtn>
+          <StyledTooltip
+            title="Close ledger view"
+            placement='bottom'
+            arrow
+          >
+            <MDBBtn onClick={handleCloseViewLedger} className="d-md-flex m-auto mt-4" style={{ background: 'rgba(41,121,255,1)' }}>Close</MDBBtn>
+          </StyledTooltip>
         </Box>
       </Modal>
       <Modal
@@ -1263,7 +1395,7 @@ export default function AccountsPage() {
         </Box>
       </Modal>
       <div style={{ display: "flex", height: "100%" }}>
-        <div id="capture" style={{ flexGrow: 1 }}>
+        <div id="capture" style={{ flexGrow: 1, marginLeft: 60 }}>
           <DataGrid
             sx={{
               "& .MuiDataGrid-columnHeaders": {
@@ -1279,6 +1411,7 @@ export default function AccountsPage() {
             rowHeight={100}
             rows={rows}
             columns={columns}
+            autoPageSize
             // autoPageSize
             rowsPerPage={10}
             disableDensitySelector
@@ -1298,72 +1431,6 @@ export default function AccountsPage() {
             }}
           />
         </div>
-      </div>
-      <div class="fixed-bottom">
-        <MDBTooltip tag="a" placement="auto" title="Help">
-          <button
-            type="button"
-            class="btn btn-primary btn-floating"
-            onClick={() => {
-              handleOpenHelp();
-            }}
-          >
-            ?
-          </button>
-        </MDBTooltip>
-
-        <Modal
-          open={openHelp}
-          onClose={handleOpenHelp}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <div class="card">
-            <div class="card-body">
-              <dl class="row">
-                <dt class="col-sm-3">View accounts:</dt>
-                <dd class="col-sm-9">
-                  All current accounts including, but not limited to, the
-                  account time, account type, initial balance, and date added.
-                </dd>
-                <dt class="col-sm-3">Create account:</dt>
-                <dd class="col-sm-9">
-                  Create a new account by using the Create New Account button
-                  and inputting the required information.
-                </dd>
-                <dt class="col-sm-3">Edit and delete account:</dt>
-                <dd class="col-sm-9">
-                  The Action functionality allows for easy editing and removal
-                  of current accounts.
-                </dd>
-                <dt class="col-sm-3">Sort accounts:</dt>
-                <dd class="col-sm-9">
-                  Accounts can be sorted by sub-categories (account name, date
-                  added, etc) or the entire table can be filtered by specified
-                  values, or by eliminating columns.
-                </dd>
-                <dt class="col-sm-3">Export account information:</dt>
-                <dd class="col-sm-9">
-                  Export information by using the Export functionality, take
-                  note that data can be filtered prior to exporting for a
-                  personalized report.
-                </dd>
-                <dt class="col-sm-3">Tip:</dt>
-                <dd class="col-sm-9">
-                  Make sure to refresh the page, by using the refresh button, to
-                  view the most recent changes.
-                </dd>
-              </dl>
-            </div>
-            <MDBBtn
-              onClick={handleCloseHelp}
-              className="d-md-flex m-auto mt-4"
-              style={{ background: "rgba(41,121,255,1)" }}
-            >
-              Close
-            </MDBBtn>
-          </div>
-        </Modal>
       </div>
     </div>
   );

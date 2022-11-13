@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { storage } from '../components/utils/firebase'
-import { MDBBtn, MDBCardText, MDBCol, MDBInput, MDBRow, MDBTextArea, MDBTooltip } from "mdb-react-ui-kit";
+import { MDBBtn, MDBCardText, MDBCol, MDBInput, MDBRow, MDBTabs, MDBTabsContent, MDBTabsItem, MDBTabsLink, MDBTabsPane, MDBTextArea, MDBTooltip } from "mdb-react-ui-kit";
 import Modal from "@mui/material/Modal";
 import * as React from "react";
 import PropTypes from "prop-types";
@@ -29,15 +29,17 @@ import {
   doc,
   updateDoc,
   orderBy,
+  where,
 } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { app } from "../components/utils/firebase";
 import { Box, IconButton, Typography } from "@mui/material";
 import { styled } from '@mui/material/styles';
 import { Divider } from '@mui/material';
+import AdjustingJournal from "../components/AdjustingJournal";
 
 export default function JournalPage() {
-  const { currentRole, filterProvidedEntry, uploadEntryDoc, setPendingEntries } = useAuth();
+  const { currentRole, filterProvidedEntry, filterProvidedAdjEntry, uploadEntryDoc, setPendingEntries, setWidth, width, StyledTooltip } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -56,6 +58,15 @@ export default function JournalPage() {
   const [openReject, setOpenReject] = useState(false);
   const [loadingUpload, setLoadingUpload] = useState(false);
   const [docFile, setDocFile] = useState(null);
+  const [justifyActive, setJustifyActive] = useState(filterProvidedAdjEntry !== "" ? 'tab2' : 'tab1');
+  const ref = useRef();
+  const handleJustifyClick = (value) => {
+    if (value === justifyActive) {
+      return;
+    }
+
+    setJustifyActive(value);
+  };
   async function handleUpload(id) {
     // eslint-disable-next-line
     const upload = await uploadEntryDoc(docFile, id, docFile.name, setLoadingUpload)
@@ -67,7 +78,7 @@ export default function JournalPage() {
       setDocFile(e.target.files[0])
     }
   }
-  
+
   const [balanceError, setBalanceError] = useState(false)
 
   const handleOpenView = (rowData) => {
@@ -187,22 +198,16 @@ export default function JournalPage() {
 
     return (
       <GridToolbarContainer>
-        <MDBTooltip tag="a" placement="auto" title="Refresh for new journal entries">
-          <Button color="primary" startIcon={<Refresh />} onClick={() => {
-            setLoading(true);
-            GetAccounts();
-            GetEntries().then(setLoading(false));
-          }}>
-            Refresh
-          </Button>
-        </MDBTooltip>
-
-        <MDBTooltip tag="a" placement="auto" title="Create a new journal entry">
-          <Button color="primary" startIcon={<Add />} onClick={handleClick}>
-            Add Journal Entry
-          </Button>
-        </MDBTooltip>
-
+        <Button color="primary" startIcon={<Refresh />} onClick={() => {
+          setLoading(true);
+          GetAccounts();
+          GetEntries().then(setLoading(false));
+        }}>
+          Refresh
+        </Button>
+        <Button color="primary" startIcon={<Add />} onClick={handleClick}>
+          Add Journal Entry
+        </Button>
         <GridToolbarFilterButton />
         <GridToolbarQuickFilter className="ms-auto" />
       </GridToolbarContainer>
@@ -229,7 +234,7 @@ export default function JournalPage() {
     var creditTotal = 0;
     debitField.forEach(element => debitTotal += parseFloat(element.amount.toString().replaceAll(',', '')))
     creditField.forEach(element => creditTotal += parseFloat(element.amount.toString().replaceAll(',', '')))
-    if(debitTotal === creditTotal) {
+    if (debitTotal === creditTotal) {
       setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
     }
     else {
@@ -237,13 +242,32 @@ export default function JournalPage() {
       storeEntryError(id, "The debit and credit totals must be equal.", debitTotal, creditTotal);
       setBalanceError(true);
     }
-      
+
   };
 
 
-  const handleApproveClick = (id, status, comment) => async () => {
+  const handleApproveClick = (id, status, comment, rowData) => async () => {
+    var balances = [];
+    for (let index = 0; index < rowData.name.length; index++) {
+      var initialBal;
+      var balanceAtApproval;
+      const accountsRef = collection(db, "accounts");
+      const q = query(accountsRef, where("name", "==", rowData.name[index].name));
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        initialBal = doc.data().balance;
+        balanceAtApproval = initialBal + rowData.debit[index].amount;
+        balanceAtApproval -= rowData.credit[index].amount;
+
+        updateDoc(doc.ref, {
+          "balance": balanceAtApproval
+        })
+      });
+      balances.push({ "amount": balanceAtApproval })
+    }
     // eslint-disable-next-line no-unused-vars
-    const update = await updateStatus(id, status, comment).then(
+    const update = await updateStatus(id, status, comment, balances).then(
       GetEntries().then(setLoading(false))
     );
     setOpenReject(false);
@@ -327,7 +351,7 @@ export default function JournalPage() {
               <Item style={{ height: 64 }}>{<div style={{ marginTop: 15 }}>{params.row?.dateCreated?.toDateString()}</div>}</Item>
               {RenderAddRows(numberOfRows,
                 <div>
-                  <Divider flexItem variant='fullWidth' width={225} />
+                  <Divider flexItem variant='fullWidth' width={width / 6 - 3} />
                   <Item style={{ height: 64 }}>&nbsp;&nbsp;</Item>
                 </div>
               )}
@@ -345,7 +369,7 @@ export default function JournalPage() {
             params.row.name.map((debit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {index === 0 ? <p>{params.row.dateCreated.toDateString()}</p> : <p>&nbsp;&nbsp;</p>}
                   </div>
@@ -383,7 +407,7 @@ export default function JournalPage() {
               choiceAccounts.map((account, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                     <Item height={64} >
                       <div style={{ marginTop: 5 }}>
                         <Select
@@ -418,7 +442,7 @@ export default function JournalPage() {
               params?.value.split(",").map((account, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                     <div className="mt-4" style={{ textAlign: "center" }}>
                       <p>{account}</p>
                     </div>
@@ -456,7 +480,7 @@ export default function JournalPage() {
               {debitField.map((debit, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                     <Item style={{ height: 64 }}>
                       <CurrencyTextField
                         placeholder="0.00"
@@ -493,7 +517,7 @@ export default function JournalPage() {
             params?.value.split(",").map((debit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 6 - 3} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {parseFloat(debit) !== 0 ? <p>{parseFloat(debit).toLocaleString("en-us", {
                       style: "currency",
@@ -533,7 +557,7 @@ export default function JournalPage() {
               {creditField.map((credit, index) => {
                 return (
                   <div key={index}>
-                    {index > 0 ? <Divider flexItem variant='fullWidth' width={225} /> : null}
+                    {index > 0 ? <Divider flexItem variant='fullWidth' width={width / 6 - 4} /> : null}
                     <Item style={{ height: 64 }}>
                       <CurrencyTextField
                         placeholder="0.00"
@@ -546,12 +570,12 @@ export default function JournalPage() {
                         outputFormat="number"
                         decimalCharacter="."
                         digitGroupSeparator=","
-                        error={balanceError && credit.amount !== 0  ? true : false}
+                        error={balanceError && credit.amount !== 0 ? true : false}
                         onChange={(event) => {
                           handleCreditChange(event, index);
                         }}
                         size="small"
-                        style={{ width: 150, marginTop: 5}}
+                        style={{ width: 150, marginTop: 5 }}
                       />
                     </Item>
                   </div>
@@ -571,7 +595,7 @@ export default function JournalPage() {
             params?.value.split(",").map((credit, index) => {
               return (
                 <div key={index}>
-                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={225} /> : null}
+                  {index > 0 ? <Divider className="mt-1" flexItem variant='fullWidth' width={width / 6 - 4} /> : null}
                   <div className="mt-4" style={{ textAlign: "center" }}>
                     {parseFloat(credit) !== 0 ? <p>({parseFloat(credit).toLocaleString("en-us", {
                       style: "currency",
@@ -644,7 +668,11 @@ export default function JournalPage() {
 
         if (isInEditMode) {
           return [
-            <MDBTooltip tag="a" placement="auto" title="Add a row">
+            <StyledTooltip
+              title="Add a row"
+              placement='top'
+              arrow
+            >
               <GridActionsCellItem
                 icon={<Add />}
                 label="Add"
@@ -655,23 +683,26 @@ export default function JournalPage() {
                 }}
                 color="inherit"
               />
-            </MDBTooltip>,
-            numberOfRows > 1 ? 
-            <MDBTooltip tag="a" placement="auto" title="Remove row">
-              <GridActionsCellItem
-              icon={<Remove />}
-              label="Remove"
-              className="textPrimary"
-              onClick={() => {
-                setNumberOfRows(numberOfRows - 1);
-                removeFields();
-              }}
-              color="inherit"
-            />
-            </MDBTooltip>
-             : 
-             <MDBTooltip tag="a" placement="auto" title="Remove row">
+            </StyledTooltip>,
+            numberOfRows > 1 ?
+              <StyledTooltip
+                title="Remove a row"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
+                  icon={<Remove />}
+                  label="Remove"
+                  className="textPrimary"
+                  onClick={() => {
+                    setNumberOfRows(numberOfRows - 1);
+                    removeFields();
+                  }}
+                  color="inherit"
+                />
+              </StyledTooltip>
+              :
+              <GridActionsCellItem
                 icon={<Remove />}
                 label="Remove"
                 className="textPrimary"
@@ -680,17 +711,24 @@ export default function JournalPage() {
                   setNumberOfRows(numberOfRows - 1);
                 }}
                 color="inherit"
-                />
-             </MDBTooltip>,
-             <MDBTooltip tag="a" placement="auto" title="Save journal entry">
-                <GridActionsCellItem
+              />,
+            <StyledTooltip
+              title="Save"
+              placement='top'
+              arrow
+            >
+              <GridActionsCellItem
                 icon={<Save />}
                 label="Save"
                 color="inherit"
                 onClick={handleSaveClick(id, debit, credit)}
-                />
-             </MDBTooltip>,
-             <MDBTooltip tag="a" placement="auto" title="Cancel journal entry">
+              />
+            </StyledTooltip>,
+            <StyledTooltip
+              title="Cancel"
+              placement='top'
+              arrow
+            >
               <GridActionsCellItem
                 icon={<Cancel />}
                 label="Cancel"
@@ -698,21 +736,29 @@ export default function JournalPage() {
                 onClick={handleCancelClick(id)}
                 color="inherit"
               />
-             </MDBTooltip>,
+            </StyledTooltip>,
           ];
         } else if (currentRole === "Manager" && status === "Pending") {
           return [
             <div style={{ textAlign: "center" }}>
-              <MDBTooltip tag="a" placement="auto" title="Approve journal entry">
+              <StyledTooltip
+                title="Approve journal entry"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
                   icon={<Check />}
                   label="Approve"
                   className="textPrimary"
-                  onClick={handleApproveClick(id, "Approved", "")}
+                  onClick={handleApproveClick(id, "Approved", "", params.row)}
                   color="success"
                 />
-              </MDBTooltip>
-              <MDBTooltip tag="a" placement="auto" title="Reject journal entry">
+              </StyledTooltip>
+              <StyledTooltip
+                title="Reject journal entry"
+                placement='top'
+                arrow
+              >
                 <GridActionsCellItem
                   icon={<Block />}
                   label="Reject"
@@ -720,14 +766,20 @@ export default function JournalPage() {
                   onClick={() => { handleOpenReject(params.row) }}
                   color="error"
                 />
-              </MDBTooltip>
-              
+              </StyledTooltip>
+
             </div>,
           ];
         }
         return [
           <div style={{ textAlign: "center" }}>
-            <MDBBtn onClick={() => { handleOpenView(params.row) }}>View</MDBBtn>
+            <StyledTooltip
+              title="View journal entry"
+              placement='left'
+              arrow
+            >
+              <MDBBtn onClick={() => { handleOpenView(params.row) }}>View</MDBBtn>
+            </StyledTooltip>
           </div>,
         ];
       },
@@ -774,7 +826,7 @@ export default function JournalPage() {
       var checkPending = false;
 
       querySnapshot.forEach(async (doc) => {
-        if(doc.data().status === "Pending")
+        if (doc.data().status === "Pending")
           checkPending = true;
         rowArray.push({
           id: doc.id,
@@ -789,7 +841,7 @@ export default function JournalPage() {
         });
       });
 
-      if(checkPending === false)
+      if (checkPending === false)
         setPendingEntries(false);
       else
         setPendingEntries(true);
@@ -826,7 +878,7 @@ export default function JournalPage() {
     });
   }
 
-  async function updateStatus(id, status, comment) {
+  async function updateStatus(id, status, comment, balanceAtApproval) {
     console.log("status: " + status);
     console.log("id: " + id);
     const entryRef = doc(db, "entries", id);
@@ -834,6 +886,7 @@ export default function JournalPage() {
     const update = await updateDoc(entryRef, {
       status: status,
       comment: comment,
+      balance: balanceAtApproval,
     });
     console.log("Added status of entry with ID: ", id);
   }
@@ -854,186 +907,224 @@ export default function JournalPage() {
     console.log("Added document name to entry with ID: ", id);
   }
 
+  const useContainerDimensions = myRef => {
+    const getDimensions = () => ({
+      width: myRef.current.offsetWidth,
+      height: myRef.current.offsetHeight
+    })
+
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+
+    useEffect(() => {
+      const handleResize = () => {
+        setDimensions(getDimensions())
+      }
+
+      if (myRef.current) {
+        setDimensions(getDimensions())
+      }
+
+      window.addEventListener("resize", handleResize)
+
+      return () => {
+        window.removeEventListener("resize", handleResize)
+      }
+    }, [myRef])
+
+    if (dimensions.width !== 0)
+      setWidth(dimensions.width);
+
+    return dimensions;
+  };
+
+  const { widthCalc } = useContainerDimensions(ref)
+
   useEffect(() => {
     console.log(filterProvidedEntry);
     GetAccounts();
     GetEntries().then(setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  
+
+
 
   return (
-    <div
-      style={{
-        height: "85vh",
-        marginLeft: "auto",
-        marginRight: "auto",
-        minWidth: 1400,
-        maxWidth: 1400,
-        padding: 25,
-      }}
-    >
-      <div style={{ display: "flex", height: "100%" }}>
-        <div id="capture" style={{ flexGrow: 1 }}>
-          <DataGrid
-            sx={{
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "rgba(41,121,255,1)",
-                color: "rgba(255,255,255,1)",
-                fontSize: 16,
-              },
-              "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
-              {
-                outline: "none",
-              },
-            }}
-            rows={rows}
-            pagination = {false}
-            getRowHeight={() => 'auto'}
-            columns={columns}
-            editMode="row"
-            loading={loading}
-            rowModesModel={rowModesModel}
-            onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
-            onRowEditStart={handleRowEditStart}
-            onRowEditStop={handleRowEditStop}
-            processRowUpdate={processRowUpdate}
-            initialState={{
-              filter: {
-                filterModel: {
-                  items: [{ columnField: 'id', operatorValue: 'contains', value: filterProvidedEntry }],
-                },
-              },
-            }}
-            // onProcessRowUpdateError={(error) => console.log(error)}
-            components={{
-              Toolbar: EditToolbar,
-            }}
-            componentsProps={{
-              toolbar: { setRows, setRowModesModel },
-            }}
-            experimentalFeatures={{ newEditingApi: true }}
+    <div>
+      <MDBTabs style={{ maxWidth: 600, margin: "auto" }} justify className='d-flex flex-row justify-content-between'>
+        <MDBTabsItem>
 
-          />
-        </div>
-      </div>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Attached File:
-          </Typography>
-          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBInput type="file" onChange={handleUploadChange} />
-            <MDBBtn disabled={loadingUpload || !docFile} onClick={() => { handleUpload(viewData?.id) }}>Upload</MDBBtn>
-          </MDBCol>
-          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBBtn disabled={loadingUpload} className="mt-3" onClick={() => { { handleClose() } }}>Close</MDBBtn> {/* eslint-disable-line */}
-          </MDBCol>
-        </Box>
-      </Modal>
-      <Modal
-        open={openReject}
-        onClose={handleCloseReject}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <MDBTextArea style={{ resize: "none" }} rows={5} value={comment} onChange={(e) => { setComment(e.target.value) }} label="Comment" />
-          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBBtn className="mt-3" onClick={handleApproveClick(viewData?.id, "Rejected", comment)}>Submit</MDBBtn>
-          </MDBCol>
-          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBBtn className="mt-3" onClick={() => { handleCloseReject() }}>Close</MDBBtn>
-          </MDBCol>
-        </Box>
-      </Modal>
-      <Modal
-        open={openView}
-        onClose={handleCloseView}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <MDBRow>
-            <MDBCol sm="4">
-              <MDBCardText className='ms-auto mt-1'>Attached File:</MDBCardText>
-            </MDBCol>
-            <MDBCol sm="8">
-              {
-                viewData?.documentName === undefined ? <MDBCardText className="text-end text-muted mt-1">None</MDBCardText>
-                  :
-                  <MDBCardText className="text-end text-muted">
-                    {viewData?.documentName}
-                    {
-                      <a href={viewData?.documentUrl}>
-                        <IconButton color="primary">
-                          <Download />
-                        </IconButton>
-                      </a>
-                    }
-                  </MDBCardText>
-              }
-            </MDBCol>
-          </MDBRow>
-          {
-            viewData?.status === "Rejected" ?
-              <div>
-                <hr />
-                <MDBRow>
-                  <MDBCol sm="4">
-                    <MDBCardText className='mt-2'>Comment:</MDBCardText>
-                  </MDBCol>
-                  <MDBCol sm="8">
-                    <MDBCardText className="text-end text-muted mt-2">{viewData?.comment}</MDBCardText>
-                  </MDBCol>
-                </MDBRow>
-              </div>
-              : null
-          }
-          <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBBtn className="mt-3" onClick={() => { setOpenView(false) }}>Close</MDBBtn>
-          </MDBCol>
-        </Box>
-      </Modal>
-      <div className="fixed-bottom" style={{ padding: 10 }}>
-        <MDBTooltip tag="a" placement="auto" title="Help">
-          <button
-            type="button"
-            className="btn btn-primary btn-floating"
-            onClick={() => {
-              handleOpenHelp();
-            }}
+          <StyledTooltip
+            title="View journal entries"
+            placement='bottom'
+            arrow
           >
-            ?
-          </button>
-        </MDBTooltip>
+            <MDBTabsLink onClick={() => handleJustifyClick('tab1')} active={justifyActive === 'tab1'}>
+              Journal Entries
+            </MDBTabsLink>
+          </StyledTooltip>
 
-        <Modal
-          open={openHelp}
-          onClose={handleOpenHelp}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <div className="card">
-            <div className="card-body">
-              <dl className="row">
-                <dd className="col-sm-9">No Content</dd>
-              </dl>
+        </MDBTabsItem>
+        <MDBTabsItem>
+          <StyledTooltip
+            title="View adjusting journal entries"
+            placement='bottom'
+            arrow
+          >
+            <MDBTabsLink onClick={() => handleJustifyClick('tab2')} active={justifyActive === 'tab2'}>
+              Adjusting Journal Entries
+            </MDBTabsLink>
+          </StyledTooltip>
+
+        </MDBTabsItem>
+      </MDBTabs>
+      <MDBTabsContent>
+
+        <MDBTabsPane show={justifyActive === 'tab1'}
+          style={{
+            height: "85vh",
+            marginLeft: "auto",
+            marginRight: "auto",
+            minWidth: 1000,
+            maxWidth: 1900,
+            paddingLeft: 25,
+            paddingRight: 25,
+            paddingTop: 10
+          }}>
+          <div style={{ display: "flex", height: "100%" }}>
+            <div id="capture" style={{ flexGrow: 1, marginLeft: 60 }} ref={ref}>
+              <DataGrid
+                sx={{
+
+                  "& .MuiDataGrid-columnHeaders": {
+                    backgroundColor: "rgba(41,121,255,1)",
+                    color: "rgba(255,255,255,1)",
+                    fontSize: 16,
+                  },
+                  "&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus, &.MuiDataGrid-root .MuiDataGrid-cell:focus":
+                  {
+                    outline: "none",
+                  },
+                }}
+                rows={rows}
+                pagination={false}
+                getRowHeight={() => 'auto'}
+                columns={columns}
+                editMode="row"
+                loading={loading}
+                rowModesModel={rowModesModel}
+                onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
+                onRowEditStart={handleRowEditStart}
+                onRowEditStop={handleRowEditStop}
+                processRowUpdate={processRowUpdate}
+                initialState={{
+                  filter: {
+                    filterModel: {
+                      items: [{ columnField: 'id', operatorValue: 'contains', value: filterProvidedEntry }],
+                    },
+                  },
+                }}
+                // onProcessRowUpdateError={(error) => console.log(error)}
+                components={{
+                  Toolbar: EditToolbar,
+                }}
+                componentsProps={{
+                  toolbar: { setRows, setRowModesModel },
+                }}
+                experimentalFeatures={{ newEditingApi: true }}
+
+              />
             </div>
-            <MDBBtn
-              onClick={handleCloseHelp}
-              className="d-md-flex m-auto mt-4"
-              style={{ background: "rgba(41,121,255,1)" }}
-            >
-              Close
-            </MDBBtn>
           </div>
-        </Modal>
-      </div>
+          <Modal
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <Typography id="modal-modal-title" variant="h6" component="h2">
+                Attached File:
+              </Typography>
+              <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+                <MDBInput type="file" onChange={handleUploadChange} />
+                <MDBBtn disabled={loadingUpload || !docFile} onClick={() => { handleUpload(viewData?.id) }}>Upload</MDBBtn>
+              </MDBCol>
+              <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+                <MDBBtn disabled={loadingUpload} className="mt-3" onClick={() => { { handleClose() } }}>Close</MDBBtn> {/* eslint-disable-line */}
+              </MDBCol>
+            </Box>
+          </Modal>
+          <Modal
+            open={openReject}
+            onClose={handleCloseReject}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <MDBTextArea style={{ resize: "none" }} rows={5} value={comment} onChange={(e) => { setComment(e.target.value) }} label="Comment" />
+              <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+                <MDBBtn className="mt-3" onClick={handleApproveClick(viewData?.id, "Rejected", comment)}>Submit</MDBBtn>
+              </MDBCol>
+              <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+                <MDBBtn className="mt-3" onClick={() => { handleCloseReject() }}>Close</MDBBtn>
+              </MDBCol>
+            </Box>
+          </Modal>
+          <Modal
+            open={openView}
+            onClose={handleCloseView}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <MDBRow>
+                <MDBCol sm="4">
+                  <MDBCardText className='ms-auto mt-1'>Attached File:</MDBCardText>
+                </MDBCol>
+                <MDBCol sm="8">
+                  {
+                    viewData?.documentName === undefined ? <MDBCardText className="text-end text-muted mt-1">None</MDBCardText>
+                      :
+                      <MDBCardText className="text-end text-muted">
+                        {viewData?.documentName}
+                        {
+                          <a href={viewData?.documentUrl}>
+                            <IconButton color="primary">
+                              <Download />
+                            </IconButton>
+                          </a>
+                        }
+                      </MDBCardText>
+                  }
+                </MDBCol>
+              </MDBRow>
+              {
+                viewData?.status === "Rejected" ?
+                  <div>
+                    <hr />
+                    <MDBRow>
+                      <MDBCol sm="4">
+                        <MDBCardText className='mt-2'>Comment:</MDBCardText>
+                      </MDBCol>
+                      <MDBCol sm="8">
+                        <MDBCardText className="text-end text-muted mt-2">{viewData?.comment}</MDBCardText>
+                      </MDBCol>
+                    </MDBRow>
+                  </div>
+                  : null
+              }
+              <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
+                <MDBBtn className="mt-3" onClick={() => { setOpenView(false) }}>Close</MDBBtn>
+              </MDBCol>
+            </Box>
+          </Modal>
+        </MDBTabsPane>
+      </MDBTabsContent>
+      <MDBTabsContent>
+        <MDBTabsPane show={justifyActive === 'tab2'} >
+          <AdjustingJournal />
+        </MDBTabsPane>
+      </MDBTabsContent>
+
     </div>
   );
 }

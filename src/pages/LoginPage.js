@@ -16,7 +16,6 @@ import {
   MDBTabsPane,
   MDBBtn,
   MDBInput,
-  MDBTooltip
 }
   from 'mdb-react-ui-kit';
 import { Alert } from '@mui/material';
@@ -48,7 +47,7 @@ export default function LoginPage() {
   const [justifyActive, setJustifyActive] = useState('tab1');
   const [open, setOpen] = useState(true);
   const db = getFirestore(app);
-  const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays, currentRole, setPendingEntries } = useAuth();
+  const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays, currentRole, setPendingEntries, StyledTooltip } = useAuth();
   const [password, setPassword] = useState("")
   const [passwordAgain, setPasswordAgain] = useState("")
   const [validPass, setValidPass] = useState("invalid")
@@ -192,8 +191,17 @@ export default function LoginPage() {
 
       const querySnapshot = await getDocs(q);
 
-      console.log(querySnapshot.docs.length)
-      if(querySnapshot.docs.length > 0) {
+      if (querySnapshot.docs.length > 0) {
+        setPendingEntries(true);
+      }
+
+      const adjEntriesRef = collection(db, "adjusting-entries");
+
+      const qAdj = query(adjEntriesRef, where("status", "==", "Pending"));
+
+      const querySnapshotAdj = await getDocs(qAdj);
+
+      if (querySnapshotAdj.docs.length > 0) {
         setPendingEntries(true);
       }
     } catch (error) { }
@@ -237,7 +245,7 @@ export default function LoginPage() {
               console.log(auth.currentUser.displayName);
             }
             const getInfo = await GetRole();
-            if(currentRole === "Manager") {
+            if (currentRole === "Manager") {
               console.log("manager")
               const pending = await GetPendingEntries();
             }
@@ -363,19 +371,27 @@ export default function LoginPage() {
 
         <MDBTabs pills justify className='mb-3 d-flex flex-row justify-content-between'>
           <MDBTabsItem>
-            <MDBTooltip tag='a' placement="auto" title="Login to a previous account">
+            <StyledTooltip
+              title="Login to an account"
+              placement='top'
+              arrow
+            >
               <MDBTabsLink onClick={() => handleJustifyClick('tab1')} active={justifyActive === 'tab1'}>
                 Login
               </MDBTabsLink>
-            </MDBTooltip>
+            </StyledTooltip>
 
           </MDBTabsItem>
           <MDBTabsItem>
-            <MDBTooltip tag='a' placement="auto" title="Create an account">
+            <StyledTooltip
+              title="Create an account"
+              placement='top'
+              arrow
+            >
               <MDBTabsLink onClick={() => handleJustifyClick('tab2')} active={justifyActive === 'tab2'}>
                 Register
               </MDBTabsLink>
-            </MDBTooltip>
+            </StyledTooltip>
 
           </MDBTabsItem>
         </MDBTabs>
@@ -409,14 +425,22 @@ export default function LoginPage() {
               }}
             />
             {/* <MDBInput wrapperClass='mb-4' label='Password' id='loginPassword' type='password' inputRef={loginPasswdInputRef}/> */}
-            <MDBTooltip tag='a' placement="auto" title="Follow link to reset password">
+            <StyledTooltip
+              title="Navigate to forgot password page"
+              placement='right'
+              arrow
+            >
               <a onClick={ResetNav} href="!#" >Forgot password?</a>
-            </MDBTooltip>
+            </StyledTooltip>
 
             <div className="d-flex justify-content-between mx-4 mb-4"></div>
-            <MDBTooltip tag='a' placement="auto" title="Finish sign in process">
+            <StyledTooltip
+              title="Sign into your account"
+              placement='top'
+              arrow
+            >
               <MDBBtn onClick={LoginForm} className="mb-4 w-100">Sign in</MDBBtn>
-            </MDBTooltip>
+            </StyledTooltip>
 
 
 
@@ -460,9 +484,13 @@ export default function LoginPage() {
             <MDBInput wrapperClass='mb-4' label='Last Name' id='regLast' type='text' inputRef={lNameInputRef} />
             <MDBInput wrapperClass='mb-4' label='Address' id='regAddress' type='text' inputRef={addressInputRef} />
             <MDBInput wrapperClass='mb-4' label='Date of Birth' id='regDoB' type='date' inputRef={dobInputRef} />
-            {/* <MDBTooltip tag='a' placement="auto" title="Finish sign up process"> */}
-            <MDBBtn onClick={SignUpForm} className="mb-4 w-100">Sign up</MDBBtn>
-            {/* </MDBTooltip> */}
+            <StyledTooltip
+              title="Create your account"
+              placement='bottom'
+              arrow
+            >
+              <MDBBtn onClick={SignUpForm} className="mb-4 w-100">Sign up</MDBBtn>
+            </StyledTooltip>
 
 
           </MDBTabsPane>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MDBBtn, MDBTooltip } from "mdb-react-ui-kit";
+import { MDBBtn } from "mdb-react-ui-kit";
 import Pagination from "@mui/material/Pagination";
 import Box from "@mui/material/Box";
 import Modal from "@mui/material/Modal";
@@ -22,9 +22,11 @@ import { getDownloadURL, ref } from "firebase/storage";
 import { CircularProgress, Grid } from "@mui/material";
 import Button from "@mui/material/Button";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function EventLogPage() {
   const db = getFirestore(app);
+  const { StyledTooltip } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -57,17 +59,15 @@ export default function EventLogPage() {
   function CustomToolBar() {
     return (
       <GridToolbarContainer>
-        <MDBTooltip tag="a" placement="auto" title="Refresh Event Log">
-          <Button
-            color="primary"
-            onClick={() => {
-              GetEvents();
-            }}
-            startIcon={<RefreshIcon />}
-          >
-            Refresh
-          </Button>
-        </MDBTooltip>
+        <Button
+          color="primary"
+          onClick={() => {
+            GetEvents();
+          }}
+          startIcon={<RefreshIcon />}
+        >
+          Refresh
+        </Button>
         <GridToolbarColumnsButton />
         <GridToolbarFilterButton />
         <GridToolbarExport />
@@ -154,7 +154,11 @@ export default function EventLogPage() {
       renderCell: (cellValues) => {
         return (
           <div>
-            <MDBTooltip tag="a" placement="auto" title="View recent changes">
+            <StyledTooltip
+              title="View Recent Changes"
+              placement='left'
+              arrow
+            >
               <MDBBtn
                 onClick={() => {
                   handleOpenImages(cellValues.row.id);
@@ -164,7 +168,7 @@ export default function EventLogPage() {
               >
                 View Images
               </MDBBtn>
-            </MDBTooltip>
+            </StyledTooltip>
           </div>
         );
       },
@@ -184,12 +188,14 @@ export default function EventLogPage() {
   return (
     <div
       style={{
-        height: "85vh",
+        height: "89vh",
         marginLeft: "auto",
         marginRight: "auto",
         minWidth: 900,
-        maxWidth: 1800,
-        padding: 25,
+        maxWidth: 1900,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 10
       }}
     >
       <Modal
@@ -204,20 +210,30 @@ export default function EventLogPage() {
             direction="row"
             alignItems="center"
             justifyContent="space-evenly"
-            spacing={2}
+            spacing={1}
           >
+            <h4 className="mb-4">Before Image</h4>
             {imageBefore && imageAfter ? (
-              <div>
-                <h1 className="mb-4">Before Image</h1>
-                <img src={imageBefore} height="500" />
+              <div className="mb-5">
+                <img src={imageBefore} height="400" />
               </div>
             ) : (
               <CircularProgress />
             )}
+
+          </Grid>
+          <Grid
+            container
+            direction="row"
+            alignItems="center"
+            justifyContent="space-evenly"
+            spacing={1}
+          >
+            <h4 className="mb-4">After Image</h4>
             {imageBefore && imageAfter ? (
               <div>
-                <h1 className="mb-4">After Image</h1>
-                <img src={imageAfter} height="500" />
+
+                <img src={imageAfter} height="400" />
               </div>
             ) : null}
           </Grid>
@@ -234,7 +250,7 @@ export default function EventLogPage() {
         </Box>
       </Modal>
       <div style={{ display: "flex", height: "100%" }}>
-        <div id="capture" style={{ flexGrow: 1 }}>
+        <div id="capture" style={{ flexGrow: 1, marginLeft: 60 }}>
           <DataGrid
             sx={{
               "& .MuiDataGrid-columnHeaders": {
@@ -271,60 +287,6 @@ export default function EventLogPage() {
             }}
           />
         </div>
-      </div>
-      <div class="fixed-bottom">
-        <MDBTooltip tag="a" placement="auto" title="Help">
-          <button
-            type="button"
-            class="btn btn-primary btn-floating"
-            onClick={() => {
-              handleOpenHelp();
-            }}
-          >
-            ?
-          </button>
-        </MDBTooltip>
-
-        <Modal
-          open={openHelp}
-          onClose={handleOpenHelp}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <div class="card">
-            <div class="card-body">
-              <dl class="row">
-                <dt class="col-sm-3">View event logs:</dt>
-                <dd class="col-sm-9">
-                  Time stamp, ID, username, and actions are displayed.
-                </dd>
-                <dt class="col-sm-3">Actions:</dt>
-                <dd class="col-sm-9">
-                  The Actions functionality tracks changes by saving before and
-                  after pictures, which allows for a visual display of changes
-                  made.
-                </dd>
-                <dt class="col-sm-3">Sorting event logs:</dt>
-                <dd class="col-sm-9">
-                  Event logs can be sorted by ascending, descending, filtered by
-                  specified values, and by the removal of columns.
-                </dd>
-                <dt class="col-sm-3">Tip:</dt>
-                <dd class="col-sm-9">
-                  Make sure to refresh the page, by using the refresh button, to
-                  view the most recent changes.
-                </dd>
-              </dl>
-            </div>
-            <MDBBtn
-              onClick={handleCloseHelp}
-              className="d-md-flex m-auto mt-4"
-              style={{ background: "rgba(41,121,255,1)" }}
-            >
-              Close
-            </MDBBtn>
-          </div>
-        </Modal>
       </div>
     </div>
   );

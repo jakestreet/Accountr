@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 export default function EditProfilePage() {
 
   const db = getFirestore(app);
-  const { currentUser, upload, currentUserInfo, setCurrentUserInfo } = useAuth();
+  const { currentUser, upload, currentUserInfo, setCurrentUserInfo, StyledTooltip } = useAuth();
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const fNameInputRef = useRef();
@@ -100,17 +100,25 @@ export default function EditProfilePage() {
         </MDBRow>
         <MDBRow className="row d-flex justify-content-center">
           <MDBCol sm="4" className="col d-flex justify-content-center">
-            <MDBTooltip tag='a' placement="auto" title="Finish editing profile">
+            <StyledTooltip
+              title="Finish editing profile"
+              placement='top'
+              arrow
+            >
               <MDBBtn onClick={() => { UpdateInformation() }} className="mt-2 mb-2">Confirm</MDBBtn>
-            </MDBTooltip>
+            </StyledTooltip>
 
           </MDBCol>
         </MDBRow>
         <MDBRow className="row d-flex justify-content-center">
           <MDBCol sm="4" className="col d-flex justify-content-center">
-            <MDBTooltip tag='a' placement="auto" title="Cancel editing profile">
-              <MDBBtn onClick={(e) => { ProfileNavigate(e) }} className="mt-2 mb-4">Return</MDBBtn>
-            </MDBTooltip>
+            <StyledTooltip
+              title="Cancel editing profile"
+              placement='bottom'
+              arrow
+            >
+              <MDBBtn onClick={(e) => { ProfileNavigate(e) }} className="mt-2 mb-4">Cancel</MDBBtn>
+            </StyledTooltip>
 
           </MDBCol>
         </MDBRow>
@@ -155,9 +163,13 @@ export default function EditProfilePage() {
               <MDBRow >
                 <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
                   <MDBInput type="file" onChange={handleChange} />
-                  <MDBTooltip tag='a' placement="auto" title="Upload new profile picture">
+                  <StyledTooltip
+                    title="Upload profile picture"
+                    placement='top'
+                    arrow
+                  >
                     <MDBBtn disabled={loading || !photo} onClick={handleClick}>Upload</MDBBtn>
-                  </MDBTooltip>
+                  </StyledTooltip>
 
                 </MDBCol>
               </MDBRow>

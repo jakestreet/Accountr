@@ -6,6 +6,8 @@ import { collection, getFirestore, addDoc } from 'firebase/firestore';
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
 import html2canvas from 'html2canvas';
+import Tooltip, { tooltipClasses } from '@mui/material/Tooltip';
+import { styled } from '@mui/material/styles';
 
 const AuthContext = React.createContext();
 
@@ -17,6 +19,7 @@ export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState();
     const [currentUserInfo, setCurrentUserInfo] = useState();
     const [currentRole, setCurrentRole] = useState();
+    const [currentPage, setCurrentPage] = useState("Home");
     const [emailMessage, setEmailMessage] = useState();
     const [passExpirationDays, setPassExpirationDays] = useState();
     const [loading, setLoading] = useState(true);
@@ -27,11 +30,25 @@ export function AuthProvider({ children }) {
     const [questionOneAnswer, setQuestionOneAnswer] = useState("");
     const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
     const [filterProvidedEntry, setFilterProvidedEntry] = useState();
+    const [filterProvidedAdjEntry, setFilterProvidedAdjEntry] = useState();
     const [ledgerRows, setLedgerRows] = useState();
+    const [width, setWidth] = useState();
     const [pendingEntries, setPendingEntries] = useState(false);
     const db = getFirestore(app);
     const serverStamp = firebase.firestore.Timestamp
 
+    const ToBeStyledTooltip = ({ className, ...props }) => (
+        <Tooltip {...props} classes={{ tooltip: className }} />
+      );
+      const StyledTooltip = styled(ToBeStyledTooltip)(({ theme }) => ({
+        backgroundColor: 'rgba(41,121,255,1)',
+        boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 6px 20px 0 rgba(0, 0, 0, 0.4);",
+        fontSize: theme.typography.pxToRem(16),
+        color: 'rgba(255, 255, 255, 0.87)',
+        '& .MuiTooltip-arrow': {
+            color: 'rgba(41,121,255,1)',
+          },
+      }));
 
     function signup(email, password) {
         return createUserWithEmailAndPassword(auth, email, password)
@@ -161,8 +178,12 @@ export function AuthProvider({ children }) {
         questionOneAnswer,
         questionTwoAnswer,
         filterProvidedEntry,
+        filterProvidedAdjEntry,
         ledgerRows,
         pendingEntries,
+        currentPage,
+        width,
+        StyledTooltip,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -186,8 +207,11 @@ export function AuthProvider({ children }) {
         setEntryFilter,
         uploadEntryDoc,
         setFilterProvidedEntry,
+        setFilterProvidedAdjEntry,
         setLedgerRows,
         setPendingEntries,
+        setCurrentPage,
+        setWidth,
     }
 
     return (

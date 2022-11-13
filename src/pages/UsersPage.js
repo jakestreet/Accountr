@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { app } from "../components/utils/firebase";
 import {
   collection,
@@ -15,13 +15,11 @@ import bcrypt from "bcryptjs";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  MDBBadge,
   MDBBtn,
   MDBTextArea,
   MDBCardText,
-  MDBTooltip,
 } from "mdb-react-ui-kit";
-import { Alert } from "@mui/material";
+import { Alert, Chip } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Collapse from "@mui/material/Collapse";
 import CloseIcon from "@mui/icons-material/Close";
@@ -31,7 +29,6 @@ import {
   gridPageSelector,
   useGridApiContext,
   useGridSelector,
-  GridToolbar,
   GridToolbarContainer,
   GridToolbarColumnsButton,
   GridToolbarFilterButton,
@@ -43,7 +40,6 @@ import Box from "@mui/material/Box";
 import Modal from "@mui/material/Modal";
 import { MDBInput } from "mdb-react-ui-kit";
 import PasswordChecklist from "react-password-checklist";
-import { minWidth } from "@mui/system";
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -60,6 +56,7 @@ export default function RequestsPage() {
     emailMessage,
     captureEvent,
     storeEvent,
+    StyledTooltip
   } = useAuth();
 
   const [rows, setRows] = useState([]);
@@ -126,28 +123,24 @@ export default function RequestsPage() {
   function CustomToolBar() {
     return (
       <GridToolbarContainer>
-        <MDBTooltip tag="a" placement="auto" title="Refresh user list">
-          <Button
-            color="primary"
-            onClick={() => {
-              GetRequests();
-            }}
-            startIcon={<RefreshIcon />}
-          >
-            Refresh
-          </Button>
-        </MDBTooltip>
-        <MDBTooltip tag="a" placement="auto" title="Create a new user">
-          <Button
-            color="primary"
-            onClick={() => {
-              handleOpenNewUser();
-            }}
-            startIcon={<AddIcon />}
-          >
-            Create New User
-          </Button>
-        </MDBTooltip>
+        <Button
+          color="primary"
+          onClick={() => {
+            GetRequests();
+          }}
+          startIcon={<RefreshIcon />}
+        >
+          Refresh
+        </Button>
+        <Button
+          color="primary"
+          onClick={() => {
+            handleOpenNewUser();
+          }}
+          startIcon={<AddIcon />}
+        >
+          Create New User
+        </Button>
 
         <GridToolbarColumnsButton />
         <GridToolbarFilterButton />
@@ -635,7 +628,11 @@ export default function RequestsPage() {
     if (statusText === "Requested") {
       return (
         <div>
-          <MDBTooltip tag="a" placement="auto" title="approve this user">
+          <StyledTooltip
+            title="Approve this user"
+            placement='left'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 UpdateStatus(username, "Approved");
@@ -652,8 +649,12 @@ export default function RequestsPage() {
             >
               Approve
             </MDBBtn>
-          </MDBTooltip>
-          <MDBTooltip tag="a" placement="auto" title="Reject this user">
+          </StyledTooltip>
+          <StyledTooltip
+            title="Reject this user"
+            placement='left'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 UpdateStatus(username, "Rejected");
@@ -663,13 +664,17 @@ export default function RequestsPage() {
             >
               Reject
             </MDBBtn>
-          </MDBTooltip>
+          </StyledTooltip>
         </div>
       );
     } else if (statusText === "Approved") {
       return (
         <div>
-          <MDBTooltip tag="a" placement="auto" title="Suspend this user">
+          <StyledTooltip
+            title="Suspend this user"
+            placement='left'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 UpdateStatus(username, "Suspended");
@@ -679,9 +684,13 @@ export default function RequestsPage() {
             >
               Suspend
             </MDBBtn>
-          </MDBTooltip>
+          </StyledTooltip>
 
-          <MDBTooltip tag="a" placement="auto" title="Disable this user">
+          <StyledTooltip
+            title="Disable this user"
+            placement='left'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 UpdateStatus(username, "Disabled");
@@ -691,16 +700,16 @@ export default function RequestsPage() {
             >
               Disable
             </MDBBtn>
-          </MDBTooltip>
+          </StyledTooltip>
         </div>
       );
     } else if (statusText === "Suspended") {
       return (
         <div>
-          <MDBTooltip
-            tag="a"
-            placement="auto"
-            title="Resume this user activity"
+          <StyledTooltip
+            title="Resume this user"
+            placement='left'
+            arrow
           >
             <MDBBtn
               onClick={() => {
@@ -711,8 +720,12 @@ export default function RequestsPage() {
             >
               Resume
             </MDBBtn>
-          </MDBTooltip>
-          <MDBTooltip tag="a" placement="auto" title="Disable this user">
+          </StyledTooltip>
+          <StyledTooltip
+            title="Disable this user"
+            placement='left'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 UpdateStatus(username, "Disabled");
@@ -722,16 +735,16 @@ export default function RequestsPage() {
             >
               Disable
             </MDBBtn>
-          </MDBTooltip>
+          </StyledTooltip>
         </div>
       );
     } else if (statusText === "Disabled" || statusText === "Rejected") {
       return (
         <div>
-          <MDBTooltip
-            tag="a"
-            placement="auto"
-            title="Resume this user activity"
+          <StyledTooltip
+            title="Resume this user"
+            placement='left'
+            arrow
           >
             <MDBBtn
               onClick={() => {
@@ -742,7 +755,7 @@ export default function RequestsPage() {
             >
               Resume
             </MDBBtn>
-          </MDBTooltip>
+          </StyledTooltip>
         </div>
       );
     }
@@ -797,11 +810,7 @@ export default function RequestsPage() {
       headerName: "Status",
       renderCell: (cellValues) => {
         return (
-          <h6>
-            <MDBBadge color={cellValues.row.statusPill} pill>
-              {cellValues.row.statusText}
-            </MDBBadge>
-          </h6>
+          <Chip disabled label={cellValues.row.statusText} color={cellValues.row.statusPill} />
         );
       },
     },
@@ -826,7 +835,11 @@ export default function RequestsPage() {
               cellValues.row.statusText,
               cellValues.row.email
             )}
-            <MDBTooltip tag="a" placement="auto" title="Email this user">
+            <StyledTooltip
+              title="Email this user"
+              placement='left'
+              arrow
+            >
               <MDBBtn
                 onClick={() => {
                   EmailOnClick(cellValues.row.email);
@@ -836,8 +849,12 @@ export default function RequestsPage() {
               >
                 Email
               </MDBBtn>
-            </MDBTooltip>
-            <MDBTooltip tag="a" placement="auto" title="Edit user information">
+            </StyledTooltip>
+            <StyledTooltip
+              title="Edit user's information"
+              placement='left'
+              arrow
+            >
               <MDBBtn
                 onClick={() => {
                   editInfoOnClick();
@@ -847,7 +864,7 @@ export default function RequestsPage() {
               >
                 Edit Info
               </MDBBtn>
-            </MDBTooltip>
+            </StyledTooltip>
           </div>
         );
       },
@@ -857,12 +874,14 @@ export default function RequestsPage() {
   return (
     <div
       style={{
-        height: "85vh",
+        height: "89vh",
         marginLeft: "auto",
         marginRight: "auto",
         minWidth: 900,
-        maxWidth: 1800,
-        padding: 25,
+        maxWidth: 1900,
+        paddingLeft: 25,
+        paddingRight: 25,
+        paddingTop: 10
       }}
     >
       <Modal
@@ -944,7 +963,11 @@ export default function RequestsPage() {
             type="date"
             inputRef={dobInputRef}
           />
-          <MDBTooltip tag="a" placement="auto" title="Finish creating user">
+          <StyledTooltip
+            title="Finish creating user"
+            placement='top'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 SignUpForm();
@@ -954,8 +977,12 @@ export default function RequestsPage() {
             >
               Create User
             </MDBBtn>
-          </MDBTooltip>
-          <MDBTooltip tag="a" placement="auto" title="Cancel creating user">
+          </StyledTooltip>
+          <StyledTooltip
+            title="Cancel creating user"
+            placement='bottom'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 handleCloseNewUser();
@@ -965,7 +992,7 @@ export default function RequestsPage() {
             >
               Close
             </MDBBtn>
-          </MDBTooltip>
+          </StyledTooltip>
         </Box>
       </Modal>
       <Modal
@@ -992,7 +1019,11 @@ export default function RequestsPage() {
             rows={10}
             inputRef={bodyInputRef}
           ></MDBTextArea>
-          <MDBTooltip tag="a" placement="auto" title="Finish sending email">
+          <StyledTooltip
+            title="Finish sending email"
+            placement='left'
+            arrow
+          >
             <MDBBtn
               onClick={SendEmailOnClick}
               className="d-md-flex m-auto mt-4"
@@ -1000,8 +1031,12 @@ export default function RequestsPage() {
             >
               Send Email
             </MDBBtn>
-          </MDBTooltip>
-          <MDBTooltip tag="a" placement="auto" title="Cancel sending email">
+          </StyledTooltip>
+          <StyledTooltip
+            title="Cancel sending email"
+            placement='left'
+            arrow
+          >
             <MDBBtn
               onClick={() => {
                 handleCloseSendEmail();
@@ -1011,7 +1046,7 @@ export default function RequestsPage() {
             >
               Close
             </MDBBtn>
-          </MDBTooltip>
+          </StyledTooltip>
         </Box>
       </Modal>
       <Modal
@@ -1082,7 +1117,7 @@ export default function RequestsPage() {
         </Box>
       </Modal>
       <div style={{ display: "flex", height: "100%" }}>
-        <div id="capture" style={{ flexGrow: 1 }}>
+        <div id="capture" style={{ flexGrow: 1, marginLeft: 60 }}>
           <DataGrid
             sx={{
               "& .MuiDataGrid-columnHeaders": {
@@ -1096,6 +1131,7 @@ export default function RequestsPage() {
               },
             }}
             rowHeight={160}
+            autoPageSize
             rows={rows}
             columns={columns}
             // autoPageSize
@@ -1116,81 +1152,6 @@ export default function RequestsPage() {
             }}
           />
         </div>
-      </div>
-      <div class="fixed-bottom">
-        <MDBTooltip tag="a" placement="auto" title="Help">
-          <button
-            type="button"
-            class="btn btn-primary btn-floating"
-            onClick={() => {
-              handleOpenHelp();
-            }}
-          >
-            ?
-          </button>
-        </MDBTooltip>
-        <Modal
-          open={openHelp}
-          onClose={handleOpenHelp}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <div class="card">
-            <div class="card-body">
-              <dl class="row">
-                <dt class="col-sm-3">View users: </dt>
-                <dd class="col-sm-9">
-                  All users with a description including, but not limited to,
-                  the account time, account type, initial balance, and date
-                  added. The search bar can also be used to quickly find a
-                  specified value.
-                </dd>
-                <dt class="col-sm-3">Create users:</dt>
-                <dd class="col-sm-9">
-                  Create a new user by using the Create New User button and
-                  inputting the required information and credentials.
-                </dd>
-                <dt class="col-sm-3">Managing users:</dt>
-                <dd class="col-sm-9">
-                  The Action functionality allows for easy access to edit,
-                  suspend, disable, email, and edit current users.
-                </dd>
-                <dt class="col-sm-3">Email User:</dt>
-                <dd class="col-sm-9">
-                  The Email functionality allows for emails to be sent to the
-                  specified user. Include information in the subject and body,
-                  and an email will be sent to the user's email address.
-                </dd>
-                <dt class="col-sm-3">Sort accounts:</dt>
-                <dd class="col-sm-9">
-                  Accounts can be sorted by sub-categories (username, email,
-                  role, status, etc) or the entire table can be filtered by
-                  specified values, or by eliminating columns.
-                </dd>
-                <dt class="col-sm-3">Export account information:</dt>
-                <dd class="col-sm-9">
-                  Export information by using the Export functionality. Take
-                  note that data can be filtered prior to exporting for a
-                  personalized report.
-                </dd>
-                <dt class="col-sm-3">Tip:</dt>
-                <dd class="col-sm-9">
-                  Make sure to refresh the page, by using the refresh button, to
-                  view the most recent changes.
-                </dd>
-              </dl>
-            </div>
-            <MDBTooltip tag="a" placement="auto" title="Exit help screen">
-              <MDBBtn
-                onClick={handleCloseHelp}
-                className="d-md-flex m-auto mt-4"
-                style={{ background: "rgba(41,121,255,1)" }}
-              >
-                Close
-              </MDBBtn>
-            </MDBTooltip>
-          </div>
-        </Modal>
       </div>
     </div>
   );
