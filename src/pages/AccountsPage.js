@@ -275,6 +275,7 @@ export default function AccountsPage() {
           dateCreated: doc.data().timeStamp.toDate(),
           debit: doc.data().debit,
           credit: doc.data().credit,
+          balance: doc.data().balance,
           status: doc.data().status,
           comment: doc.data()?.comment,
           documentName: doc.data()?.documentName,
@@ -286,7 +287,38 @@ export default function AccountsPage() {
     } catch (error) { }
   }
 
-  async function filterEntries(name, balance, entriesToFilter) {
+  async function GetAdjEntries() {
+    try {
+      const entriesRef = collection(db, "adjusting-entries");
+
+      const q = query(entriesRef, orderBy("timeStamp", "asc"));
+
+      const rowArray = [];
+
+      const querySnapshot = await getDocs(q);
+
+
+      querySnapshot.forEach(async (doc) => {
+        rowArray.push({
+          id: doc.id,
+          name: doc.data().account,
+          dateCreated: doc.data().timeStamp.toDate(),
+          debit: doc.data().debit,
+          credit: doc.data().credit,
+          balance: doc.data().balance,
+          status: doc.data().status,
+          comment: doc.data()?.comment,
+          documentName: doc.data()?.documentName,
+          documentUrl: doc.data()?.documentUrl,
+          category: doc.data().category
+        });
+      });
+
+      return rowArray;
+    } catch (error) { }
+  }
+
+  async function filterEntries(name, balance, entriesToFilter, entriesToFilterAdj) {
     let temp = [];
     let currentBalance = balance;
     // eslint-disable-next-line
@@ -294,26 +326,47 @@ export default function AccountsPage() {
       // eslint-disable-next-line
       entry['name'].map((data, index) => {
         if (data['name'] === name) {
-          currentBalance += parseFloat(entry['debit'][index]['amount']);
-          currentBalance -= parseFloat(entry['credit'][index]['amount']);
+          // currentBalance += parseFloat(entry['debit'][index]['amount']);
+          // currentBalance -= parseFloat(entry['credit'][index]['amount']);
           temp.push({
             id: entry['id'],
             date: entry['dateCreated'],
             debit: parseFloat(entry['debit'][index]['amount']),
             credit: parseFloat(entry['credit'][index]['amount']),
-            balance: parseFloat(currentBalance),
+            balance: parseFloat(entry['balance'][index]['amount']),
             description: entry['comment']
           })
 
         }
-        setLedgerRows(temp)
+        
       })
     })
+    await entriesToFilterAdj.map(entry => {
+      // eslint-disable-next-line
+      entry['name'].map((data, index) => {
+        if (data['name'] === name) {
+          // currentBalance += parseFloat(entry['debit'][index]['amount']);
+          // currentBalance -= parseFloat(entry['credit'][index]['amount']);
+          temp.push({
+            id: entry['id'],
+            date: entry['dateCreated'],
+            debit: parseFloat(entry['debit'][index]['amount']),
+            credit: parseFloat(entry['credit'][index]['amount']),
+            balance: parseFloat(entry['balance'][index]['amount']),
+            description: entry['category']
+          })
+
+        }
+        
+      })
+    })
+    setLedgerRows(temp)
   }
 
   async function getLedgerRows(accName, balance) {
     setLedgerRows([]);
     var entriesToFilter = [];
+    var entriesToFilterAdj = [];
     await GetEntries().then((data) => {
       data.forEach((entry) => {
         if (entry['status'] === 'Approved') {
@@ -326,7 +379,19 @@ export default function AccountsPage() {
       },
       )
     })
-    await filterEntries(accName, balance, entriesToFilter)
+    await GetAdjEntries().then((data) => {
+      data.forEach((entry) => {
+        if (entry['status'] === 'Approved') {
+          entry['name'].forEach((name) => {
+            if (name['name'] === accName) {
+              entriesToFilterAdj.push(entry);
+            }
+          })
+        }
+      },
+      )
+    })
+    await filterEntries(accName, balance, entriesToFilter, entriesToFilterAdj)
   }
 
   function CustomToolBar() {
@@ -455,6 +520,7 @@ export default function AccountsPage() {
           dateAdded: serverStamp.now(),
           description: description,
           initialBal: initialBal,
+          balance: initialBal,
           name: accountName,
           normalSide: normalSide,
           order: order,
@@ -511,6 +577,7 @@ export default function AccountsPage() {
           dateAdded: doc.data().dateAdded.toDate(),
           description: doc.data().description,
           initialBal: doc.data().initialBal,
+          balance: doc.data().balance,
           name: doc.data().name,
           normalSide: doc.data().normalSide,
           order: doc.data().order,
@@ -755,6 +822,20 @@ export default function AccountsPage() {
             <hr />
             <MDBRow>
               <MDBCol sm="4">
+                <MDBCardText className="ms-4">Current Balance:</MDBCardText>
+              </MDBCol>
+              <MDBCol sm="8">
+                <MDBCardText className="text-end me-4 text-muted">
+                  {selectedAcc.balance?.toLocaleString("en-us", {
+                    style: "currency",
+                    currency: "USD",
+                  })}
+                </MDBCardText>
+              </MDBCol>
+            </MDBRow>
+            <hr />
+            <MDBRow>
+              <MDBCol sm="4">
                 <MDBCardText className="ms-4">Order:</MDBCardText>
               </MDBCol>
               <MDBCol sm="8">
@@ -903,8 +984,8 @@ export default function AccountsPage() {
       flex: 1,
     },
     {
-      field: "initialBal",
-      headerName: "Initial Balance",
+      field: "balance",
+      headerName: "Balance",
       flex: 1,
       valueFormatter: (params) =>
         params?.value.toLocaleString("en-us", {

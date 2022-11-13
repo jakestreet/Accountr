@@ -15,7 +15,7 @@ import { Pagination } from '@mui/material';
 
 export default function Ledger() {
     const navigate = useNavigate();
-    const { setFilterProvidedEntry, ledgerRows  } = useAuth();
+    const { setFilterProvidedEntry, setFilterProvidedAdjEntry, ledgerRows } = useAuth();
 
 
     const columns = [
@@ -68,21 +68,35 @@ export default function Ledger() {
             flex: 1,
             renderCell: (cellValues) => {
                 return (
-                <div className="d-flex gap-2">
-                    <MDBTooltip tag="a" placement="auto" title="View this account">
-                        <MDBBtn
-                            onClick={() => {
-                                setFilterProvidedEntry(cellValues?.row.id)
-                                navigate("/journal")
-                            }}
-                            className="d-md-flex gap-2 mt-2 btn-sm"
-                            style={{ background: "rgba(41,121,255,1)" }}
-                        >
-                            Go to Entry
-                        </MDBBtn>
-                    </MDBTooltip>
-                </div>
-            );}
+                    <div className="d-flex gap-2">
+                        <MDBTooltip tag="a" placement="auto" title="View this account">
+                            {
+                                cellValues.row.description === "" ?
+                                    <MDBBtn
+                                        onClick={() => {
+                                            setFilterProvidedEntry(cellValues?.row.id)
+                                            navigate("/journal")
+                                        }}
+                                        className="d-md-flex gap-2 mt-2 btn-sm"
+                                        style={{ background: "rgba(41,121,255,1)" }}
+                                    >
+                                        Go to Entry
+                                    </MDBBtn> :
+                                    <MDBBtn
+                                        onClick={() => {
+                                            setFilterProvidedAdjEntry(cellValues?.row.id)
+                                            navigate("/journal")
+                                        }}
+                                        className="d-md-flex gap-2 mt-2 btn-sm"
+                                        style={{ background: "rgba(41,121,255,1)" }}
+                                    >
+                                        Go to ADJ Entry
+                                    </MDBBtn>
+                            }
+                        </MDBTooltip>
+                    </div>
+                );
+            }
         }
 
     ];

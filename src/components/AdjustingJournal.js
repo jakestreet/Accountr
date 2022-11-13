@@ -29,6 +29,7 @@ import {
   doc,
   updateDoc,
   orderBy,
+  where,
 } from "firebase/firestore";
 import { getDownloadURL } from "firebase/storage";
 import { app } from "../components/utils/firebase";
@@ -37,7 +38,7 @@ import { styled } from '@mui/material/styles';
 import { Divider } from '@mui/material';
 
 export default function AdjustingJournal() {
-  const { currentRole, filterProvidedEntry, uploadEntryDoc, setPendingEntries, width, setWidth, StyledTooltip } = useAuth();
+  const { currentRole, filterProvidedAdjEntry, uploadEntryDoc, setPendingEntries, width, setWidth, StyledTooltip } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -248,9 +249,28 @@ export default function AdjustingJournal() {
   };
 
 
-  const handleApproveClick = (id, status, comment) => async () => {
+  const handleApproveClick = (id, status, comment, rowData) => async () => {
+    var balances = [];
+    for (let index = 0; index < rowData.name.length; index++) {
+      var initialBal;
+      var balanceAtApproval;
+      const accountsRef = collection(db, "accounts");
+      const q = query(accountsRef, where("name", "==", rowData.name[index].name));
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        initialBal = doc.data().balance;
+        balanceAtApproval = initialBal + rowData.debit[index].amount;
+        balanceAtApproval -= rowData.credit[index].amount;
+
+        updateDoc(doc.ref, {
+          "balance": balanceAtApproval
+        })
+      });
+      balances.push({ "amount": balanceAtApproval })
+    }
     // eslint-disable-next-line no-unused-vars
-    const update = await updateStatus(id, status, comment).then(
+    const update = await updateStatus(id, status, comment, balances).then(
       GetEntries().then(setLoading(false))
     );
     setOpenReject(false);
@@ -768,7 +788,7 @@ export default function AdjustingJournal() {
                   icon={<Check />}
                   label="Approve"
                   className="textPrimary"
-                  onClick={handleApproveClick(id, "Approved", "")}
+                  onClick={handleApproveClick(id, "Approved", "", params.row)}
                   color="success"
                 />
               </StyledTooltip>
@@ -899,7 +919,7 @@ export default function AdjustingJournal() {
     });
   }
 
-  async function updateStatus(id, status, comment) {
+  async function updateStatus(id, status, comment, balanceAtApproval) {
     console.log("status: " + status);
     console.log("id: " + id);
     const entryRef = doc(db, "adjusting-entries", id);
@@ -907,6 +927,7 @@ export default function AdjustingJournal() {
     const update = await updateDoc(entryRef, {
       status: status,
       comment: comment,
+      balance: balanceAtApproval,
     });
     console.log("Added status of entry with ID: ", id);
   }
@@ -960,7 +981,7 @@ export default function AdjustingJournal() {
   const { widthCalc } = useContainerDimensions(ref)
 
   useEffect(() => {
-    console.log(filterProvidedEntry);
+    console.log(filterProvidedAdjEntry);
     GetAccounts();
     GetEntries().then(setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -973,7 +994,7 @@ export default function AdjustingJournal() {
         height: "85vh",
         marginLeft: "auto",
         marginRight: "auto",
-        maxWidth: 900,
+        minWidth: 1000,
         maxWidth: 1900,
         paddingLeft: 25,
         paddingRight: 25,
@@ -1008,7 +1029,7 @@ export default function AdjustingJournal() {
             initialState={{
               filter: {
                 filterModel: {
-                  items: [{ columnField: 'id', operatorValue: 'contains', value: filterProvidedEntry }],
+                  items: [{ columnField: 'id', operatorValue: 'contains', value: filterProvidedAdjEntry }],
                 },
               },
             }}

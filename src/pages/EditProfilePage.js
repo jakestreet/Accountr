@@ -117,7 +117,7 @@ export default function EditProfilePage() {
               placement='bottom'
               arrow
             >
-              <MDBBtn onClick={(e) => { ProfileNavigate(e) }} className="mt-2 mb-4">Return</MDBBtn>
+              <MDBBtn onClick={(e) => { ProfileNavigate(e) }} className="mt-2 mb-4">Cancel</MDBBtn>
             </StyledTooltip>
 
           </MDBCol>

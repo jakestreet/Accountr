@@ -30,6 +30,7 @@ export function AuthProvider({ children }) {
     const [questionOneAnswer, setQuestionOneAnswer] = useState("");
     const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
     const [filterProvidedEntry, setFilterProvidedEntry] = useState();
+    const [filterProvidedAdjEntry, setFilterProvidedAdjEntry] = useState();
     const [ledgerRows, setLedgerRows] = useState();
     const [width, setWidth] = useState();
     const [pendingEntries, setPendingEntries] = useState(false);
@@ -177,6 +178,7 @@ export function AuthProvider({ children }) {
         questionOneAnswer,
         questionTwoAnswer,
         filterProvidedEntry,
+        filterProvidedAdjEntry,
         ledgerRows,
         pendingEntries,
         currentPage,
@@ -205,6 +207,7 @@ export function AuthProvider({ children }) {
         setEntryFilter,
         uploadEntryDoc,
         setFilterProvidedEntry,
+        setFilterProvidedAdjEntry,
         setLedgerRows,
         setPendingEntries,
         setCurrentPage,

@@ -29,6 +29,7 @@ import {
   doc,
   updateDoc,
   orderBy,
+  where,
 } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { app } from "../components/utils/firebase";
@@ -38,7 +39,7 @@ import { Divider } from '@mui/material';
 import AdjustingJournal from "../components/AdjustingJournal";
 
 export default function JournalPage() {
-  const { currentRole, filterProvidedEntry, uploadEntryDoc, setPendingEntries, setWidth, width, StyledTooltip } = useAuth();
+  const { currentRole, filterProvidedEntry, filterProvidedAdjEntry, uploadEntryDoc, setPendingEntries, setWidth, width, StyledTooltip } = useAuth();
   const [openHelp, setOpenHelp] = useState(false);
   const handleOpenHelp = () => setOpenHelp(true);
   const handleCloseHelp = () => setOpenHelp(false);
@@ -57,7 +58,7 @@ export default function JournalPage() {
   const [openReject, setOpenReject] = useState(false);
   const [loadingUpload, setLoadingUpload] = useState(false);
   const [docFile, setDocFile] = useState(null);
-  const [justifyActive, setJustifyActive] = useState('tab1');
+  const [justifyActive, setJustifyActive] = useState(filterProvidedAdjEntry !== "" ? 'tab2' : 'tab1');
   const ref = useRef();
   const handleJustifyClick = (value) => {
     if (value === justifyActive) {
@@ -245,9 +246,28 @@ export default function JournalPage() {
   };
 
 
-  const handleApproveClick = (id, status, comment) => async () => {
+  const handleApproveClick = (id, status, comment, rowData) => async () => {
+    var balances = [];
+    for (let index = 0; index < rowData.name.length; index++) {
+      var initialBal;
+      var balanceAtApproval;
+      const accountsRef = collection(db, "accounts");
+      const q = query(accountsRef, where("name", "==", rowData.name[index].name));
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach(async (doc) => {
+        initialBal = doc.data().balance;
+        balanceAtApproval = initialBal + rowData.debit[index].amount;
+        balanceAtApproval -= rowData.credit[index].amount;
+
+        updateDoc(doc.ref, {
+          "balance": balanceAtApproval
+        })
+      });
+      balances.push({ "amount": balanceAtApproval })
+    }
     // eslint-disable-next-line no-unused-vars
-    const update = await updateStatus(id, status, comment).then(
+    const update = await updateStatus(id, status, comment, balances).then(
       GetEntries().then(setLoading(false))
     );
     setOpenReject(false);
@@ -730,7 +750,7 @@ export default function JournalPage() {
                   icon={<Check />}
                   label="Approve"
                   className="textPrimary"
-                  onClick={handleApproveClick(id, "Approved", "")}
+                  onClick={handleApproveClick(id, "Approved", "", params.row)}
                   color="success"
                 />
               </StyledTooltip>
@@ -858,7 +878,7 @@ export default function JournalPage() {
     });
   }
 
-  async function updateStatus(id, status, comment) {
+  async function updateStatus(id, status, comment, balanceAtApproval) {
     console.log("status: " + status);
     console.log("id: " + id);
     const entryRef = doc(db, "entries", id);
@@ -866,6 +886,7 @@ export default function JournalPage() {
     const update = await updateDoc(entryRef, {
       status: status,
       comment: comment,
+      balance: balanceAtApproval,
     });
     console.log("Added status of entry with ID: ", id);
   }
@@ -910,7 +931,7 @@ export default function JournalPage() {
       }
     }, [myRef])
 
-    if (dimensions.width != 0)
+    if (dimensions.width !== 0)
       setWidth(dimensions.width);
 
     return dimensions;
@@ -962,7 +983,7 @@ export default function JournalPage() {
             height: "85vh",
             marginLeft: "auto",
             marginRight: "auto",
-            maxWidth: 900,
+            minWidth: 1000,
             maxWidth: 1900,
             paddingLeft: 25,
             paddingRight: 25,

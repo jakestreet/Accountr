@@ -191,8 +191,17 @@ export default function LoginPage() {
 
       const querySnapshot = await getDocs(q);
 
-      console.log(querySnapshot.docs.length)
       if (querySnapshot.docs.length > 0) {
+        setPendingEntries(true);
+      }
+
+      const adjEntriesRef = collection(db, "adjusting-entries");
+
+      const qAdj = query(adjEntriesRef, where("status", "==", "Pending"));
+
+      const querySnapshotAdj = await getDocs(qAdj);
+
+      if (querySnapshotAdj.docs.length > 0) {
         setPendingEntries(true);
       }
     } catch (error) { }

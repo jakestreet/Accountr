@@ -114,6 +114,7 @@ export default function MiniDrawer() {
         passExpirationDays,
         pendingEntries,
         setFilterProvidedEntry,
+        setFilterProvidedAdjEntry,
         StyledTooltip
     } = useAuth();
     const navigate = useNavigate();
@@ -316,7 +317,8 @@ export default function MiniDrawer() {
 
     React.useEffect(() => {
         setFilterProvidedEntry();
-    }, [navigate, setFilterProvidedEntry])
+        setFilterProvidedAdjEntry("");
+    }, [navigate, setFilterProvidedEntry, setFilterProvidedAdjEntry])
 
 
     return (
