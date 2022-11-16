@@ -31,7 +31,8 @@ export function AuthProvider({ children }) {
     const [questionTwoAnswer, setQuestionTwoAnswer] = useState("");
     const [filterProvidedEntry, setFilterProvidedEntry] = useState();
     const [filterProvidedAdjEntry, setFilterProvidedAdjEntry] = useState();
-    const [ledgerRows, setLedgerRows] = useState();
+    const [ledgerRows, setLedgerRows] = useState([]);
+    const [ledgerLoading, setLedgerLoading] = useState(false);
     const [width, setWidth] = useState();
     const [pendingEntries, setPendingEntries] = useState(false);
     const db = getFirestore(app);
@@ -184,6 +185,7 @@ export function AuthProvider({ children }) {
         currentPage,
         width,
         StyledTooltip,
+        ledgerLoading,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -212,6 +214,7 @@ export function AuthProvider({ children }) {
         setPendingEntries,
         setCurrentPage,
         setWidth,
+        setLedgerLoading,
     }
 
     return (
