@@ -1073,10 +1073,10 @@ export default function AdjustingJournal() {
         <Box sx={style}>
           <MDBTextArea style={{ resize: "none" }} rows={5} value={comment} onChange={(e) => { setComment(e.target.value) }} label="Comment" />
           <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBBtn className="mt-3" onClick={handleApproveClick(viewData?.id, "Rejected", comment)}>Submit</MDBBtn>
+            <MDBBtn className="mt-3" disabled={comment === "" ? true : false} onClick={handleApproveClick(viewData?.id, "Rejected", comment)}>Reject</MDBBtn>
           </MDBCol>
           <MDBCol className='d-flex align-items-center justify-content-center gap-2 mt-2'>
-            <MDBBtn className="mt-3" onClick={() => { handleCloseReject() }}>Close</MDBBtn>
+            <MDBBtn className="mt-3" onClick={() => { handleCloseReject() }}>Cancel</MDBBtn>
           </MDBCol>
         </Box>
       </Modal>

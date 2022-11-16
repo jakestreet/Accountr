@@ -22,7 +22,7 @@ import {
   MDBCol,
   MDBTextArea,
 } from "mdb-react-ui-kit";
-import { Alert, CircularProgress } from "@mui/material";
+import { Alert, CircularProgress, Link } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Collapse from "@mui/material/Collapse";
 import CloseIcon from "@mui/icons-material/Close";
@@ -60,7 +60,7 @@ export default function AccountsPage() {
 
   const [rows, setRows] = useState([]);
 
-  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows, StyledTooltip } = useAuth();
+  const { currentUser, captureEvent, storeEvent, currentRole, emailMessage, sendEmail, setLedgerRows, setLedgerLoading, StyledTooltip } = useAuth();
 
   const [emailTo, setEmailTo] = useState("");
   const subjectInputRef = useRef();
@@ -199,12 +199,12 @@ export default function AccountsPage() {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 1200,
+    width: 1400,
     bgcolor: 'background.paper',
     border: '5px solid rgba(255,255,255,1)',
     boxShadow: 24,
     p: 4,
-    height: 800,
+    height: 900,
   };
 
   const SendEmailOnClick = (e) => {
@@ -338,7 +338,7 @@ export default function AccountsPage() {
           })
 
         }
-        
+
       })
     })
     await entriesToFilterAdj.map(entry => {
@@ -357,14 +357,16 @@ export default function AccountsPage() {
           })
 
         }
-        
+
       })
     })
     setLedgerRows(temp)
+    setLedgerLoading(false);
   }
 
   async function getLedgerRows(accName, balance) {
     setLedgerRows([]);
+    setLedgerLoading(true);
     var entriesToFilter = [];
     var entriesToFilterAdj = [];
     await GetEntries().then((data) => {
@@ -967,11 +969,37 @@ export default function AccountsPage() {
       field: "accountNumber",
       headerName: "Account Number",
       flex: 1,
+      renderCell: (params) => {
+        return <StyledTooltip
+          title="View ledger"
+          placement='right'
+          arrow
+        >
+          <Link component="button" underline="none"
+            onClick={async () => {
+              await getLedgerRows(params.row.name, params.row.balance).then(setViewLedger(true));
+            }}
+          >{params.row.accountNumber}</Link>
+        </StyledTooltip>
+      }
     },
     {
       field: "name",
       headerName: "Name",
       flex: 1,
+      renderCell: (params) => {
+        return <StyledTooltip
+          title="View ledger"
+          placement='left'
+          arrow
+        >
+          <Link component="button" underline="none"
+            onClick={async () => {
+              await getLedgerRows(params.row.name, params.row.balance).then(setViewLedger(true));
+            }}
+          >{params.row.name}</Link>
+        </StyledTooltip>
+      }
     },
     {
       field: "category",
