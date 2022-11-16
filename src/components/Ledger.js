@@ -15,7 +15,7 @@ import { Pagination } from '@mui/material';
 
 export default function Ledger() {
     const navigate = useNavigate();
-    const { setFilterProvidedEntry, setFilterProvidedAdjEntry, ledgerRows } = useAuth();
+    const { setFilterProvidedEntry, setFilterProvidedAdjEntry, ledgerRows, ledgerLoading } = useAuth();
 
 
     const columns = [
@@ -28,7 +28,7 @@ export default function Ledger() {
             field: "date",
             headerName: "Journal Entry Date",
             flex: 1,
-            valueFormatter: params => params?.value.toLocaleDateString('en-US'),
+            valueFormatter: params => params?.value.toLocaleString('en-US'),
         },
         {
             field: "debit",
@@ -50,7 +50,7 @@ export default function Ledger() {
         },
         {
             field: "balance",
-            headerName: "Balance",
+            headerName: "Balance At Approval",
             flex: 1,
             valueFormatter: params => params?.value.toLocaleString('en-us', {
                 style: 'currency',
@@ -117,7 +117,7 @@ export default function Ledger() {
     }
 
     return (
-        <div style={{ height: 670, marginLeft: "auto", marginRight: "auto", minWidth: 900, maxWidth: 1800, padding: 10 }}>
+        <div style={{ height: 770, marginLeft: "auto", marginRight: "auto", minWidth: 900, maxWidth: 1800, padding: 10 }}>
             <div style={{ display: 'flex', height: '100%' }}>
                 <div id="capture" style={{ flexGrow: 1 }}>
                     <DataGrid
@@ -141,6 +141,7 @@ export default function Ledger() {
                             Pagination: CustomPagination,
                             Toolbar: GridToolbar,
                         }}
+                        loading={ledgerLoading}
                         hideFooterRowCount={true}
                         hideFooterSelectedRowCount={true}
                         componentsProps={{
