@@ -9,6 +9,7 @@ import UsersPage from "./pages/UsersPage";
 import EventLogPage from "./pages/EventLogPage";
 import AccountsPage from "./pages/AccountsPage";
 import JournalPage from "./pages/JournalPage";
+import DocumentsPage from "./pages/DocumentsPage";
 import PrivateRoutes from "./components/PrivateRoutes";
 import NewNavBar from "./components/NewNavBar";
 
@@ -36,6 +37,7 @@ function App() {
             <Route path="event-log" element={<div style={{}}><EventLogPage /></div>} />
             <Route path="accounts" element={<div style={{}}><AccountsPage /></div>} />
             <Route path="journal" element={<div style={{}}><JournalPage /></div>} />
+            <Route path="documents" element={<div style={{}}><DocumentsPage /></div>} />
           </Route>
         </Routes>
       </BrowserRouter>
