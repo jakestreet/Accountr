@@ -121,6 +121,7 @@ export default function JournalPage() {
   const handleAccountChange = (event, index) => {
     let data = [...choiceAccounts];
     data[index][event.target.name] = event.target.value;
+    console.log(data);
     setChoiceAccounts(data);
   }
 
@@ -252,13 +253,20 @@ export default function JournalPage() {
       var initialBal;
       var balanceAtApproval;
       const accountsRef = collection(db, "accounts");
-      const q = query(accountsRef, where("name", "==", rowData.name[index].name));
+      const q = query(accountsRef, where("name", "==", rowData.name[index].name.name));
       const querySnapshot = await getDocs(q);
 
       querySnapshot.forEach(async (doc) => {
         initialBal = doc.data().balance;
-        balanceAtApproval = initialBal + rowData.debit[index].amount;
-        balanceAtApproval -= rowData.credit[index].amount;
+        const category = rowData.name[index].name.category
+        if(category === "Assets" || category === "Expenses") {
+          balanceAtApproval = initialBal + rowData.debit[index].amount;
+          balanceAtApproval -= rowData.credit[index].amount;
+        }
+        else if(category === "Equity" || category === "Liabilities" || category === "Revenue") {
+          balanceAtApproval = initialBal + rowData.credit[index].amount;
+          balanceAtApproval -= rowData.debit[index].amount;
+        }
 
         updateDoc(doc.ref, {
           "balance": balanceAtApproval
@@ -298,6 +306,7 @@ export default function JournalPage() {
     creditField.forEach(function (item, i) { if (item === '') creditField[i] = 0 })
     updatedRow.status = "Pending";
     updatedRow.dateCreated = new Date();
+    console.log(choiceAccounts);
     updatedRow.name = choiceAccounts;
     updatedRow.debit = debitField;
     updatedRow.credit = creditField;
@@ -388,7 +397,7 @@ export default function JournalPage() {
       align: "center",
       valueGetter: (params) => {
         const accountNames = params.row.name;
-        return accountNames?.map((elem) => elem.name).join(",")
+        return accountNames?.map((elem) => elem.name.name).join(",")
       },
       renderCell: (params) => {
         const isInEditMode =
@@ -799,8 +808,12 @@ export default function JournalPage() {
       const querySnapshot = await getDocs(q);
 
       querySnapshot.forEach(async (doc) => {
+        const accountObject = {
+          name: doc.data().name,
+          category: doc.data().category,
+        }
         accountsArray.push(
-          <MenuItem key={doc.data().id} value={doc.data().name}>
+          <MenuItem key={doc.data().id} value={accountObject}>
             {doc.data().name}
           </MenuItem>
         );

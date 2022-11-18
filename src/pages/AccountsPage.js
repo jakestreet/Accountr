@@ -325,7 +325,7 @@ export default function AccountsPage() {
     await entriesToFilter.map(entry => {
       // eslint-disable-next-line
       entry['name'].map((data, index) => {
-        if (data['name'] === name) {
+        if (data['name'].name === name) {
           // currentBalance += parseFloat(entry['debit'][index]['amount']);
           // currentBalance -= parseFloat(entry['credit'][index]['amount']);
           temp.push({
@@ -344,7 +344,7 @@ export default function AccountsPage() {
     await entriesToFilterAdj.map(entry => {
       // eslint-disable-next-line
       entry['name'].map((data, index) => {
-        if (data['name'] === name) {
+        if (data['name'].name === name) {
           // currentBalance += parseFloat(entry['debit'][index]['amount']);
           // currentBalance -= parseFloat(entry['credit'][index]['amount']);
           temp.push({
@@ -370,12 +370,16 @@ export default function AccountsPage() {
     var entriesToFilter = [];
     var entriesToFilterAdj = [];
     await GetEntries().then((data) => {
+      console.log(data)
       data.forEach((entry) => {
         if (entry['status'] === 'Approved') {
           entry['name'].forEach((name) => {
-            if (name['name'] === accName) {
+            console.log(name['name'].name);
+            console.log(accName);
+            if (name['name'].name === accName) {
               entriesToFilter.push(entry);
             }
+            console.log(entriesToFilter);
           })
         }
       },
@@ -385,7 +389,7 @@ export default function AccountsPage() {
       data.forEach((entry) => {
         if (entry['status'] === 'Approved') {
           entry['name'].forEach((name) => {
-            if (name['name'] === accName) {
+            if (name['name'].name === accName) {
               entriesToFilterAdj.push(entry);
             }
           })

@@ -186,6 +186,7 @@ export function AuthProvider({ children }) {
         width,
         StyledTooltip,
         ledgerLoading,
+        db,
         setCurrentRole,
         signup,
         signupAdmin,

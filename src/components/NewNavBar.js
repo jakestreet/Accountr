@@ -19,7 +19,7 @@ import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import { AccountBalance, Home, LibraryBooks, People, SyncProblem, NotificationsNoneOutlined, Notifications, Help } from '@mui/icons-material';
+import { AccountBalance, Home, LibraryBooks, People, SyncProblem, NotificationsNoneOutlined, Notifications, Help, Description } from '@mui/icons-material';
 import Calendar from "react-calendar";
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -179,6 +179,12 @@ export default function MiniDrawer() {
         navigate("/journal");
     };
 
+    const DocumentsNavigate = async (e) => {
+        e.preventDefault();
+        navigate("/documents");
+    };
+
+
     const UsersNavigate = async (e) => {
         e.preventDefault();
         if (currentRole === "Admin") {
@@ -213,6 +219,9 @@ export default function MiniDrawer() {
         }
         else if (location.pathname === "/journal") {
             setCurrentPage("Journal")
+        }
+        else if (location.pathname === "/documents") {
+            setCurrentPage("Documents")
         }
         else if (location.pathname === "/profile") {
             setCurrentPage("Profile")
@@ -294,6 +303,8 @@ export default function MiniDrawer() {
             return currentPage === "Accounts" ? <AccountBalance style={{ color: "rgba(41,121,255,1)" }} /> : <AccountBalance />
         else if (text === "Journal")
             return currentPage === "Journal" ? <LibraryBooks style={{ color: "rgba(41,121,255,1)" }} /> : <LibraryBooks />
+        else if (text === "Documents")
+            return currentPage === "Documents" ? <Description style={{ color: "rgba(41,121,255,1)" }} /> : <Description />
         else
             return <InboxIcon />
     }
@@ -309,6 +320,8 @@ export default function MiniDrawer() {
             AccountsNavigate(e);
         else if (destination === "Journal")
             JournalNavigate(e);
+        else if (destination === "Documents")
+            DocumentsNavigate(e);
     }
 
     React.useEffect(() => {
@@ -444,20 +457,20 @@ export default function MiniDrawer() {
                                 <Typography variant="h7" className="mt-1 me-2">
                                     {currentUser && currentUser.displayName}
                                 </Typography>
-                                    <MDBDropdownToggle
-                                        floating
-                                        className="mx-auto"
-                                        style={{ background: "rgba(255,255,255,1)" }}
-                                    >
-                                        {RenderProfilePicture()}
-                                    </MDBDropdownToggle>
+                                <MDBDropdownToggle
+                                    floating
+                                    className="mx-auto"
+                                    style={{ background: "rgba(255,255,255,1)" }}
+                                >
+                                    {RenderProfilePicture()}
+                                </MDBDropdownToggle>
                                 <MDBDropdownMenu>
-                                        <MDBDropdownItem onClick={ProfileNavigate} link>
-                                            Profile
-                                        </MDBDropdownItem>
-                                        <MDBDropdownItem onClick={LogOut} link>
-                                            Log Out
-                                        </MDBDropdownItem>
+                                    <MDBDropdownItem onClick={ProfileNavigate} link>
+                                        Profile
+                                    </MDBDropdownItem>
+                                    <MDBDropdownItem onClick={LogOut} link>
+                                        Log Out
+                                    </MDBDropdownItem>
                                 </MDBDropdownMenu>
                             </MDBDropdown>
                         </div>
@@ -487,7 +500,7 @@ export default function MiniDrawer() {
                     <Divider />
                     <List style={{ flexGrow: 1 }}>
                         {currentRole === "Admin" ?
-                            ['Home', 'Users', 'Accounts', 'Journal', 'Event Log'].map((text, index) => (
+                            ['Home', 'Users', 'Accounts', 'Journal', 'Documents', 'Event Log'].map((text, index) => (
                                 <ListItem key={text} disablePadding sx={{ display: 'block' }}>
                                     <StyledTooltip
                                         title={open ? null : text}
@@ -516,7 +529,7 @@ export default function MiniDrawer() {
                                     </StyledTooltip>
                                 </ListItem>
                             )) :
-                            ['Home', 'Accounts', 'Journal'].map((text, index) => (
+                            ['Home', 'Accounts', 'Journal', 'Documents'].map((text, index) => (
                                 <ListItem key={text} disablePadding sx={{ display: 'block' }}>
                                     <StyledTooltip
                                         title={open ? null : text}
