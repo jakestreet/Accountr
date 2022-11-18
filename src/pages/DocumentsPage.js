@@ -2,17 +2,14 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { MDBTabs, MDBTabsItem, MDBTabsLink, MDBTabsContent, MDBTabsPane } from "mdb-react-ui-kit";
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Image, Font, PDFViewer } from '@react-pdf/renderer';
+import { Page, Text, Document, StyleSheet, Font, PDFViewer } from '@react-pdf/renderer';
 import { Table, TableHeader, TableBody, TableCell, DataTableCell } from '@david.kucsai/react-pdf-table';
-import ReactPDF from "@react-pdf/renderer";
-import { Button } from "@mui/material";
+import { Button, Card, Divider, TextField } from "@mui/material";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 
 export default function DocumentsPage() {
     const { StyledTooltip, db } = useAuth();
     const [justifyActive, setJustifyActive] = useState('Trial Balance');
-    const [entryArray, setEntryArray] = useState([]);
-    const [accountArray, setAccountArray] = useState([]);
     const [tableArray, setTableArray] = useState([]);
     const [startDate, setStartDate] = useState();
     const [endDate, setEndDate] = useState();
@@ -40,46 +37,38 @@ export default function DocumentsPage() {
     async function GetEntries() {
         const entriesRef = collection(db, "entries");
 
-        const q = query(entriesRef, orderBy("timeStamp", "desc"), where("status", "==", "Approved", where("timeStamp", "<=", endDate)));
+        const q = query(entriesRef, orderBy("timeStamp", "desc"), where("status", "==", "Approved"), where("timeStamp", ">=", startDate), where("timeStamp", "<=", endDate));
 
         const rowArray = [];
 
-        console.log("got entries");
-
         const querySnapshot = await getDocs(q);
 
-        var checkPending = false;
-
         querySnapshot.forEach(async (doc) => {
-            if(doc.data().status === "Approved")
-                rowArray.push({
-                    name: doc.data().account,
-                    balance: doc.data().balance,
-                });
+            rowArray.push({
+                name: doc.data().account,
+                balance: doc.data().balance,
+            });
         });
-
-        console.log(rowArray);
-        setEntryArray(rowArray);
-        GetRequests();
+        return rowArray;
     }
 
-    function filterEntries(accountName) {
+    async function filterEntries(accountName, entries) {
         var balance = 0;
-        entryArray.forEach((element, index) => {
-            if(balance === 0) {
-                if(element.name[index].name === accountName) {
-                    // console.log("THIS ONE" + element.balance[index].amount)
-                    balance = element.balance[index].amount;
-                }  
+        console.log(entries);
+        entries.forEach((element) => {
+            if (balance === 0) {
+                element.name.forEach((elem, index) => {
+                    if (elem.name === accountName) {
+                        balance = element.balance[index].amount;
+                        console.log(balance);
+                    }
+                })
             }
- 
         })
-
         return balance;
-
     }
 
-    async function GetRequests() {
+    async function GetRequests(entries) {
         try {
             const accountsRef = collection(db, "accounts");
 
@@ -90,66 +79,58 @@ export default function DocumentsPage() {
 
             const rowsArray = [];
 
-
             const querySnapshot = await getDocs(q);
 
             querySnapshot.forEach(async (doc) => {
-                const balance = filterEntries(doc.data().name);
-                console.log(balance);
+                const balance = await filterEntries(doc.data().name, entries)
                 rowsArray.push({
                     id: doc.id,
                     name: doc.data().name,
                     normalSide: doc.data().normalSide,
-                    balance: balance,
+                    balance: balance === 0 ? doc.data().balance : balance,
                 });
             });
-
-            // setAccountArray(rowsArray);
-            getTrialBalance(rowsArray);
+            return rowsArray;
         } catch (error) { }
     }
 
     async function getTrialBalance(rowsArray) {
+        const arr = []
         rowsArray.map((account) => {
-            tableArray.push(
+            var debit = "";
+            var credit = "";
+            if (account.normalSide === "Debit")
+                debit = account.balance;
+            else
+                credit = account.balance;
+            arr.push(
                 {
                     accountNumber: account.id,
                     accountName: account.name,
                     type: account.normalSide,
-                    debit: account.balance,
-                    credit: "0.00",
+                    debit: debit,
+                    credit: credit,
                 }
             )
-            // entryArray.map((entry, index) => {
-            //     if(account.name === entry.name[index].name)
-            //     tableArray.push(
-            //         {
-            //             accountNumber: account.id,
-            //             accountName: account.name,
-            //             debit: "0.00",
-            //             credit: "0.00",
-            //         }
-            //     )
-            // })
-
         })
-
-        console.log(tableArray);
-        
+        return arr;
     }
 
-    useEffect(() => {
-        
-    }, [])
-    
+    async function populateTrialBalance() {
+        setTableArray([])
+        const entries = await GetEntries();
+        const accounts = await GetRequests(entries);
+        const trial = await getTrialBalance(accounts)
+        setTableArray(trial);
+    }
 
-    const Quixote = () => (
-        <Document>
+
+    const TrialBalancePDF = () => (
+        <Document title="Trial Balance">
             <Page style={styles.body}>
                 <Text style={styles.header} fixed>
-                    ~ Created with react-pdf ~
+                    Trial Balance
                 </Text>
-                {/* <Table data={[{firstName: "John", lastName: "Smith"}, {firstName: "John", lastName: "Smith"}]}> */}
                 <Table data={tableArray}>
                     <TableHeader>
                         <TableCell>Account #</TableCell>
@@ -160,8 +141,14 @@ export default function DocumentsPage() {
                     <TableBody>
                         <DataTableCell getContent={(r) => r.accountNumber} />
                         <DataTableCell getContent={(r) => r.accountName} />
-                        <DataTableCell getContent={(r) => r.debit} />
-                        <DataTableCell getContent={(r) => r.type} />
+                        <DataTableCell style={{ textAlign: "right" }} getContent={(r) => r.debit === "" ? "" : parseFloat(r.debit).toLocaleString('en-us', {
+                            style: 'currency',
+                            currency: 'USD'
+                        })} />
+                        <DataTableCell style={{ textAlign: "right" }} getContent={(r) => r.credit === "" ? "" : parseFloat(r.credit).toLocaleString('en-us', {
+                            style: 'currency',
+                            currency: 'USD'
+                        })} />
                     </TableBody>
                 </Table>
                 <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
@@ -229,19 +216,39 @@ export default function DocumentsPage() {
             {RenderTabs()}
             <MDBTabsContent>
                 <MDBTabsPane show={justifyActive === 'Trial Balance'}>
-                    <div className="d-flex justify-content-center">
-                        <Button onClick={() => {GetEntries()}}>Get Entries</Button>
-                        <PDFViewer style={{
-                            height: "85vh",
-                            width: "75vw",
-                            paddingLeft: 25,
-                            paddingRight: 25,
-                            paddingTop: 10
-                        }}>
-                            <Quixote />
-                        </PDFViewer>
-                    </div>
+                    {
+                        tableArray.length !== 0 ?
+                            <div className="d-flex justify-content-center">
+                                <Button onClick={() => { setTableArray([]); setStartDate(); setEndDate(); }}>Finish</Button>
+                            </div> :
+                            <div style={{ marginTop: 50 }}>
+                                <Card elevation={5} style={{width:400, margin: "auto"}} >
+                                    <h6 className="d-flex justify-content-center" style={{paddingTop:25}}>Select Date Range</h6>
+                                    <div className="d-flex justify-content-center" style={{paddingBottom:10}}>
+                                        <TextField onChange={(event) => setStartDate(new Date(event.target.value))} style={{ paddingRight: 5 }} size="small" type={"date"} helperText="Start Date"></TextField>
+                                        <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
+                                    </div>
+                                    <div style={{ marginTop: 25, padding:25 }} className="d-flex justify-content-center">
+                                        <Button variant="contained" style={{backgroundColor: "rgba(41,121,255,1)"}} onClick={() => { populateTrialBalance() }}>Generate Trial Balance</Button>
+                                    </div>
+                                </Card>
+                            </div>
+                    }
 
+                    {tableArray.length === 0 ? null :
+                        <div className="d-flex justify-content-center">
+                            <Card elevation={5} >
+                                <PDFViewer style={{
+                                    height: "80vh",
+                                    width: "75vw",
+                                    padding: 10
+                                }}>
+                                    <TrialBalancePDF />
+                                </PDFViewer>
+                            </Card>
+
+                        </div>
+                    }
                 </MDBTabsPane>
             </MDBTabsContent>
             <MDBTabsContent>
