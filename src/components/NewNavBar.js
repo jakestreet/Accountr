@@ -305,8 +305,6 @@ export default function MiniDrawer() {
             return currentPage === "Journal" ? <LibraryBooks style={{ color: "rgba(41,121,255,1)" }} /> : <LibraryBooks />
         else if (text === "Documents")
             return currentPage === "Documents" ? <Description style={{ color: "rgba(41,121,255,1)" }} /> : <Description />
-        else
-            return <InboxIcon />
     }
 
     function NavigatePage(e, destination) {
@@ -322,6 +320,13 @@ export default function MiniDrawer() {
             JournalNavigate(e);
         else if (destination === "Documents")
             DocumentsNavigate(e);
+    }
+
+    function renderEventLog() {
+        if(currentRole === "Manager")
+            return 'Event Log'
+        else
+            return null
     }
 
     React.useEffect(() => {
@@ -529,7 +534,7 @@ export default function MiniDrawer() {
                                     </StyledTooltip>
                                 </ListItem>
                             )) :
-                            ['Home', 'Accounts', 'Journal', 'Documents'].map((text, index) => (
+                            ['Home', 'Accounts', 'Journal', 'Documents', renderEventLog()].map((text, index) => (
                                 <ListItem key={text} disablePadding sx={{ display: 'block' }}>
                                     <StyledTooltip
                                         title={open ? null : text}
