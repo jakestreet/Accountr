@@ -263,6 +263,9 @@ export default function LoginPage() {
             if (currentRole === "Manager") {
               console.log("manager")
               const pending = await GetPendingEntries();
+            } 
+            else if(currentRole === "Admin") {
+              const pending = await GetPendingUsers();
             }
             navigate("/dashboard");
           }
