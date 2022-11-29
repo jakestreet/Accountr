@@ -575,7 +575,9 @@ export default function DocumentsPage() {
                                         <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
                                     </div>
                                     <div style={{ marginTop: 25, padding: 25 }} className="d-flex justify-content-center">
+                                    <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
                                         <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateTrialBalance() }}>Generate Trial Balance</Button>
+                                    </StyledTooltip>
                                     </div>
                                 </Card>
                             </div>
@@ -612,7 +614,9 @@ export default function DocumentsPage() {
                                         <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
                                     </div>
                                     <div style={{ marginTop: 25, padding: 25 }} className="d-flex justify-content-center">
+                                    <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
                                         <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateIncomeStatement() }}>Generate Income Statement</Button>
+                                    </StyledTooltip>
                                     </div>
                                 </Card>
                             </div>
@@ -649,7 +653,9 @@ export default function DocumentsPage() {
                                         <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
                                     </div>
                                     <div style={{ marginTop: 25, padding: 25 }} className="d-flex justify-content-center">
+                                    <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
                                         <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateBalanceSheet() }}>Generate Balance Sheet</Button>
+                                    </StyledTooltip>
                                     </div>
                                 </Card>
                             </div>
@@ -686,7 +692,9 @@ export default function DocumentsPage() {
                                         <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
                                     </div>
                                     <div style={{ marginTop: 25, padding: 25 }} className="d-flex justify-content-center">
+                                    <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
                                         <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateRetainedEarnings() }}>Generate Income Statement</Button>
+                                    </StyledTooltip>
                                     </div>
                                 </Card>
                             </div>

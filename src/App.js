@@ -30,7 +30,7 @@ function App() {
           <Route path="reset-password" element={<ResetPage />} />
           <Route path="answer-questions" element={<QuestionsPage />} />
           <Route element={<PrivateRoutes />}>
-            <Route path="home" element={<div style={{marginLeft: 24}}><HomePage /></div>} />
+            <Route path="dashboard" element={<div style={{marginLeft: 64}}><HomePage /></div>} />
             <Route path="edit-profile" element={<div style={{marginLeft: 24}}><EditProfilePage /></div>} />
             <Route path="profile" element={<div style={{marginLeft: 24}}><ProfilePage  /></div>} />
             <Route path="users" element={<div style={{}}><UsersPage /></div>} />

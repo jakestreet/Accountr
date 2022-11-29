@@ -56,7 +56,8 @@ export default function RequestsPage() {
     emailMessage,
     captureEvent,
     storeEvent,
-    StyledTooltip
+    StyledTooltip,
+    setPendingUsers,
   } = useAuth();
 
   const [rows, setRows] = useState([]);
@@ -508,6 +509,8 @@ export default function RequestsPage() {
             }
           }
         }
+        if (doc.data().status === "Requested")
+          setPendingUsers(true);
       });
 
       const querySnapshot = await getDocs(q);
@@ -774,7 +777,7 @@ export default function RequestsPage() {
   //disable access for users role
   useEffect(() => {
     if (currentRole === "User") {
-      navigate("/home");
+      navigate("/dashboard");
     }
   });
 

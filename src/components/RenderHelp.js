@@ -3,11 +3,17 @@ import { useAuth } from "../contexts/AuthContext";
 export default function RenderHelp() {
     const { currentPage } = useAuth();
 
-    if (currentPage === "Home")
+    if (currentPage === "Dashboard")
         return (
             <div class="card-body">
                 <dl class="row">
-                    <dd class="col-sm-9">Home Page Help</dd>
+                    <dt class="col-sm-3">General Notifications:</dt>
+                    <dd class="col-sm-9">View any pending notifications.</dd>
+                    <dt class="col-sm-3">Financial Ratios:</dt>
+                    <dd class="col-sm-9">
+                        View your company's Financial Ratios. 
+                        Green (good), yellow (borderline or warning range), and red (needs closer look.)
+                    </dd>
                 </dl>
             </div>
         )
@@ -128,7 +134,26 @@ export default function RenderHelp() {
         return (
             <div class="card-body">
                 <dl class="row">
-                    <dd class="col-sm-9">Journal Page Help</dd>
+                    <dt class="col-sm-3">View journal entry:</dt>
+                    <dd class="col-sm-9">
+                        View any attached files.
+                    </dd>
+                    <dt class="col-sm-3">Create journal entry:</dt>
+                    <dd class="col-sm-9">
+                        Create a new journal entry by using the Create New Journal Entry button
+                        and inputting the required information.
+                    </dd>
+                    <dt class="col-sm-3">Sort accounts:</dt>
+                    <dd class="col-sm-9">
+                        Journal entries can be sorted by sub-categories (account name, date
+                        created, etc) or the entire table can be filtered by specified
+                        values, or by eliminating columns.
+                    </dd>
+                    <dt class="col-sm-3">Tip:</dt>
+                    <dd class="col-sm-9">
+                        Make sure to refresh the page, by using the refresh button, to
+                        view the most recent changes.
+                    </dd>
                 </dl>
             </div>
         )
@@ -147,6 +172,20 @@ export default function RenderHelp() {
                 <dl class="row">
                     <dt class="col-sm-3">Edit personal account information:</dt>
                     <dd class="col-sm-9">Profile picture, full name, address, and date of birth can be modified.</dd>
+                </dl>
+            </div>
+        )
+
+    else if (currentPage === "Documents")
+        return (
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Generate Document:</dt>
+                    <dd class="col-sm-9">Generate different printable PDF documents based on a selected date range.</dd>
+                    <dt class="col-sm-3">Select Date Range:</dt>
+                    <dd class="col-sm-9">Select a date range for which you want to view.</dd>
+                    <dt class="col-sm-3">Tip:</dt>
+                    <dd class="col-sm-9">Select a wide date range.</dd>
                 </dl>
             </div>
         )

@@ -35,6 +35,7 @@ export function AuthProvider({ children }) {
     const [ledgerLoading, setLedgerLoading] = useState(false);
     const [width, setWidth] = useState();
     const [pendingEntries, setPendingEntries] = useState(false);
+    const [pendingUsers, setPendingUsers] = useState(false);
     const db = getFirestore(app);
     const serverStamp = firebase.firestore.Timestamp
 
@@ -187,6 +188,7 @@ export function AuthProvider({ children }) {
         StyledTooltip,
         ledgerLoading,
         db,
+        pendingUsers,
         setCurrentRole,
         signup,
         signupAdmin,
@@ -216,6 +218,7 @@ export function AuthProvider({ children }) {
         setCurrentPage,
         setWidth,
         setLedgerLoading,
+        setPendingUsers,
     }
 
     return (

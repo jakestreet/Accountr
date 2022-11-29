@@ -154,9 +154,9 @@ export default function MiniDrawer() {
     const handleDrawerClose = () => {
         setOpen(false);
     };
-    const HomeNavigate = async (e) => {
+    const DashboardNavigate = async (e) => {
         e.preventDefault();
-        navigate("/home");
+        navigate("/dashboard");
     };
 
     const ProfileNavigate = async (e) => {
@@ -208,8 +208,8 @@ export default function MiniDrawer() {
     };
 
     function RenderCurrentPage() {
-        if (location.pathname === "/home") {
-            setCurrentPage("Home")
+        if (location.pathname === "/dashboard") {
+            setCurrentPage("Dashboard")
         }
         else if (location.pathname === "/users") {
             setCurrentPage("Users")
@@ -293,8 +293,8 @@ export default function MiniDrawer() {
     }
 
     function GetIcon(text) {
-        if (text === "Home")
-            return currentPage === "Home" ? <Home style={{ color: "rgba(41,121,255,1)" }} /> : <Home />
+        if (text === "Dashboard")
+            return currentPage === "Dashboard" ? <Home style={{ color: "rgba(41,121,255,1)" }} /> : <Home />
         else if (text === "Users")
             return currentPage === "Users" ? <People style={{ color: "rgba(41,121,255,1)" }} /> : <People />
         else if (text === "Event Log")
@@ -308,8 +308,8 @@ export default function MiniDrawer() {
     }
 
     function NavigatePage(e, destination) {
-        if (destination === "Home")
-            HomeNavigate(e);
+        if (destination === "Dashboard")
+            DashboardNavigate(e);
         else if (destination === "Users")
             UsersNavigate(e);
         else if (destination === "Event Log")
@@ -505,7 +505,7 @@ export default function MiniDrawer() {
                     <Divider />
                     <List style={{ flexGrow: 1 }}>
                         {currentRole === "Admin" ?
-                            ['Home', 'Users', 'Accounts', 'Journal', 'Documents', 'Event Log'].map((text, index) => (
+                            ['Dashboard', 'Users', 'Accounts', 'Journal', 'Documents', 'Event Log'].map((text, index) => (
                                 <ListItem key={text} disablePadding sx={{ display: 'block' }}>
                                     <StyledTooltip
                                         title={open ? null : text}
@@ -534,7 +534,7 @@ export default function MiniDrawer() {
                                     </StyledTooltip>
                                 </ListItem>
                             )) :
-                            ['Home', 'Accounts', 'Journal', 'Documents', renderEventLog()].map((text, index) => (
+                            ['Dashboard', 'Accounts', 'Journal', 'Documents', renderEventLog()].map((text, index) => (
                                 <ListItem key={text} disablePadding sx={{ display: 'block' }}>
                                     <StyledTooltip
                                         title={open ? null : text}

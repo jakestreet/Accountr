@@ -47,7 +47,7 @@ export default function LoginPage() {
   const [justifyActive, setJustifyActive] = useState('tab1');
   const [open, setOpen] = useState(true);
   const db = getFirestore(app);
-  const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays, currentRole, setPendingEntries, StyledTooltip } = useAuth();
+  const { signupAdmin, login, logoutAdmin, currentUser, sendEmail, setCurrentRole, setCurrentUserInfo, setPassExpirationDays, passExpirationDays, currentRole, setPendingEntries, StyledTooltip, setPendingUsers } = useAuth();
   const [password, setPassword] = useState("")
   const [passwordAgain, setPasswordAgain] = useState("")
   const [validPass, setValidPass] = useState("invalid")
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (currentUser !== null) {
-      navigate("/home");
+      navigate("/dashboard");
     }
   })
 
@@ -207,6 +207,21 @@ export default function LoginPage() {
     } catch (error) { }
   }
 
+  async function GetPendingUsers() {
+    try {
+      // setLoading(true);
+      const usersRef = collection(db, "users");
+
+      const q = query(usersRef, where("status", "==", "Requested"));
+
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.docs.length > 0) {
+        setPendingUsers(true);
+      }
+    } catch (error) { }
+  }
+
   function GetPasswordExpiration(passwordExpiration) {
     const MyDate = new Date();
     const currentYear = String(MyDate.getFullYear());
@@ -249,7 +264,7 @@ export default function LoginPage() {
               console.log("manager")
               const pending = await GetPendingEntries();
             }
-            navigate("/home");
+            navigate("/dashboard");
           }
           else if (docSnap.data().status === "Requested") {
             setOpen(true);
