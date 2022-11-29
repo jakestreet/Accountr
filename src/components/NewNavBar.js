@@ -410,7 +410,6 @@ export default function MiniDrawer() {
                             }}
                         >
                             <MDBDropdown style={{ display: "flex", alignItems: "center" }}>
-                                {RenderPasswordExpirationNotif()}
                                 {pendingEntries && currentRole === "Manager" ?
                                     <div style={{ paddingTop: 2 }}>
                                         <StyledTooltip

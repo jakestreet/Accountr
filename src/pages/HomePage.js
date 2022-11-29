@@ -1,4 +1,4 @@
-import { Card, Chip, CircularProgress, Typography } from '@mui/material';
+import { Card, Chip, CircularProgress, Divider, Typography } from '@mui/material';
 import { PieChart } from 'react-minimal-pie-chart';
 import { app } from "../components/utils/firebase";
 import { useState, useEffect, useRef } from "react";
@@ -18,21 +18,59 @@ import { useAuth } from "../contexts/AuthContext";
 import DocumentsPage from './DocumentsPage';
 
 export default function HomePage() {
-    const { db, pendingEntries, passExpirationDays, pendingUsers, currentRole } = useAuth();
+    const { db, pendingEntries, passExpirationDays, pendingUsers, currentRole, setPendingEntries, setPendingUsers } = useAuth();
     const [dataArray, setDataArray] = useState([])
     const [ratioArray, setRatioArray] = useState([])
+    const [requestedUsers, setRequestedUsers] = useState(false);
+
+    async function GetPendingEntries() {
+        try {
+            // setLoading(true);
+            const entriesRef = collection(db, "entries");
+
+            const q = query(entriesRef, where("status", "==", "Pending"));
+
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.docs.length > 0) {
+                setPendingEntries(true);
+            }
+
+            const adjEntriesRef = collection(db, "adjusting-entries");
+
+            const qAdj = query(adjEntriesRef, where("status", "==", "Pending"));
+
+            const querySnapshotAdj = await getDocs(qAdj);
+
+            if (querySnapshotAdj.docs.length > 0) {
+                setPendingEntries(true);
+            }
+        } catch (error) { }
+    }
+
+    async function GetPendingUsers() {
+        try {
+            // setLoading(true);
+            const usersRef = collection(db, "users");
+
+            const q = query(usersRef, where("status", "==", "Requested"));
+
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.docs.length > 0) {
+                setRequestedUsers(true);
+            }
+        } catch (error) { }
+    }
 
     useEffect(() => {
         async function fetchData() {
+            const pendingEntries = await GetPendingEntries();
+            const pendingUsers = await GetPendingUsers();
             const data = await getRatioData();
             setDataArray(data);
         }
         fetchData();
     }, [])
-
-
-    const [selected, setSelected] = useState();
-    const [hovered, setHovered] = useState();
 
     async function getRatioData() {
         try {
@@ -171,7 +209,7 @@ export default function HomePage() {
 
     function createPieChart() {
         console.log(dataArray);
-        console.log("PENDING USERS: " + pendingUsers);
+        console.log("PENDING USER: " + pendingUsers);
         var color;
         return dataArray.map((data) => (
             dataArray != null ? <Card elevation={3} key={data.title}>
@@ -211,7 +249,7 @@ export default function HomePage() {
     }
 
     function getPendingUserNotification() {
-        if (pendingUsers && currentRole === "Admin") {
+        if (requestedUsers && currentRole === "Admin") {
             return (
                 <div>
                     You have pending users.
@@ -220,7 +258,7 @@ export default function HomePage() {
         }
     }
 
-    function getRationNotification(data) {
+    function getRatioNotification(data) {
         var ratio = (data.first.ratio / data.second.ratio).toFixed(2);
         if (ratio >= data.green)
             console.log("")
@@ -228,7 +266,7 @@ export default function HomePage() {
             console.log("warning")
             return (
                 <div>
-                    Warning
+                    Caution: The {data.title} is currently in the caution range.
                 </div>
             )
         }
@@ -236,49 +274,51 @@ export default function HomePage() {
             console.log("red")
             return (
                 <div>
-                    Bad
+                    Warning: The {data.title} needs immediate attention!
                 </div>
             )
         }
     }
 
-    
 
-function getPasswordExpirationNotification() {
-    if (passExpirationDays <= 3) {
-        return (
-            <div>
-                Password Expires in {passExpirationDays} days
-            </div>
-        )
+
+    function getPasswordExpirationNotification() {
+        if (passExpirationDays <= 3) {
+            return (
+                <div>
+                    Password Expires in {passExpirationDays} days
+                </div>
+            )
+        }
     }
-}
 
-function displayRatioNotification() {
-    return dataArray.map((data => (
-        dataArray.length > 0 ? getRationNotification(data) : null
-    )))
-}
+    function displayRatioNotification() {
+        return dataArray.map((data => (
+            dataArray.length > 0 ? getRatioNotification(data) : null
+        )))
+    }
 
-return (
-    <div>
-        <div style={{ marginBottom: 50, marginTop: 25 }}>
-            <Card elevation={5} style={{ padding: 25, maxWidth: 1600, height: 300, margin: "auto", }}>
-                <Typography>General Notifications</Typography>
-                {getPendingJournalEntryNotification()}
-                {getPendingUserNotification()}
-                {displayRatioNotification()}
-                {getPasswordExpirationNotification()}
+    return (
+        <div>
+            <div style={{ marginBottom: 50, marginTop: 25 }}>
+                <Card elevation={5} style={{ padding: 25, maxWidth: 1600, height: 300, margin: "auto", }}>
+                    <Typography variant="h5">Important Messages</Typography>
+                    <Divider />
+                    {getPendingJournalEntryNotification()}
+                    {getPendingUserNotification()}
+                    {displayRatioNotification()}
+                    {getPasswordExpirationNotification()}
+                </Card>
+            </div>
+
+            <Card elevation={5} style={{ padding: 25, maxWidth: 1600, margin: "auto", }}>
+                <Typography variant="h5">Financial Ratios</Typography>
+                <Divider />
+                <div style={{ padding: 25, maxWidth: 1200, margin: "auto", display: "flex", gap: 50 }}>
+                    {createPieChart()}
+                </div>
+
             </Card>
         </div>
-
-        <Card elevation={5} style={{ padding: 25, maxWidth: 1600, margin: "auto", }}>
-            <Typography>Financial Ratios</Typography>
-            <div style={{ padding: 25, maxWidth: 1200, margin: "auto", display: "flex", gap: 50 }}>
-                {createPieChart()}
-            </div>
-
-        </Card>
-    </div>
-)
+    )
 }
