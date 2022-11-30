@@ -31,7 +31,8 @@ import {
   orderBy,
   where,
 } from "firebase/firestore";
-import { getDownloadURL, ref } from "firebase/storage";
+import { getDownloadURL } from "firebase/storage";
+import {ref as firebaseRef} from "firebase/storage";
 import { app } from "../components/utils/firebase";
 import { Box, IconButton, Typography } from "@mui/material";
 import { styled } from '@mui/material/styles';
@@ -906,7 +907,7 @@ export default function JournalPage() {
 
   async function updateJournalDocName(id, name) {
     // eslint-disable-next-line
-    const fileRef = ref(storage, "entry docs/" + "journal-entry-" + id + '/' + name);
+    const fileRef = firebaseRef(storage, "entry docs/" + "journal-entry-" + id + '/' + name);
 
     getDownloadURL(fileRef).then(async (url) => {
       const entryRef = doc(db, "entries", id);

@@ -130,6 +130,31 @@ export function AuthProvider({ children }) {
 
     }
 
+    function sendDocumentEmail(emailTo, subject, body, fromName, documentName, documentUrl) {
+        return window.Email.send({
+            SecureToken: "ce629ac7-e05d-45c6-b41e-943099ad36ef",
+            To: emailTo,
+            From: `${fromName} <teamjest4713@gmail.com>`,
+            Subject: subject,
+            Body: body,
+            Attachments : [
+                {
+                    name : documentName,
+                    path : documentUrl
+                }]
+        }).then(
+            message => {
+                if (message === "OK") {
+                    setEmailMessage("Email Sent!")
+                }
+                else {
+                    setEmailMessage(message);
+                }
+            }
+        );
+
+    }
+
     async function storeEvent(username) {
         const newEventAdded = await addDoc(collection(db, "events"), {
             timeStamp: serverStamp.now(),
@@ -219,6 +244,7 @@ export function AuthProvider({ children }) {
         setWidth,
         setLedgerLoading,
         setPendingUsers,
+        sendDocumentEmail,
     }
 
     return (
