@@ -1,14 +1,25 @@
-import { useEffect, useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { MDBTabs, MDBTabsItem, MDBTabsLink, MDBTabsContent, MDBTabsPane } from "mdb-react-ui-kit";
 import React from 'react';
-import { Page, Text, Document, StyleSheet, Font, PDFViewer } from '@react-pdf/renderer';
+import { Page, Text, Document, StyleSheet, Font, PDFViewer, BlobProvider } from '@react-pdf/renderer';
 import { Table, TableHeader, TableBody, TableCell, DataTableCell } from '@david.kucsai/react-pdf-table';
-import { Button, Card, Divider, TextField } from "@mui/material";
+import { Button, Card, TextField } from "@mui/material";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import { MDBBtn, MDBCol, MDBTextArea } from "mdb-react-ui-kit";
+import Box from "@mui/material/Box";
+import Modal from "@mui/material/Modal";
+import { Alert } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Collapse from "@mui/material/Collapse";
+import CloseIcon from "@mui/icons-material/Close";
+import { MDBInput } from "mdb-react-ui-kit";
+import "firebase/compat/firestore";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 
 export default function DocumentsPage() {
-    const { StyledTooltip, db } = useAuth();
+    const { StyledTooltip, db, sendDocumentEmail, emailMessage, currentUser, currentRole } = useAuth();
     const [justifyActive, setJustifyActive] = useState('Trial Balance');
     const [tableArray, setTableArray] = useState([]);
     const [incomeStateArray, setIncomeStateArray] = useState([]);
@@ -16,12 +27,124 @@ export default function DocumentsPage() {
     const [balanceArray, setBalanceArray] = useState([]);
     const [startDate, setStartDate] = useState();
     const [endDate, setEndDate] = useState();
+    const documentBlob = useRef();
+    const documentName = useRef();
+    const [emailTo, setEmailTo] = useState("");
+    const subjectInputRef = useRef();
+    const bodyInputRef = useRef();
+    const handleOpenSendEmail = () => setOpenSendEmail(true);
+    const [openEmailAlert, setOpenEmailAlert] = useState(false);
+    const [openSendEmail, setOpenSendEmail] = useState(false);
+    const [emails, setEmails] = useState();
+    
+    const handleCloseSendEmail = () => {
+        setOpenSendEmail(false);
+        setOpenEmailAlert(false);
+    };
+    
+    const handleEmailChange = (event) => {
+        setEmailTo(event.target.value);
+    };
+    
+    const SendEmailAlert = (e) => {
+        return (
+            <Collapse in={openEmailAlert}>
+                <Alert
+                    severity="success"
+                    action={
+                        <IconButton
+                            aria-label="close"
+                            color="inherit"
+                            size="small"
+                            onClick={() => {
+                                setOpenEmailAlert(false);
+                            }}
+                        >
+                            <CloseIcon fontSize="inherit" />
+                        </IconButton>
+                    }
+                    sx={{ mb: 2 }}
+                >
+                    {emailMessage}
+                </Alert>
+            </Collapse>
+        );
+    };
+
+    const styleEmail = {
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: 600,
+        bgcolor: "background.paper",
+        border: "5px solid rgba(255,255,255,1)",
+        boxShadow: 24,
+        p: 4,
+    };
+
+    const SendEmailOnClick = async (e) => {
+        e.preventDefault();
+        const subject = subjectInputRef.current.value;
+        const body = bodyInputRef.current.value;
+        const blobBase = await blobToBase64(documentBlob.current);
+        sendDocumentEmail(emailTo, subject, body, currentUser.displayName, documentName.current, blobBase)
+        setOpenEmailAlert(true);
+    };
+
+    async function EmailOnClick() {
+        // eslint-disable-next-line
+        const getEmails = await GetEmails();
+        handleOpenSendEmail();
+    }
+
+    async function GetEmails() {
+        try {
+            const usersRef = collection(db, "users");
+
+            var q;
+            if (currentRole === "Admin")
+                q = query(usersRef, where("role", "!=", "Admin"));
+            else if (currentRole === "User")
+                q = query(usersRef, where("role", "!=", "User"));
+            else
+                q = query(usersRef)
+
+            const emailsArray = [];
+
+            const querySnapshot = await getDocs(q);
+
+            var gotFirst = false;
+
+            querySnapshot.forEach(async (doc) => {
+                if (gotFirst === false) {
+                    setEmailTo(doc.data().email);
+                    gotFirst = true;
+                }
+                emailsArray.push(
+                    <MenuItem key={doc.data().username} value={doc.data().email}>
+                        {doc.data().email + " - " + doc.data().role}
+                    </MenuItem>
+                );
+            });
+
+            setEmails(emailsArray);
+        } catch (error) { }
+    }
 
     const handleJustifyClick = (value) => {
         if (value === justifyActive)
             return;
         setJustifyActive(value);
     };
+
+    function blobToBase64(blob) {
+        return new Promise((resolve, _) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+    }
 
     function RenderTabs() {
         return <MDBTabs style={{ maxWidth: 1000, margin: "auto" }} justify className='d-flex flex-row justify-content-between'>
@@ -169,12 +292,12 @@ export default function DocumentsPage() {
         var liabilitiesBalance = 0;
 
         accounts.forEach((element) => {
-            if(element.category === "Assets" || element.category === "Expenses")
+            if (element.category === "Assets" || element.category === "Expenses")
                 assetsArr.push({
                     name: element.name,
                     balance: element.balance,
                 })
-            else if(element.category === "Liabilities" || element.category === "Revenue")
+            else if (element.category === "Liabilities" || element.category === "Revenue")
                 liabilitiesArr.push({
                     name: element.name,
                     balance: element.balance,
@@ -187,7 +310,7 @@ export default function DocumentsPage() {
         liabilitiesArr.forEach((element) => {
             liabilitiesBalance += element.balance;
         })
-        
+
         balanceArr.push({
             assets: assetsArr,
             liabilities: liabilitiesArr,
@@ -208,9 +331,9 @@ export default function DocumentsPage() {
         var debitBalance = 0;
         var arr = [];
         trial.forEach((element) => {
-            if(element.type === "Debit")
+            if (element.type === "Debit")
                 debitBalance += element.debit;
-            else if(element.type === "Credit")
+            else if (element.type === "Credit")
                 creditBalance += element.credit;
         })
         arr.push({
@@ -233,7 +356,7 @@ export default function DocumentsPage() {
         setIncomeStateArray(incomeState);
 
     }
-    
+
     async function populateBalanceSheet() {
         setBalanceArray([])
         const entries = await GetEntries();
@@ -328,8 +451,8 @@ export default function DocumentsPage() {
                         <TableCell>Balance</TableCell>
                     </TableHeader>
                     <TableBody>
-                        <DataTableCell  getContent={(r) => r.assets.map((element) => (<Text>{element.name}</Text>))} />
-                        <DataTableCell  getContent={(r) => r.assets.map((element) => (<Text>{element.balance.toLocaleString('en-us', {
+                        <DataTableCell getContent={(r) => r.assets.map((element) => (<Text>{element.name}</Text>))} />
+                        <DataTableCell getContent={(r) => r.assets.map((element) => (<Text>{element.balance.toLocaleString('en-us', {
                             style: 'currency',
                             currency: 'USD'
                         })}</Text>))} />
@@ -355,8 +478,8 @@ export default function DocumentsPage() {
                         <TableCell>Balance</TableCell>
                     </TableHeader>
                     <TableBody>
-                        <DataTableCell  getContent={(r) => r.liabilities.map((element) => (<Text>{element.name}</Text>))} />
-                        <DataTableCell  getContent={(r) => r.liabilities.map((element) => (<Text>{element.balance.toLocaleString('en-us', {
+                        <DataTableCell getContent={(r) => r.liabilities.map((element) => (<Text>{element.name}</Text>))} />
+                        <DataTableCell getContent={(r) => r.liabilities.map((element) => (<Text>{element.balance.toLocaleString('en-us', {
                             style: 'currency',
                             currency: 'USD'
                         })}</Text>))} />
@@ -489,7 +612,7 @@ export default function DocumentsPage() {
                     <TableBody>
                         <DataTableCell getContent={(r) => r.revenue.map((element) => (<Text>{element.accountNumber}</Text>))} />
                         <DataTableCell getContent={(r) => r.revenue.map((element) => (<Text>{element.accountName}</Text>))} />
-                        <DataTableCell getContent={(r) => r.revenue.map((element) => (<Text style={{textAlign: "right"}}>{parseFloat(element.balance).toLocaleString('en-us', {
+                        <DataTableCell getContent={(r) => r.revenue.map((element) => (<Text style={{ textAlign: "right" }}>{parseFloat(element.balance).toLocaleString('en-us', {
                             style: 'currency',
                             currency: 'USD'
                         })}</Text>))} />
@@ -500,7 +623,7 @@ export default function DocumentsPage() {
                     <TableHeader>
                         <TableCell>Total</TableCell>
                         <TableCell></TableCell>
-                        <TableCell style={{textAlign: "right"}}>
+                        <TableCell style={{ textAlign: "right" }}>
                             {parseFloat(incomeStateArray[0].revTotal).toLocaleString('en-us', {
                                 style: 'currency',
                                 currency: 'USD'
@@ -520,7 +643,7 @@ export default function DocumentsPage() {
                     <TableBody>
                         <DataTableCell getContent={(r) => r.expenses.map((element) => (<Text>{element.accountNumber}</Text>))} />
                         <DataTableCell getContent={(r) => r.expenses.map((element) => (<Text>{element.accountName}</Text>))} />
-                        <DataTableCell getContent={(r) => r.expenses.map((element) => (<Text style={{textAlign: "right"}}>{parseFloat(element.balance).toLocaleString('en-us', {
+                        <DataTableCell getContent={(r) => r.expenses.map((element) => (<Text style={{ textAlign: "right" }}>{parseFloat(element.balance).toLocaleString('en-us', {
                             style: 'currency',
                             currency: 'USD'
                         })}</Text>))} />
@@ -531,7 +654,7 @@ export default function DocumentsPage() {
                     <TableHeader>
                         <TableCell>Total</TableCell>
                         <TableCell></TableCell>
-                        <TableCell style={{textAlign: "right"}}>{parseFloat(incomeStateArray[0].expTotal).toLocaleString('en-us', {
+                        <TableCell style={{ textAlign: "right" }}>{parseFloat(incomeStateArray[0].expTotal).toLocaleString('en-us', {
                             style: 'currency',
                             currency: 'USD'
                         })}</TableCell>
@@ -544,7 +667,7 @@ export default function DocumentsPage() {
                     <TableHeader>
                         <TableCell>Net Income</TableCell>
                         <TableCell></TableCell>
-                        <TableCell style={{textAlign: "right"}}>{parseFloat(incomeStateArray[0].income).toLocaleString('en-us', {
+                        <TableCell style={{ textAlign: "right" }}>{parseFloat(incomeStateArray[0].income).toLocaleString('en-us', {
                             style: 'currency',
                             currency: 'USD'
                         })}</TableCell>
@@ -566,6 +689,11 @@ export default function DocumentsPage() {
                         tableArray.length !== 0 ?
                             <div className="d-flex justify-content-center">
                                 <Button onClick={() => { setTableArray([]); setStartDate(); setEndDate(); }}>Finish</Button>
+                                <BlobProvider document={<TrialBalancePDF />} fileName="Trial Balance.pdf">
+                                    {({ blob, url, loading, error }) =>
+                                        loading ? <Button disabled>Loading document...</Button> : <Button onClick={() => { documentBlob.current = blob; documentName.current = "Trial Balance.pdf"; EmailOnClick() }}>Email</Button>
+                                    }
+                                </BlobProvider>
                             </div> :
                             <div style={{ marginTop: 50 }}>
                                 <Card elevation={5} style={{ width: 400, margin: "auto" }} >
@@ -575,9 +703,9 @@ export default function DocumentsPage() {
                                         <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
                                     </div>
                                     <div style={{ marginTop: 25, padding: 25 }} className="d-flex justify-content-center">
-                                    <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
-                                        <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateTrialBalance() }}>Generate Trial Balance</Button>
-                                    </StyledTooltip>
+                                        <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
+                                            <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateTrialBalance() }}>Generate Trial Balance</Button>
+                                        </StyledTooltip>
                                     </div>
                                 </Card>
                             </div>
@@ -605,6 +733,11 @@ export default function DocumentsPage() {
                         incomeStateArray.length !== 0 ?
                             <div className="d-flex justify-content-center">
                                 <Button onClick={() => { setIncomeStateArray([]); setStartDate(); setEndDate(); }}>Finish</Button>
+                                <BlobProvider document={<IncomeStatementPDF />} fileName="Income Statement.pdf">
+                                    {({ blob, url, loading, error }) =>
+                                        loading ? <Button disabled>Loading document...</Button> : <Button onClick={() => { documentBlob.current = blob; documentName.current = "Income Statement.pdf"; EmailOnClick() }}>Email</Button>
+                                    }
+                                </BlobProvider>
                             </div> :
                             <div style={{ marginTop: 50 }}>
                                 <Card elevation={5} style={{ width: 400, margin: "auto" }} >
@@ -614,9 +747,9 @@ export default function DocumentsPage() {
                                         <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
                                     </div>
                                     <div style={{ marginTop: 25, padding: 25 }} className="d-flex justify-content-center">
-                                    <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
-                                        <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateIncomeStatement() }}>Generate Income Statement</Button>
-                                    </StyledTooltip>
+                                        <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
+                                            <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateIncomeStatement() }}>Generate Income Statement</Button>
+                                        </StyledTooltip>
                                     </div>
                                 </Card>
                             </div>
@@ -644,6 +777,11 @@ export default function DocumentsPage() {
                         balanceArray.length !== 0 ?
                             <div className="d-flex justify-content-center">
                                 <Button onClick={() => { setBalanceArray([]); setStartDate(); setEndDate(); }}>Finish</Button>
+                                <BlobProvider document={<BalanceSheetPDF />} fileName="Balance Sheet.pdf">
+                                    {({ blob, url, loading, error }) =>
+                                        loading ? <Button disabled>Loading document...</Button> : <Button onClick={() => { documentBlob.current = blob; documentName.current = "Balance Sheet.pdf"; EmailOnClick() }}>Email</Button>
+                                    }
+                                </BlobProvider>
                             </div> :
                             <div style={{ marginTop: 50 }}>
                                 <Card elevation={5} style={{ width: 400, margin: "auto" }} >
@@ -653,9 +791,9 @@ export default function DocumentsPage() {
                                         <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
                                     </div>
                                     <div style={{ marginTop: 25, padding: 25 }} className="d-flex justify-content-center">
-                                    <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
-                                        <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateBalanceSheet() }}>Generate Balance Sheet</Button>
-                                    </StyledTooltip>
+                                        <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
+                                            <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateBalanceSheet() }}>Generate Balance Sheet</Button>
+                                        </StyledTooltip>
                                     </div>
                                 </Card>
                             </div>
@@ -683,6 +821,11 @@ export default function DocumentsPage() {
                         retainedEarningsArray.length !== 0 ?
                             <div className="d-flex justify-content-center">
                                 <Button onClick={() => { setRetainedEarningsArray([]); setStartDate(); setEndDate(); }}>Finish</Button>
+                                <BlobProvider document={<RetainedEarningsPDF />} fileName="Retained Earnings Statement.pdf">
+                                    {({ blob, url, loading, error }) =>
+                                        loading ? <Button disabled>Loading document...</Button> : <Button onClick={() => { documentBlob.current = blob; documentName.current = "Retained Earnings Statement.pdf"; EmailOnClick() }}>Email</Button>
+                                    }
+                                </BlobProvider>
                             </div> :
                             <div style={{ marginTop: 50 }}>
                                 <Card elevation={5} style={{ width: 400, margin: "auto" }} >
@@ -692,9 +835,9 @@ export default function DocumentsPage() {
                                         <TextField onChange={(event) => setEndDate(new Date(event.target.value))} style={{ paddingLeft: 5 }} size="small" type={"date"} helperText="End Date"></TextField>
                                     </div>
                                     <div style={{ marginTop: 25, padding: 25 }} className="d-flex justify-content-center">
-                                    <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
-                                        <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateRetainedEarnings() }}>Generate Income Statement</Button>
-                                    </StyledTooltip>
+                                        <StyledTooltip title={`Generate PDF`} placement='bottom' arrow>
+                                            <Button variant="contained" style={{ backgroundColor: "rgba(41,121,255,1)" }} onClick={() => { populateRetainedEarnings() }}>Generate Income Statement</Button>
+                                        </StyledTooltip>
                                     </div>
                                 </Card>
                             </div>
@@ -708,7 +851,7 @@ export default function DocumentsPage() {
                                     width: "75vw",
                                     padding: 10
                                 }}>
-                                    <RetainedEarningsPDF/>
+                                    <RetainedEarningsPDF />
                                 </PDFViewer>
                             </Card>
 
@@ -716,6 +859,68 @@ export default function DocumentsPage() {
                     }
                 </MDBTabsPane>
             </MDBTabsContent>
+            <Modal
+                open={openSendEmail}
+                onClose={handleCloseSendEmail}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={styleEmail}>
+                    {SendEmailAlert()}
+                    <label>To:</label>
+                    <Select className="ms-2 mb-2" size="small" autoWidth value={emailTo} onChange={handleEmailChange}>
+                        {emails}
+                    </Select>
+                    <MDBCol className="mb-2">
+                        <label>From: {currentUser.email}</label>
+                    </MDBCol>
+                    <MDBCol className="mb-2">
+                        <label>Attachment: {documentName.current}</label>
+                    </MDBCol>
+                    <MDBInput
+                        wrapperClass="mb-4 mt-4"
+                        label="Subject"
+                        id="subject"
+                        type="text"
+                        inputRef={subjectInputRef}
+                    />
+                    <MDBTextArea
+                        label="Body"
+                        id="body"
+                        type="text"
+                        rows={10}
+                        inputRef={bodyInputRef}
+                    ></MDBTextArea>
+                    <StyledTooltip
+                        title="Finish sending email"
+                        placement='top'
+                        arrow
+                    >
+                        <MDBBtn
+                            onClick={SendEmailOnClick}
+                            className="d-md-flex m-auto mt-4"
+                            style={{ background: "rgba(41,121,255,1)" }}
+                        >
+                            Send Email
+                        </MDBBtn>
+                    </StyledTooltip>
+                    <StyledTooltip
+                        title="Cancel sending email"
+                        placement='bottom'
+                        arrow
+                    >
+                        <MDBBtn
+                            onClick={() => {
+                                handleCloseSendEmail();
+                            }}
+                            className="d-md-flex m-auto mt-4"
+                            style={{ background: "rgba(41,121,255,1)" }}
+                        >
+                            Close
+                        </MDBBtn>
+                    </StyledTooltip>
+                </Box>
+            </Modal>
         </div>
     )
 }

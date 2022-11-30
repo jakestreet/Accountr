@@ -6,7 +6,7 @@ import { collection, getFirestore, addDoc } from 'firebase/firestore';
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
 import html2canvas from 'html2canvas';
-import Tooltip, { tooltipClasses } from '@mui/material/Tooltip';
+import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 
 const AuthContext = React.createContext();
@@ -140,7 +140,7 @@ export function AuthProvider({ children }) {
             Attachments : [
                 {
                     name : documentName,
-                    path : documentUrl
+                    data : documentUrl
                 }]
         }).then(
             message => {
@@ -149,6 +149,8 @@ export function AuthProvider({ children }) {
                 }
                 else {
                     setEmailMessage(message);
+                    console.log(message);
+                    console.log(documentUrl)
                 }
             }
         );
