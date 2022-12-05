@@ -451,10 +451,10 @@ export default function AccountsPage() {
         }, 1000)
       );
       setLoading(false);
-      setAlert("Account removed succesful!");
+      setAlert("Account removed successfully!");
       setOpenAlert(true);
     } catch (error) {
-      setAlert(`Account removed succesful!\n${error.message}`);
+      setAlert(`Account removed successfully!\n${error.message}`);
       setOpenAlert(true);
     }
   };
@@ -1070,7 +1070,7 @@ export default function AccountsPage() {
               </MDBBtn>
             </StyledTooltip>
 
-            {cellValues.row.initialBal === 0 ? (
+            {cellValues.row.balance === 0 ? (
               <StyledTooltip
                 title="Remove this account"
                 placement='top'
