@@ -215,6 +215,8 @@ export default function RequestsPage() {
             status: "Approved",
             passwordExpiration: passwordExpiration,
             passwordAttempts: 1,
+            suspensionStartDate: "none",
+            suspensionEndDate: "none",
           });
           setLoginStatus(
             "Account succesfully created! An email with the username has been sent to the new account."
