@@ -626,6 +626,9 @@ export default function AccountsPage() {
       } else if (alert === "Account removed successfully!") {
         alertSeverity = "success";
       }
+      else if (alert === "Account successfully updated!") {
+        alertSeverity = "success"
+      }
 
       return (
         <Collapse in={openAlert}>
@@ -956,7 +959,7 @@ export default function AccountsPage() {
           }, 1000)
         );
         setLoading(false);
-        setAlert("Account succesfully updated!");
+        setAlert("Account successfully updated!");
         setOpenAlert(true);
       } else {
         setAlert("Account name already exists!");
