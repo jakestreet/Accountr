@@ -6,7 +6,7 @@ Live Site: [https://accountr.netlify.app/](https://accountr.netlify.app/)
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-##Steps to Run Accountr Locally:
+## Steps to Run Accountr Locally:
 1.	Install NodeJS and NPM (should be included with NodeJS)
 2.	Clone repository from https://github.com/jakestreet/Accountr
 3.	Run `npm install –legacy-peer-deps` inside the root directory of the cloned repository
