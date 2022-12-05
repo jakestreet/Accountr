@@ -225,7 +225,8 @@ export default function RequestsPage() {
             "Accountr Request Approved",
             "Your request for an account with Accountr has been approved. You may now login with the username " +
             username +
-            " at https://accountr.netlify.app/"
+            " at https://accountr.netlify.app/",
+            currentUser.displayName
           );
           await signupAdmin(email, password).then((userCredential) => {
             logoutAdmin();
