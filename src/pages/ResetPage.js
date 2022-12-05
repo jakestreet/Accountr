@@ -31,7 +31,7 @@ export default function ResetPage() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("not loaded");
-  const { resetPassword } = useAuth();
+  const { resetPassword, StyledTooltip } = useAuth();
   const queryURL = useQuery();
   const db = getFirestore(app);
   const oobCode = queryURL.get('oobCode')
@@ -153,12 +153,20 @@ export default function ResetPage() {
           }}
           onChange={(isValid) => { setValidPass(isValid) }}
         />
-        <MDBTooltip tag='a' placement="auto" title="Finish resetting password">
+        <StyledTooltip
+          title="Finish resetting your password"
+          placement='top'
+          arrow
+        >
           <MDBBtn onClick={ResetPassword} className="mb-4 w-25 m-auto mt-2">Reset Password</MDBBtn>
-        </MDBTooltip>
-        <MDBTooltip tag='a' placement="auto" title="Return to log in screen">
+        </StyledTooltip>
+        <StyledTooltip
+          title="Return to login page"
+          placement='bottom'
+          arrow
+        >
           <MDBBtn className="mb-4 w-25 m-auto" href="/" color="link">Return to Log In</MDBBtn>
-        </MDBTooltip>
+        </StyledTooltip>
 
       </MDBContainer>
     </div>
