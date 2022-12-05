@@ -240,8 +240,7 @@ export default function RequestsPage() {
         setOpenAlert(true);
       }
     } catch (error) {
-      setLoginStatus(error.message);
-      setOpenAlert(true);
+      console.log(error)
     }
   };
 
